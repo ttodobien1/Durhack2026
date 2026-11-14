@@ -95,3 +95,31 @@ Solo se agregan campos; los del contrato no cambian.
 - **Rol C:** el prompt del sistema está en `backend/src/copilot/systemPrompt.js` y los rasgos de estilo en
   `backend/src/copilot/styles.js`; se pueden editar sin tocar el resto.
 - Sin `ANTHROPIC_API_KEY`, `/copiloto` responde 503 y el resto de la API funciona igual.
+
+## 8. Cuentas de usuario (sección 2: pasa de "Fuera" a "Importante")
+
+- **Decisión:** el equipo decidió tener cuentas reales (antes estaban en la lista "Fuera"). Login propio con
+  email + contraseña, guardado en TigerData; no se usa Supabase ni otro servicio.
+- **Tablas nuevas:** `usuarios` (nombre, email, hash de la contraseña con scrypt, `perfil` JSONB) y `sesiones`
+  (solo se guarda el hash del token, duran 30 días). `piezas` y `canciones` ganan `usuario_id` (dueño).
+- **Migración automática:** el backend crea las tablas y columnas que falten en la primera petición después de un
+  deploy. No hay que correr nada a mano en TigerData.
+- **Rutas nuevas:**
+
+| Método | Ruta | Qué hace |
+| --- | --- | --- |
+| POST | `/auth/registro` | `{ nombre, email, password }` → `201 { usuario, token }` |
+| POST | `/auth/login` | `{ usuario (nombre o email), password }` → `{ usuario, token }` |
+| POST | `/auth/logout` | Cierra la sesión del token |
+| GET | `/auth/yo` | La cuenta conectada |
+| PUT | `/auth/yo` | Guarda el perfil público `{ perfil: {...} }` |
+| GET | `/usuarios/:nombre` | Perfil público (sin email) |
+
+- El token va en `Authorization: Bearer <token>`.
+- **Con sesión:** forks, piezas y canciones nuevas quedan a nombre de la cuenta (`autor` = nombre de usuario) y solo
+  esa cuenta puede editarlas.
+- **Sin sesión:** todo funciona como antes (`autor` = lo que mande el cliente, por ejemplo `"you"`), pero no se puede
+  publicar con el nombre de una cuenta registrada. Las piezas semilla y lo anónimo no tienen dueño.
+- **Frontend:** el login y el registro ya llaman al backend. `ME` en `frontend/src/api.js` es el usuario conectado
+  (`"you"` sin sesión) y el perfil (bio, README, foto, pins) se guarda en el servidor con copia en el navegador.
+- No hay verificación de email ni recuperación de contraseña (necesitarían un servicio de envío de correos).

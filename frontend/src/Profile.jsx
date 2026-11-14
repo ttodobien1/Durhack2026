@@ -4,7 +4,7 @@ import { api, ME } from './api.js'
 import * as audio from './audio.js'
 import { Arrangement, withMeta } from './Landing.jsx'
 import { Avatar, SiteBar } from './Site.jsx'
-import { ACCENTS, authorsFor, contributions, loadProfile, useUser } from './profile.js'
+import { ACCENTS, authorsFor, contributions, loadProfile, syncProfile, useUser } from './profile.js'
 import { renderMarkdown } from './markdown.js'
 import { typeLabel } from './components/Browser.jsx'
 import './profile.css'
@@ -42,6 +42,16 @@ export function Profile({ name }) {
       (e) => setData({ error: e.message }),
     )
     return () => audio.stop()
+  }, [name])
+
+  // The profile (bio, README, picture...) lives on the backend: refresh the browser copy, then re-render.
+  const [, setProfileVersion] = useState(0)
+  useEffect(() => {
+    let live = true
+    syncProfile(name).then((changed) => live && changed && setProfileVersion((v) => v + 1))
+    return () => {
+      live = false
+    }
   }, [name])
 
   const preview = (p) => {

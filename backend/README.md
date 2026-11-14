@@ -55,7 +55,7 @@ Errors always come back as `{ "error": "message" }` with the matching HTTP statu
 
 | Method | Route | Notes |
 | --- | --- | --- |
-| GET | `/health` | Database type and row counts |
+| GET | `/health` | Database type and row counts (pieces, songs, accounts) |
 | GET | `/piezas?estilo=&tipo=&tonalidad=&q=&autor=` | All filters optional. `estilo` takes several tags (`rap,boombap`; `boom bap` and `lo-fi` also work), `tonalidad` accepts `Am` / `A minor` / `La menor`, `q` ignores case and accents |
 | GET | `/piezas/:id` | One piece |
 | POST | `/piezas` | Create an original piece (id is generated). *Extra* |
@@ -85,15 +85,41 @@ Following `CLAUDE.md` section 5: notes with the same `(tono, inicio)` are `igual
 time, or the same onset with another pitch, are `movidas` (closest first, at most 4 beats or 12 semitones away);
 the rest are `nuevas` / `borradas`. A change of only `duracion` or `velocidad` still counts as `iguales`.
 
+## Accounts
+
+Email + password accounts stored in the database (no third-party auth service).
+
+| Method | Route | Notes |
+| --- | --- | --- |
+| POST | `/auth/registro` | `{ "nombre", "email", "password" }` → `201 { usuario, token }`. `nombre`: 2-24 letters, numbers, `-`, `_` (case-insensitive unique; `you`, `yours`, `anonymous` are reserved). Password 6+ characters. `409` if the username or email is taken |
+| POST | `/auth/login` | `{ "usuario": username or email, "password" }` → `{ usuario, token }`; `401` if wrong |
+| POST | `/auth/logout` | Ends the session of the token sent → `204` |
+| GET | `/auth/yo` | The logged-in account `{ usuario: { id, nombre, email, perfil, creado } }` |
+| PUT | `/auth/yo` | `{ "perfil": { displayName, bio, location, website, readme, accent, avatar, pinned } }` saves the public profile (`avatar` is an image `data:` URL up to 300 KB) |
+| GET | `/usuarios/:nombre` | Public profile `{ nombre, perfil, creado }` (never the email) |
+
+- Send the token as `Authorization: Bearer <token>`. Sessions last 30 days; only a SHA-256 hash of the token is
+  stored. A wrong or expired token gets `401` on any route, so the client knows to log in again.
+- Passwords are hashed with scrypt (Node's built-in `crypto`), never stored or logged in clear text.
+- **Logged in**, forks, new pieces and new songs are authored by the account (`autor` = username, whatever the body
+  says) and owned by it: only that account can `PUT` them (`401` without a token, `403` with another account's).
+- **Signed out** works as before: `autor` comes from the body (`"anonymous"` if missing), except a registered
+  username (`401`: log in to publish as them). Seed data and anonymous work have no owner and stay editable by anyone.
+- `PUT /canciones/:id` never changes a song's `autor`.
+- No email verification or password reset (they would need an email-sending service).
+
 ## Database schema
 
-`src/db/schema.sql`:
+`src/db/schema.js` (idempotent SQL; `npm run db:init` applies it, and the server applies it by itself on the first
+request if tables or columns are missing, so deploys never need a manual migration):
 
 - `piezas`: one row per piece. `estilo` and `notas` are JSONB columns (GIN index on `estilo`); `parent_id`
-  references another piece (fork). `busqueda` is normalized text used by `?q=`.
-- `canciones`: name, author, tempo.
+  references another piece (fork). `busqueda` is normalized text used by `?q=`. `usuario_id`: owner account.
+- `canciones`: name, author, tempo, `usuario_id` (owner account).
 - `pistas`: tracks of a song (`cancion_id`, `posicion`, `instrumento`).
 - `bloques`: a piece placed on a track at bar `compas`.
+- `usuarios`: accounts (`nombre`, `email`, `password_hash`, `perfil` JSONB).
+- `sesiones`: login sessions (`token_hash`, `usuario_id`, `expires_at`).
 
 The lineage tree is a recursive query that walks `parent_id` up from every piece used in the song.
 
@@ -110,6 +136,9 @@ The lineage tree is a recursive query that walks `parent_id` up from every piece
    and `ANTHROPIC_API_KEY`. `vercel.json` sends every request to `api/index.js`, which exports the Express app.
 4. The frontend is a separate Vercel project (Root Directory = `frontend`) with `VITE_API_URL` set to the backend URL.
    CORS is open to every origin.
+5. With Vercel's Git integration, every push to the production branch (`main` by default) redeploys both projects;
+   other branches get preview URLs. Schema changes are applied by the server itself on the first request after the
+   deploy; seed data still needs `npm run db:seed`.
 
 ## Copilot
 

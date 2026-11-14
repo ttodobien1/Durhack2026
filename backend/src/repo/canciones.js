@@ -54,9 +54,10 @@ export async function getCancion(id) {
   return cancion ?? null;
 }
 
-export async function cancionExists(id) {
-  const result = await db.query('SELECT 1 FROM canciones WHERE id = $1', [id]);
-  return result.rows.length > 0;
+// Owner of a song: { usuario_id (null when unowned), autor }, or null if the song does not exist.
+export async function getCancionOwner(id) {
+  const result = await db.query('SELECT usuario_id, autor FROM canciones WHERE id = $1', [id]);
+  return result.rows[0] ?? null;
 }
 
 async function assertPiezasExist(cancion) {
@@ -87,16 +88,17 @@ async function writeTracks(tx, id, cancion) {
   }
 }
 
-// Creates a song with a new sequential id. Returns the stored Cancion.
-export async function createCancion(cancion) {
+// Creates a song with a new sequential id, owned by `usuarioId` (null = anonymous). Returns the stored Cancion.
+export async function createCancion(cancion, usuarioId = null) {
   await assertPiezasExist(cancion);
   const id = await insertWithNewId('canciones', 'c', (newId) =>
     db.transaction(async (tx) => {
-      await tx.query('INSERT INTO canciones (id, nombre, autor, tempo) VALUES ($1, $2, $3, $4)', [
+      await tx.query('INSERT INTO canciones (id, nombre, autor, tempo, usuario_id) VALUES ($1, $2, $3, $4, $5)', [
         newId,
         cancion.nombre,
         cancion.autor,
         cancion.tempo,
+        usuarioId,
       ]);
       await writeTracks(tx, newId, cancion);
     }),

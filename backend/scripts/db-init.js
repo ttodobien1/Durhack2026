@@ -3,9 +3,8 @@
 //   npm run db:reset                drop everything, recreate and seed from /data
 //   npm run db:reset -- --yes       same, but allowed against a remote database (TigerData)
 import '../src/loadEnv.js';
-import { readFile } from 'node:fs/promises';
 import { databaseKind, db, LOCAL_DATA_DIR } from '../src/db/client.js';
-import { SCHEMA_FILE } from './lib/paths.js';
+import { SCHEMA } from '../src/db/schema.js';
 import { seedDatabase } from './lib/seed.js';
 
 const args = new Set(process.argv.slice(2));
@@ -21,10 +20,10 @@ if (reset && databaseKind === 'postgres' && !args.has('--yes')) {
 
 try {
   if (reset) {
-    await db.exec('DROP TABLE IF EXISTS bloques, pistas, canciones, piezas CASCADE;');
+    await db.exec('DROP TABLE IF EXISTS bloques, pistas, canciones, piezas, sesiones, usuarios CASCADE;');
     console.log('Dropped existing tables');
   }
-  await db.exec(await readFile(SCHEMA_FILE, 'utf8'));
+  await db.exec(SCHEMA);
   console.log('Schema ready');
   if (seed) await seedDatabase();
 } catch (err) {

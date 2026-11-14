@@ -98,6 +98,61 @@ export function validatePiezaUpdate(body) {
   return changes;
 }
 
+// --- Accounts ---------------------------------------------------------------------------------------
+
+export const NOMBRE_USUARIO = /^[\w-]{2,24}$/; // same rule as the frontend sign-up form
+const RESERVED_NOMBRES = ['you', 'yours', 'anonymous'];
+
+export function validateRegistro(body) {
+  if (!body || typeof body !== 'object') throw badRequest('Body must be a JSON object');
+  const nombre = typeof body.nombre === 'string' ? body.nombre.trim() : '';
+  const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+  const { password } = body;
+  if (!NOMBRE_USUARIO.test(nombre)) throw badRequest('"nombre": use 2-24 letters, numbers, dashes or underscores');
+  if (RESERVED_NOMBRES.includes(nombre.toLowerCase())) throw badRequest(`"nombre": "${nombre}" is reserved`);
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw badRequest('"email" is not a valid email address');
+  if (typeof password !== 'string' || password.length < 6 || password.length > 200) {
+    throw badRequest('"password" must be 6-200 characters');
+  }
+  return { nombre, email, password };
+}
+
+export function validateLogin(body) {
+  if (!body || typeof body !== 'object') throw badRequest('Body must be a JSON object');
+  const usuario = typeof body.usuario === 'string' ? body.usuario.trim() : '';
+  if (!usuario) throw badRequest('"usuario" (username or email) is required');
+  if (typeof body.password !== 'string' || !body.password) throw badRequest('"password" is required');
+  return { usuario, password: body.password };
+}
+
+// Public profile edited in the frontend settings page. Only known fields are kept.
+const PERFIL_TEXTS = { displayName: 60, bio: 300, location: 60, website: 200, readme: 20000, accent: 20 };
+const MAX_AVATAR = 300_000; // characters of a data: URL (the frontend sends a 256x256 JPEG, ~30 KB)
+
+export function validatePerfil(body) {
+  const perfil = body?.perfil;
+  if (!perfil || typeof perfil !== 'object' || Array.isArray(perfil)) throw badRequest('"perfil" must be an object');
+  const clean = {};
+  for (const [key, max] of Object.entries(PERFIL_TEXTS)) {
+    if (perfil[key] === undefined || perfil[key] === null) continue;
+    if (typeof perfil[key] !== 'string' || perfil[key].length > max) throw badRequest(`"perfil.${key}" must be text up to ${max} characters`);
+    clean[key] = perfil[key];
+  }
+  if (perfil.avatar !== undefined && perfil.avatar !== null) {
+    if (typeof perfil.avatar !== 'string' || !perfil.avatar.startsWith('data:image/') || perfil.avatar.length > MAX_AVATAR) {
+      throw badRequest('"perfil.avatar" must be an image data URL under 300 KB');
+    }
+  }
+  clean.avatar = perfil.avatar ?? null;
+  if (perfil.pinned !== undefined && perfil.pinned !== null) {
+    if (!Array.isArray(perfil.pinned) || perfil.pinned.length > 12 || perfil.pinned.some((id) => typeof id !== 'string' || id.length > 40)) {
+      throw badRequest('"perfil.pinned" must be a list of up to 12 ids');
+    }
+    clean.pinned = perfil.pinned;
+  }
+  return clean;
+}
+
 // Song (POST/PUT /canciones). Checking that pieza_id values exist is done by the repository.
 export function validateCancion(body) {
   if (!body || typeof body !== 'object') throw badRequest('Body must be a JSON object');

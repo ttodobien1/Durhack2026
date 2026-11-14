@@ -13,7 +13,8 @@ import { recordContribution } from './profile.js'
 
 const FILL_BARS = 8 // a piece added from the Browser repeats across the first 8 bars
 
-const emptySong = { id: 'c-new', nombre: 'Untitled project', autor: ME, tempo: 96, pistas: [] }
+// A function so `autor` is whoever is logged in when the project opens (ME changes on log in / out).
+const emptySong = () => ({ id: 'c-new', nombre: 'Untitled project', autor: ME, tempo: 96, pistas: [] })
 
 export default function App({ projectId = 'new' }) {
   const [pieces, setPieces] = useState({}) // id → Pieza cache
@@ -21,7 +22,7 @@ export default function App({ projectId = 'new' }) {
   const [selectedId, setSelectedId] = useState(null)
   const [draft, setDraft] = useState(null) // unsaved notes of the selected piece
   const [draftBars, setDraftBars] = useState(null) // unsaved length (compases) of the selected piece
-  const [savedJson, setSavedJson] = useState(() => JSON.stringify(emptySong)) // song as last loaded or saved
+  const [savedJson, setSavedJson] = useState(() => JSON.stringify(emptySong())) // song as last loaded or saved
   const [diff, setDiff] = useState(null)
   const [playing, setPlaying] = useState(null) // 'song' | piece id | null
   const [treeOpen, setTreeOpen] = useState(false)

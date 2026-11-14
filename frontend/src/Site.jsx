@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { LogOut, Settings, X } from 'lucide-react'
+import { api } from './api.js'
 import { StemmaMark } from './App.jsx'
-import { loadProfile } from './profile.js'
+import { cacheProfile, loadProfile } from './profile.js'
 import './landing.css'
 
 /** Site header for the landing, profile and settings pages. `onUser(null)` signs out. */
@@ -70,7 +71,9 @@ export function Avatar({ name, size, profile = loadProfile(name), className = ''
 export function AuthDialog({ mode, onMode, onClose, onDone }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
+  const [busy, setBusy] = useState(false)
   const signup = mode === 'signup'
 
   useEffect(() => {
@@ -79,13 +82,30 @@ export function AuthDialog({ mode, onMode, onClose, onDone }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
     const clean = name.trim()
-    if (!/^[\w-]{2,24}$/.test(clean)) return setError('Use 2–24 letters, numbers, dashes or underscores.')
+    if (signup && !/^[\w-]{2,24}$/.test(clean)) return setError('Use 2–24 letters, numbers, dashes or underscores.')
+    if (!signup && !clean) return setError('Enter your username or email.')
     if (signup && !/^\S+@\S+\.\S+$/.test(email)) return setError('Enter a valid email address.')
-    onDone({ name: clean }) // the name only; the password is never kept
+    if (signup ? password.length < 6 : !password) return setError(signup ? 'Use at least 6 characters for the password.' : 'Enter your password.')
+    setBusy(true)
+    try {
+      const { user, perfil } = signup
+        ? await api.register({ nombre: clean, email: email.trim(), password })
+        : await api.login({ usuario: clean, password })
+      try {
+        if (Object.keys(perfil).length) cacheProfile(user.name, perfil)
+      } catch {
+        /* storage full: the profile loads from the server instead */
+      }
+      onDone(user)
+    } catch (err) {
+      setError(err.message)
+      setBusy(false)
+    }
   }
+  const edit = (set) => (e) => (set(e.target.value), setError(null))
 
   return (
     <div className="window-backdrop" onClick={onClose}>
@@ -98,29 +118,29 @@ export function AuthDialog({ mode, onMode, onClose, onDone }) {
         </h2>
         <div className="auth-body">
           <label>
-            Username
-            <input autoFocus value={name} onChange={(e) => (setName(e.target.value), setError(null))} autoComplete="username" />
+            {signup ? 'Username' : 'Username or email'}
+            <input autoFocus value={name} onChange={edit(setName)} autoComplete="username" />
           </label>
           {signup && (
             <label>
               Email
-              <input type="email" value={email} onChange={(e) => (setEmail(e.target.value), setError(null))} autoComplete="email" />
+              <input type="email" value={email} onChange={edit(setEmail)} autoComplete="email" />
             </label>
           )}
           <label>
             Password
-            <input type="password" autoComplete={signup ? 'new-password' : 'current-password'} />
+            <input type="password" value={password} onChange={edit(setPassword)} autoComplete={signup ? 'new-password' : 'current-password'} />
           </label>
           {error && (
             <p className="auth-error" role="alert">
               {error}
             </p>
           )}
-          <button className="tbtn accent big" type="submit">
-            {signup ? 'Sign up' : 'Log in'}
+          <button className="tbtn accent big" type="submit" disabled={busy}>
+            {busy ? 'One moment…' : signup ? 'Sign up' : 'Log in'}
           </button>
           <p className="fine">
-            Hackathon demo: your username stays in this browser and nothing is sent anywhere.{' '}
+            Your account lives on Stemma’s server; the password is stored only as a secure hash.{' '}
             <button type="button" className="link" onClick={() => onMode(signup ? 'login' : 'signup')}>
               {signup ? 'Already have an account? Log in' : 'New here? Sign up'}
             </button>

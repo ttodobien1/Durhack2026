@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { ArrowRight, Check, Trash2, Upload, User } from 'lucide-react'
 import { api } from './api.js'
 import { AuthDialog, Avatar, SiteBar } from './Site.jsx'
-import { ACCENTS, authorsFor, loadProfile, saveProfile, useUser } from './profile.js'
+import { ACCENTS, authorsFor, loadProfile, saveProfile, syncProfile, useUser } from './profile.js'
 import { renderMarkdown } from './markdown.js'
 import './profile.css'
 
@@ -36,7 +36,14 @@ export function Settings() {
 
   useEffect(() => {
     setForm(name && loadProfile(name))
-    if (name) api.projects().then((list) => setProjects(list.filter((p) => authorsFor(name).includes(p.autor))), () => setProjects([]))
+    if (!name) return
+    api.projects().then((list) => setProjects(list.filter((p) => authorsFor(name).includes(p.autor))), () => setProjects([]))
+    // The saved profile lives on the backend: load it before editing so saving never overwrites it with blanks.
+    let live = true
+    syncProfile(name).then((changed) => live && changed && setForm(loadProfile(name)))
+    return () => {
+      live = false
+    }
   }, [name])
   useEffect(() => {
     if (form && location.hash.endsWith('#readme')) document.getElementById('readme')?.scrollIntoView()
@@ -49,7 +56,7 @@ export function Settings() {
         <main className="settings-out panel">
           <User size={28} aria-hidden="true" />
           <h1>Log in to customize your profile</h1>
-          <p>Your picture, bio, README and pinned projects are kept in this browser under your username.</p>
+          <p>Your picture, bio, README and pinned projects are saved with your account.</p>
           <div className="hero-cta">
             <button className="tbtn accent big" onClick={() => setAuth('login')}>
               Log in
@@ -81,13 +88,18 @@ export function Settings() {
     }
   }
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
+    setStatus({ ok: true, text: 'Saving…' })
     try {
-      saveProfile(name, { ...form, displayName: form.displayName.trim(), bio: form.bio.trim(), location: form.location.trim(), website: form.website.trim() })
+      await saveProfile(name, { ...form, displayName: form.displayName.trim(), bio: form.bio.trim(), location: form.location.trim(), website: form.website.trim() })
       setStatus({ ok: true, text: 'Profile updated.' })
-    } catch {
-      setStatus({ ok: false, text: 'Could not save: this browser’s storage is full or blocked. Try a smaller picture, then save again.' })
+    } catch (err) {
+      const storage = err?.name === 'QuotaExceededError' || /quota|storage/i.test(err?.message ?? '')
+      setStatus({
+        ok: false,
+        text: storage ? 'Saved on the server, but this browser’s storage is full: try a smaller picture.' : `Could not save: ${err?.message ?? 'unknown error'}`,
+      })
     }
   }
 
