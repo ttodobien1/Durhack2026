@@ -1,0 +1,23 @@
+{
+  "id": "p-008",
+  "nombre": "Bajo en blancas i-iv-V7",
+  "tipo": "bajo",
+  "autor": "sofia",
+  "licencia": "CC BY 4.0",
+  "fuente": "Placeholder seed data (replace with role C pieces)",
+  "tonalidad": "Am",
+  "tempo": 96,
+  "estilo": ["salsa","romantica","bolero"],
+  "compases": 4,
+  "parent_id": null,
+  "notas": [
+    {"tono":45,"inicio":0,"duracion":2,"velocidad":0.8},
+    {"tono":52,"inicio":2,"duracion":2,"velocidad":0.75},
+    {"tono":50,"inicio":4,"duracion":2,"velocidad":0.8},
+    {"tono":45,"inicio":6,"duracion":2,"velocidad":0.75},
+    {"tono":40,"inicio":8,"duracion":2,"velocidad":0.8},
+    {"tono":47,"inicio":10,"duracion":2,"velocidad":0.75},
+    {"tono":45,"inicio":12,"duracion":2,"velocidad":0.8},
+    {"tono":52,"inicio":14,"duracion":2,"velocidad":0.75}
+  ]
+}

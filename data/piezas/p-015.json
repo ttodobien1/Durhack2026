@@ -1,0 +1,24 @@
+{
+  "id": "p-015",
+  "nombre": "Coro de respuesta",
+  "tipo": "melodia",
+  "autor": "luis",
+  "licencia": "CC BY 4.0",
+  "fuente": "Placeholder seed data (replace with role C pieces)",
+  "tonalidad": "Am",
+  "tempo": 96,
+  "estilo": ["salsa","romantica"],
+  "compases": 2,
+  "parent_id": null,
+  "notas": [
+    {"tono":69,"inicio":0.5,"duracion":0.5,"velocidad":0.8},
+    {"tono":72,"inicio":1,"duracion":0.5,"velocidad":0.8},
+    {"tono":76,"inicio":1.5,"duracion":1,"velocidad":0.8},
+    {"tono":74,"inicio":2.5,"duracion":0.5,"velocidad":0.8},
+    {"tono":72,"inicio":3,"duracion":1,"velocidad":0.8},
+    {"tono":74,"inicio":4.5,"duracion":0.5,"velocidad":0.8},
+    {"tono":72,"inicio":5,"duracion":0.5,"velocidad":0.8},
+    {"tono":71,"inicio":5.5,"duracion":1,"velocidad":0.8},
+    {"tono":69,"inicio":6.5,"duracion":1.5,"velocidad":0.8}
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "id": "p-007",
+  "nombre": "Tumbao de bajo en La menor",
+  "tipo": "bajo",
+  "autor": "luis",
+  "licencia": "CC BY 4.0",
+  "fuente": "Placeholder seed data (replace with role C pieces)",
+  "tonalidad": "Am",
+  "tempo": 96,
+  "estilo": ["salsa","romantica"],
+  "compases": 4,
+  "parent_id": null,
+  "notas": [
+    {"tono":45,"inicio":0.75,"duracion":0.75,"velocidad":0.85},
+    {"tono":52,"inicio":1.5,"duracion":1.25,"velocidad":0.8},
+    {"tono":45,"inicio":2.75,"duracion":0.75,"velocidad":0.85},
+    {"tono":50,"inicio":3.5,"duracion":1.25,"velocidad":0.8},
+    {"tono":50,"inicio":4.75,"duracion":0.75,"velocidad":0.85},
+    {"tono":45,"inicio":5.5,"duracion":1.25,"velocidad":0.8},
+    {"tono":50,"inicio":6.75,"duracion":0.75,"velocidad":0.85},
+    {"tono":40,"inicio":7.5,"duracion":1.25,"velocidad":0.8},
+    {"tono":40,"inicio":8.75,"duracion":0.75,"velocidad":0.85},
+    {"tono":47,"inicio":9.5,"duracion":1.25,"velocidad":0.8},
+    {"tono":40,"inicio":10.75,"duracion":0.75,"velocidad":0.85},
+    {"tono":45,"inicio":11.5,"duracion":1.25,"velocidad":0.8},
+    {"tono":45,"inicio":12.75,"duracion":0.75,"velocidad":0.85},
+    {"tono":52,"inicio":13.5,"duracion":1.25,"velocidad":0.8},
+    {"tono":45,"inicio":14.75,"duracion":0.75,"velocidad":0.85},
+    {"tono":45,"inicio":15.5,"duracion":1.25,"velocidad":0.8}
+  ]
+}

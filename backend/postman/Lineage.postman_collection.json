@@ -1,0 +1,239 @@
+{
+  "info": {
+    "name": "Lineage API",
+    "description": "Requests for the Lineage backend (DurHack 2026). Set the collection variable `baseUrl` (default http://localhost:3001; use the Vercel URL for production). Run `npm run db:reset` first so the seed data (p-001...p-015, c-001) exists. Suggested flow: Piezas > Fork p-006 (saves forkId) > Edit notes of the fork > Diff fork vs parent > Canciones > Create song > Lineage tree.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3001" },
+    { "key": "forkId", "value": "p-016" },
+    { "key": "cancionId", "value": "c-001" },
+    { "key": "notasEditadas", "value": "[]" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": { "method": "GET", "url": "{{baseUrl}}/health" }
+    },
+    {
+      "name": "Piezas",
+      "item": [
+        {
+          "name": "List all pieces",
+          "request": { "method": "GET", "url": "{{baseUrl}}/piezas" }
+        },
+        {
+          "name": "Search (estilo, tipo, tonalidad, q)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/piezas?estilo=salsa&tipo=acordes&tonalidad=Am&q=montuno",
+            "description": "All filters are optional. estilo accepts several tags (salsa,romantica). tonalidad accepts Am / A minor / La menor. q is accent- and case-insensitive."
+          }
+        },
+        {
+          "name": "Get piece p-005",
+          "request": { "method": "GET", "url": "{{baseUrl}}/piezas/p-005" }
+        },
+        {
+          "name": "Create original piece",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('201 Created', () => pm.response.to.have.status(201));"] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/piezas",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Bajo de prueba\",\n  \"tipo\": \"bajo\",\n  \"autor\": \"chino\",\n  \"licencia\": \"CC BY 4.0\",\n  \"fuente\": \"creada en DurHack\",\n  \"tonalidad\": \"Am\",\n  \"tempo\": 96,\n  \"estilo\": [\"salsa\", \"romantica\"],\n  \"compases\": 1,\n  \"notas\": [\n    { \"tono\": 45, \"inicio\": 0.75, \"duracion\": 0.75, \"velocidad\": 0.85 },\n    { \"tono\": 52, \"inicio\": 1.5, \"duracion\": 1.25, \"velocidad\": 0.8 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Fork p-006 (saves forkId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const fork = pm.response.json();",
+                  "pm.test('parent_id points to p-006', () => pm.expect(fork.parent_id).to.eql('p-006'));",
+                  "pm.collectionVariables.set('forkId', fork.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/piezas/p-006/fork",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"autor\": \"chino\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Body is optional: { autor, nombre }. Without autor the fork is credited to \"anonymous\"."
+          }
+        },
+        {
+          "name": "Edit notes of the fork (moves first note, adds one)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Loads the fork, edits its notes and stores them in {{notasEditadas}} for the body.",
+                  "const url = pm.collectionVariables.get('baseUrl') + '/piezas/' + pm.collectionVariables.get('forkId');",
+                  "pm.sendRequest(url, (err, res) => {",
+                  "  const pieza = res.json();",
+                  "  pieza.notas[0].inicio += 0.25;",
+                  "  pieza.notas.push({ tono: 88, inicio: 3, duracion: 0.5, velocidad: 0.9 });",
+                  "  pm.collectionVariables.set('notasEditadas', JSON.stringify(pieza.notas));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/piezas/{{forkId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Mi montuno\",\n  \"notas\": {{notasEditadas}}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "PUT replaces the whole note list. Also accepts nombre, tonalidad, tempo, estilo, compases."
+          }
+        },
+        {
+          "name": "Diff fork vs its parent",
+          "request": { "method": "GET", "url": "{{baseUrl}}/piezas/{{forkId}}/diff" }
+        },
+        {
+          "name": "Diff p-006 vs p-005",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/piezas/p-006/diff/p-005",
+            "description": ":id is the modified piece, :otra the reference. If one is an ancestor of the other it is always used as the original, whatever the order."
+          }
+        },
+        {
+          "name": "Error: unknown tipo (400)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/piezas?tipo=guitarra" }
+        }
+      ]
+    },
+    {
+      "name": "Canciones",
+      "item": [
+        {
+          "name": "List songs",
+          "request": { "method": "GET", "url": "{{baseUrl}}/canciones" }
+        },
+        {
+          "name": "Get song c-001",
+          "request": { "method": "GET", "url": "{{baseUrl}}/canciones/c-001" }
+        },
+        {
+          "name": "Create song with the fork (saves cancionId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('cancionId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/canciones",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Mi salsa\",\n  \"autor\": \"chino\",\n  \"tempo\": 96,\n  \"pistas\": [\n    { \"instrumento\": \"bateria\", \"bloques\": [{ \"pieza_id\": \"p-001\", \"compas\": 0 }] },\n    { \"instrumento\": \"piano\", \"bloques\": [{ \"pieza_id\": \"{{forkId}}\", \"compas\": 0 }] },\n    { \"instrumento\": \"bajo\", \"bloques\": [{ \"pieza_id\": \"p-007\", \"compas\": 0 }] }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Update song (full replace)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/canciones/{{cancionId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Mi salsa (v2)\",\n  \"autor\": \"chino\",\n  \"tempo\": 96,\n  \"pistas\": [\n    { \"instrumento\": \"bateria\", \"bloques\": [{ \"pieza_id\": \"p-001\", \"compas\": 0 }, { \"pieza_id\": \"p-001\", \"compas\": 4 }] },\n    { \"instrumento\": \"bateria\", \"bloques\": [{ \"pieza_id\": \"p-002\", \"compas\": 0 }, { \"pieza_id\": \"p-002\", \"compas\": 4 }] },\n    { \"instrumento\": \"piano\", \"bloques\": [{ \"pieza_id\": \"{{forkId}}\", \"compas\": 0 }, { \"pieza_id\": \"{{forkId}}\", \"compas\": 4 }] },\n    { \"instrumento\": \"bajo\", \"bloques\": [{ \"pieza_id\": \"p-007\", \"compas\": 0 }, { \"pieza_id\": \"p-007\", \"compas\": 4 }] },\n    { \"instrumento\": \"piano\", \"bloques\": [{ \"pieza_id\": \"p-009\", \"compas\": 4 }] }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Lineage tree of the song",
+          "request": { "method": "GET", "url": "{{baseUrl}}/canciones/{{cancionId}}/arbol" }
+        },
+        {
+          "name": "Lineage tree of c-001",
+          "request": { "method": "GET", "url": "{{baseUrl}}/canciones/c-001/arbol" }
+        }
+      ]
+    },
+    {
+      "name": "Copiloto",
+      "item": [
+        {
+          "name": "Start a song from scratch",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/copiloto",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Quiero una salsa romántica, bien movida, para una canción de desamor.\",\n  \"cancion\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Needs ANTHROPIC_API_KEY on the server; without it the endpoint answers 503."
+          }
+        },
+        {
+          "name": "Complete the current song",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/copiloto",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"What is my song missing?\",\n  \"cancion\": {\n    \"id\": \"c-001\",\n    \"nombre\": \"Desamor en La menor\",\n    \"autor\": \"ana\",\n    \"tempo\": 96,\n    \"pistas\": [\n      { \"instrumento\": \"bateria\", \"bloques\": [{ \"pieza_id\": \"p-001\", \"compas\": 0 }] },\n      { \"instrumento\": \"piano\", \"bloques\": [{ \"pieza_id\": \"p-006\", \"compas\": 0 }] }\n    ]\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Sound like an artist (style traits only)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/copiloto",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Quiero sonar como Frankie Ruiz\",\n  \"cancion\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
