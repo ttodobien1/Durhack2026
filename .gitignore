@@ -1,5 +1,7 @@
 # Raw downloaded datasets (re-created by data/scripts/00_download.py)
 data/raw/
+# Intermediate pipeline outputs (re-created by running the stages)
+data/build/
 
 # Environment / secrets
 .env
