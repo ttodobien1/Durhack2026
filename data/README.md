@@ -16,7 +16,7 @@ Seed data loaded into the database with `npm run db:seed` (or `npm run db:reset`
 - `id` is required in seed files (`p-001`, `p-002`, ...). Forks need `parent_id` pointing to a piece that exists.
 - `inicio` and `duracion` are in beats (quarter notes), never seconds. `velocidad` is 0-1.
 - `tipo` is one of `ritmo`, `acordes`, `melodia`, `bajo`.
-- `estilo` tags are stored lowercase without accents (`"romántica"` becomes `"romantica"`).
+- `estilo` tags are stored lowercase, without accents or hyphens (`"romántica"` → `"romantica"`, `"lo-fi"` → `"lofi"`, `"boom bap"` → `"boombap"`).
 - `tonalidad` is stored in short notation (`"La menor"` or `"A minor"` becomes `"Am"`). Use `null` for drums.
 - Every imported piece needs `autor`, `licencia` and `fuente` (CC BY requires attribution). No melodies or lyrics from known songs.
 

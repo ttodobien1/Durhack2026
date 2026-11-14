@@ -10,11 +10,24 @@ export function normalizeText(value) {
     .trim();
 }
 
-// "salsa romántica, Bolero" -> ["salsa", "romantica", "bolero"]
+// Style names written as two words that the data stores as one tag.
+const COMPOUND_TAGS = [
+  [/\bboom[\s-]*bap\b/g, 'boombap'],
+  [/\blo[\s-]*fi\b/g, 'lofi'],
+  [/\bhip[\s-]*hop\b/g, 'hiphop'],
+  [/\bnew[\s-]*orleans\b/g, 'neworleans'],
+  [/\bcha[\s-]*cha([\s-]*cha)?\b/g, 'chachacha'],
+];
+
+// "Rap, boom bap, Lo-Fi" -> ["rap", "boombap", "lofi"];  "salsa romántica" -> ["salsa", "romantica"]
 export function splitTags(value) {
   const list = Array.isArray(value) ? value : String(value ?? '').split(/[,;]/);
   return list
-    .flatMap((item) => normalizeText(item).split(/[\s-]+/))
+    .flatMap((item) => {
+      let text = normalizeText(item);
+      for (const [pattern, tag] of COMPOUND_TAGS) text = text.replace(pattern, tag);
+      return text.replace(/-/g, '').split(' ');
+    })
     .filter(Boolean);
 }
 

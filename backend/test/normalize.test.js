@@ -6,9 +6,16 @@ test('normalizeText removes accents and case', () => {
   assert.equal(normalizeText('  Salsa  Romántica '), 'salsa romantica');
 });
 
-test('splitTags splits on commas, spaces and hyphens', () => {
+test('splitTags splits on commas and spaces', () => {
   assert.deepEqual(splitTags('salsa romántica, Bolero'), ['salsa', 'romantica', 'bolero']);
-  assert.deepEqual(splitTags(['Salsa', 'cha-cha']), ['salsa', 'cha', 'cha']);
+  assert.deepEqual(splitTags(['Rap', 'trap']), ['rap', 'trap']);
+});
+
+test('splitTags joins compound style names into one tag', () => {
+  assert.deepEqual(splitTags('Rap, boom bap, Lo-Fi'), ['rap', 'boombap', 'lofi']);
+  assert.deepEqual(splitTags(['rap', 'lo-fi']), ['rap', 'lofi']);
+  assert.deepEqual(splitTags('hip-hop new orleans'), ['hiphop', 'neworleans']);
+  assert.deepEqual(splitTags('cha-cha-chá'), ['chachacha']);
 });
 
 test('normalizeKey understands common key spellings', () => {

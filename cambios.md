@@ -8,14 +8,16 @@ Detalle técnico completo: `backend/README.md`. Datos y MIDI: `data/README.md`.
 
 ---
 
-## 1. Base de datos: SQLite local + Turso en producción (sección 3)
+## 1. Base de datos: PostgreSQL en TigerData (sección 3)
 
-- Vercel no puede usar un archivo SQLite, así que en producción la base vive en **Turso** (SQLite alojado, plan
-  gratis). Sigue siendo SQLite, así que el acuerdo de la sección 3 se mantiene.
-- En local se usa el archivo `backend/lineage.db` (no va al repo). Mismo código y mismo SQL en los dos casos.
-- Librería: `@libsql/client`.
+- La base pasa de SQLite a **PostgreSQL en TigerData** (Postgres administrado con TimescaleDB), para optar al premio
+  "Best Use of Tiger Data" de MLH. TigerData da una prueba gratis de 30 días sin tarjeta.
+- En local, sin `DATABASE_URL`, el backend usa **PGlite**: un Postgres que corre dentro de Node y guarda los datos
+  en `backend/.pglite/` (no va al repo). No hay que instalar nada y se trabaja sin internet. Mismo SQL en los dos casos.
+- Librerías: `pg` (TigerData) y `@electric-sql/pglite` (local).
+- Las rutas, los contratos y los datos de `/data` no cambian. El frontend no tiene que tocar nada.
 
-**Cambio propuesto en la tabla de stack:** `Base de datos | SQLite (libSQL): archivo local en desarrollo, Turso en producción`.
+**Cambio propuesto en la tabla de stack:** `Base de datos | PostgreSQL: TigerData en producción, PGlite en desarrollo`.
 
 ## 2. Variables de entorno nuevas (sección 3)
 
@@ -23,9 +25,12 @@ Backend (agregar a la lista):
 
 | Variable | Por defecto | Uso |
 | --- | --- | --- |
-| `TURSO_DATABASE_URL` | `file:lineage.db` | En producción: `libsql://<db>-<org>.turso.io` |
-| `TURSO_AUTH_TOKEN` | — | Token de Turso (no hace falta en local) |
+| `DATABASE_URL` | — (usa PGlite local) | Cadena de conexión de TigerData: `postgres://tsdbadmin:...@<host>:<puerto>/tsdb?sslmode=verify-full` |
+| `PG_POOL_MAX` | `5` | Opcional, conexiones máximas a Postgres por instancia |
 | `ANTHROPIC_MODEL` | `claude-opus-5-5` | Opcional, para cambiar el modelo del copiloto |
+
+El copiloto va a pasar a **Gemini** (gratis en la hackathon). Ese cambio lo trae otra rama del equipo; cuando se
+junte, su variable de entorno reemplaza a `ANTHROPIC_API_KEY`/`ANTHROPIC_MODEL`.
 
 `ANTHROPIC_API_KEY` y `PORT` siguen igual. Están todas en `backend/.env.example`.
 
@@ -66,8 +71,8 @@ Solo se agregan campos; los del contrato no cambian.
 - **Diff:** sigue la sección 5 al pie de la letra. Si solo cambia la `duracion` o la `velocidad` de una nota, cuenta
   como `iguales`. Una nota cuenta como "movida" solo si se mueve hasta 4 pulsos o 12 semitonos; más lejos aparece
   como borrada + nueva.
-- **Normalización al guardar:** los tags de `estilo` se guardan en minúscula y sin tildes (`"romántica"` →
-  `"romantica"`); `tonalidad` se guarda en notación corta (`"La menor"` o `"A minor"` → `"Am"`). La búsqueda `?q=`
+- **Normalización al guardar:** los tags de `estilo` se guardan en minúscula, sin tildes y sin guiones
+  (`"romántica"` → `"romantica"`, `"lo-fi"` → `"lofi"`, `"boom bap"` → `"boombap"`); `tonalidad` se guarda en notación corta (`"La menor"` o `"A minor"` → `"Am"`). La búsqueda `?q=`
   ignora mayúsculas y tildes.
 - **`PUT /piezas/:id`:** reemplaza toda la lista de notas. También acepta `nombre`, `tonalidad`, `tempo`, `estilo` y
   `compases`. No se pueden cambiar `autor`, `tipo`, `licencia` ni `parent_id` (protege el linaje).
@@ -75,10 +80,10 @@ Solo se agregan campos; los del contrato no cambian.
 
 ## 6. Datos provisorios (sección 6)
 
-- `data/piezas/p-001` a `p-015` y `data/canciones/c-001` son **provisorios** para poder trabajar mientras el rol C
-  prepara las piezas reales. Su `fuente` lo dice. Se pueden reemplazar con los mismos ids.
-- Valores de `instrumento` usados en `c-001`: `bateria`, `piano`, `bajo`. **Rol A:** confirmar si esos nombres sirven
-  para elegir el sampler.
+- `data/piezas/p-001` a `p-015` y `data/canciones/c-001` son **provisorios** (y todavía de salsa) para poder
+  trabajar mientras el rol C prepara las piezas reales. Su `fuente` lo dice. Se pueden reemplazar con los mismos ids.
+  Los ritmos reales del Groove MIDI (`data/piezas/groove.json`, `p-101` a `p-402`) se cargan junto con ellos.
+- Valores de `instrumento`: `bateria`, `piano`, `bajo`, `melodia` (confirmado por el frontend).
 - Las piezas se cargan con `npm run db:seed` desde `backend/`. Los MIDI se convierten con `npm run import:midi`
   (ver `data/README.md`).
 

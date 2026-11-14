@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
 
 // Health check: confirms the database answers and shows how much data there is.
 app.get('/health', async (req, res) => {
-  const result = await db.execute(
+  const result = await db.query(
     'SELECT (SELECT COUNT(*) FROM piezas) AS piezas, (SELECT COUNT(*) FROM canciones) AS canciones',
   );
   const { piezas: totalPiezas, canciones: totalCanciones } = result.rows[0];
