@@ -35,7 +35,7 @@ BandLab ya tiene fork, Splice Create combina samples con IA, y Mozart AI y Veena
 | Fuera (no se construye) | Audio grabado, voces, letras generadas, mezcla/mastering, cuentas de usuario, red social |
 
 - **Solo MIDI, nunca audio.** MIDI son datos estructurados (nota, tiempo, duración, velocidad), comparables como texto.
-- **Un solo estilo para la demo:** salsa romántica. Tiene que sonar bien.
+- **Un solo estilo para la demo:** beats de rap (instrumentales: batería, bajo, acordes y melodías cortas en loop). Tiene que sonar bien.
 
 ---
 
@@ -74,14 +74,14 @@ Estos contratos permiten trabajar en paralelo con datos falsos. **No se cambian 
 ```json
 {
   "id": "p-017",
-  "nombre": "Montuno en La menor",
+  "nombre": "Acordes lo-fi en La menor",
   "tipo": "acordes",
   "autor": "ana",
   "licencia": "CC BY 4.0",
   "fuente": "creada en DurHack",
   "tonalidad": "Am",
   "tempo": 96,
-  "estilo": ["salsa", "romantica"],
+  "estilo": ["rap", "lo-fi"],
   "compases": 4,
   "parent_id": null,
   "notas": [{ "tono": 57, "inicio": 0, "duracion": 0.5, "velocidad": 0.8 }]
@@ -97,7 +97,7 @@ Estos contratos permiten trabajar en paralelo con datos falsos. **No se cambian 
 ```json
 {
   "id": "c-001",
-  "nombre": "Desamor en La menor",
+  "nombre": "Beat nocturno en La menor",
   "autor": "ana",
   "tempo": 96,
   "pistas": [
@@ -134,23 +134,23 @@ Estos contratos permiten trabajar en paralelo con datos falsos. **No se cambian 
 - `GET /canciones/:id/arbol`:
   ```json
   {
-    "nodos":   [{ "id": "p-017", "nombre": "Montuno en La menor", "autor": "ana", "tipo": "acordes", "licencia": "CC BY 4.0" }],
+    "nodos":   [{ "id": "p-017", "nombre": "Acordes lo-fi en La menor", "autor": "ana", "tipo": "acordes", "licencia": "CC BY 4.0" }],
     "aristas": [{ "desde": "p-003", "hacia": "p-017" }]
   }
   ```
   `desde` = pieza de origen (padre), `hacia` = fork (hijo). Incluye la cadena completa de padres de cada pieza usada en la canción.
 - `POST /copiloto`:
-  - Request: `{ "mensaje": "quiero una salsa romántica para un desamor", "cancion": Cancion | null }`
+  - Request: `{ "mensaje": "quiero un beat de boom bap", "cancion": Cancion | null }`
   - Response: `{ "texto": "...", "piezas_sugeridas": ["p-017", "p-022"] }`
 - Errores: `{ "error": "mensaje" }` con el código HTTP correspondiente.
 
 ### 4.4 Herramientas del copiloto (solo dos)
 - `buscar_piezas(estilo, tipo, tonalidad, texto)` — devuelve piezas reales de la base.
-- `describir_estilo(nombre)` — devuelve rasgos de estilo (tempo, clave, instrumentación), **sin imitar artistas**.
+- `describir_estilo(nombre)` — devuelve rasgos de estilo (tempo, swing, patrón de batería, instrumentación), **sin imitar artistas**.
 
 **Regla del prompt del sistema:** el copiloto solo recomienda piezas existentes y explica por qué; nunca escribe una canción completa. Respuestas cortas.
 
-Si el usuario pide "sonar como" un artista (ej.: "quiero sonar como Frankie Ruiz"), el copiloto traduce el pedido a **rasgos de estilo** (tempo, clave, montuno, sección de bronces, estructura de salsa romántica) y busca piezas con esos rasgos. No imita al artista ni reproduce sus canciones.
+Si el usuario pide "sonar como" un artista o productor (ej.: "quiero sonar como un beat de los 90"), el copiloto traduce el pedido a **rasgos de estilo** (tempo 85–95, swing, caja en los tiempos 2 y 4, acordes con sonido de vinilo) y busca piezas con esos rasgos. No imita al artista ni reproduce sus canciones.
 
 ---
 
@@ -174,12 +174,12 @@ Combinar dos forks y marcar choques armónicos (por ejemplo, notas simultáneas 
 
 ## 6. Datos (piezas semilla)
 
-Meta: **30–50 piezas**, foco en salsa romántica.
+Meta: **30–50 piezas**, foco en beats de rap (boom bap, lo-fi, trap).
 
 | Fuente | Uso | Licencia |
 | --- | --- | --- |
 | Groove MIDI Dataset (Google Magenta) | Piezas de ritmo: cortar 2–4 compases por estilo | CC BY 4.0 |
-| Creadas durante el evento | Progresiones, montunos, bajos y melodías de salsa | Propias |
+| Creadas durante el evento | Progresiones, bajos y melodías para beats | Propias |
 | PDMX (MuseScore, dominio público) | Melodías si hiciera falta | CC BY |
 | Lakh MIDI Dataset | **No usar** (contiene muchas obras con copyright) | — |
 
@@ -232,8 +232,8 @@ NO TOMES EN CUENTA LAS HORAS, YA ESTAMOS CON MENOS DE 24 HORAS
 ## 10. Demo (2 minutos)
 
 1. **0:00–0:15** — El problema: en música se reutilizan ideas todo el tiempo, pero se pierde quién hizo qué.
-2. **0:15–0:40** — "Quiero una salsa romántica, bien movida, para una canción de desamor." El copiloto propone ritmo, montuno y bajo y explica por qué.
-3. **0:40–1:05** — El usuario elige y hace fork del montuno; edita notas en el piano roll.
+2. **0:15–0:40** — "Quiero un beat de boom bap, relajado, para rapear de noche." El copiloto propone batería, bajo y acordes y explica por qué.
+3. **0:40–1:05** — El usuario elige y hace fork de los acordes; edita notas en el piano roll.
 4. **1:05–1:20** — "¿Qué cambié?" → diff con colores.
 5. **1:20–1:40** — Suena la canción completa.
 6. **1:40–2:00** — Árbol de origen: "Esta canción tiene 4 piezas de 3 autores, y esto es lo tuyo." Cierre:
