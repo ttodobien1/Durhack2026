@@ -256,3 +256,6 @@ Meta: **30–50 piezas**, foco en salsa romántica.
 - El copiloto nunca debe generar canciones completas ni notas nuevas: solo buscar y explicar piezas existentes.
 - No escribir claves ni secretos en el código; usar variables de entorno.
 - Mantener el código simple y legible: es un hackathon de 24 horas, se prioriza que funcione de punta a punta.
+
+
+..
