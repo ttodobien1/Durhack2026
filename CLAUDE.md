@@ -188,22 +188,13 @@ Meta: **30–50 piezas**, foco en salsa romántica.
 
 ---
 
-## 7. Reglas del hackathon (DurHack, evento MLH)
-
-- DurHack dura **24 horas**. Todo el **código se escribe durante el evento**.
-- Se permiten librerías, frameworks, código open source y material público con licencia abierta.
-- Antes del evento solo se prepara lo que no es código: reglas, decisiones, wireframes, guion, este archivo.
-- Pendiente confirmar en las reglas oficiales: fecha exacta, tamaño máximo de equipo, criterios de evaluación y si se pueden llevar datos o mockups preparados.
-
----
-
 ## 8. Equipo, roles y ramas
 
 | Rol | Responsable | Construye | Rama |
 | --- | --- | --- | --- |
-| A — Frontend y audio | _(nombre)_ | Interfaz React, reproducción con Tone.js, editor de pistas, piano roll, diff visual | `a/frontend` |
-| B — Backend y copiloto | _(nombre)_ | Base de datos, API, importador MIDI → JSON, fork, diff, datos del árbol, copiloto | `b/backend` |
-| C — Música, datos y producto | _(nombre)_ | Piezas semilla y metadatos, canción de demo, prompt del copiloto, vista del árbol (React Flow), pitch y video | `c/datos` |
+| A — Frontend y audio | _(santiago)_ | Interfaz React, reproducción con Tone.js, editor de pistas, piano roll, diff visual | `a/frontend` |
+| B — Backend y copiloto | _(chino)_ | Base de datos, API, importador MIDI → JSON, fork, diff, datos del árbol, copiloto | `b/backend` |
+| C — Música, datos y producto | _(cristobal)_ | Piezas semilla y metadatos, canción de demo, prompt del copiloto, vista del árbol (React Flow), pitch y video | `c/datos` |
 
 - **Dueño de la integración:** B. Une las ramas a `main` cada 3–4 horas. `main` siempre debe funcionar.
 - **Dueño de la demo:** C. Tiene la última palabra sobre qué se ve en los 2 minutos y puede pedir recortes.
@@ -232,6 +223,8 @@ Meta: **30–50 piezas**, foco en salsa romántica.
 | 20–22 | Solo arreglos; video de respaldo grabado; **congelamiento de código a la hora 22** |
 | 22–24 | Entrega, README y demo ensayada 2 veces |
 
+NO TOMES EN CUENTA LAS HORAS, YA ESTAMOS CON MENOS DE 24 HORAS
+
 **Recortes si vamos atrasados (en este orden):** merge → copiloto → piano roll editable. Lo último que se recorta es el **árbol de origen y el diff**.
 
 ---
@@ -256,6 +249,4 @@ Meta: **30–50 piezas**, foco en salsa romántica.
 - El copiloto nunca debe generar canciones completas ni notas nuevas: solo buscar y explicar piezas existentes.
 - No escribir claves ni secretos en el código; usar variables de entorno.
 - Mantener el código simple y legible: es un hackathon de 24 horas, se prioriza que funcione de punta a punta.
-
-
-..
+- Todo el proyecto (no prompts) es en inglés. Tu responde al chat del claude con el idioma que te se te hable con el prompt, pero todo el proyecto se hace en inglés.
