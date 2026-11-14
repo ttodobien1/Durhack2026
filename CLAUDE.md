@@ -1,8 +1,8 @@
-# CLAUDE.md — Lineage (DurHack 2026)
+# CLAUDE.md — Stemma (DurHack 2026)
 
 Contexto compartido del proyecto. Este archivo vive en la raíz del repositorio y es igual para los tres integrantes. Si un acuerdo cambia, se cambia aquí primero (en un commit propio) y se avisa al equipo.
 
-> Nombre de trabajo del proyecto: **Lineage** (provisorio, se puede cambiar).
+> Nombre del proyecto: **Stemma** (antes "Lineage", que era provisorio).
 
 ---
 
@@ -237,7 +237,7 @@ NO TOMES EN CUENTA LAS HORAS, YA ESTAMOS CON MENOS DE 24 HORAS
 4. **1:05–1:20** — "¿Qué cambié?" → diff con colores.
 5. **1:20–1:40** — Suena la canción completa.
 6. **1:40–2:00** — Árbol de origen: "Esta canción tiene 4 piezas de 3 autores, y esto es lo tuyo." Cierre:
-   > "Composition is how we build software, how we combine data, and how we make music. Lineage lets you do all three, and you stay the composer."
+   > "Composition is how we build software, how we combine data, and how we make music. Stemma lets you do all three, and you stay the composer."
 
 ---
 
