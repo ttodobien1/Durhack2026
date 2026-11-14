@@ -1,4 +1,4 @@
--- Lineage database schema (PostgreSQL: TigerData in production, PGlite locally).
+-- Stemma database schema (PostgreSQL: TigerData in production, PGlite locally).
 -- Column names follow the shared contracts in CLAUDE.md (section 4).
 -- Apply with: npm run db:init   (or npm run db:reset to drop + recreate + seed)
 

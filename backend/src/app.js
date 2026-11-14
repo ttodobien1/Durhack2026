@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
 app.get('/', (req, res) => {
-  res.json({ name: 'Lineage API', status: 'ok', docs: 'See backend/README.md' });
+  res.json({ name: 'Stemma API', status: 'ok', docs: 'See backend/README.md' });
 });
 
 // Health check: confirms the database answers and shows how much data there is.
@@ -25,7 +25,7 @@ app.get('/health', async (req, res) => {
     database: databaseKind,
     piezas: Number(totalPiezas),
     canciones: Number(totalCanciones),
-    copiloto: Boolean(process.env.ANTHROPIC_API_KEY),
+    copiloto: Boolean(process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY),
   });
 });
 

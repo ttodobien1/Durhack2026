@@ -4,6 +4,7 @@ import { HttpError } from '../lib/errors.js';
 import { existingPiezaIds, getPiezasByIds } from '../repo/piezas.js';
 import { SYSTEM_PROMPT } from './systemPrompt.js';
 import { TOOL_DEFINITIONS, runTool } from './tools.js';
+import { askGemini } from './gemini.js';
 
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-opus-5-5';
 const MAX_ROUNDS = 6; // model calls per request (each tool round is one call)
@@ -30,7 +31,7 @@ const RESPONSE_FORMAT = {
 let client = null;
 function getClient() {
   if (!process.env.ANTHROPIC_API_KEY) {
-    throw new HttpError(503, 'Copilot unavailable: ANTHROPIC_API_KEY is not set on the server');
+    throw new HttpError(503, 'Copilot unavailable: set ANTHROPIC_API_KEY (or GEMINI_API_KEY) on the server');
   }
   client ??= new Anthropic({ timeout: 60_000 });
   return client;
@@ -108,6 +109,11 @@ async function createMessage(anthropic, messages) {
 // mensaje: user text; cancion: Cancion (contract 4.2) or null.
 // Returns { texto, piezas_sugeridas } (contract 4.3).
 export async function runCopilot(mensaje, cancion) {
+  // Claude is the agreed copilot; Gemini is used only when no Anthropic key is configured.
+  if (!process.env.ANTHROPIC_API_KEY && process.env.GEMINI_API_KEY) {
+    const answer = parseFinalAnswer(await askGemini(`${await describeSong(cancion)}\n\nUser message: ${mensaje}`));
+    return { texto: answer.texto, piezas_sugeridas: await onlyExistingIds(answer.piezas_sugeridas) };
+  }
   const anthropic = getClient();
   const messages = [
     { role: 'user', content: `${await describeSong(cancion)}\n\nUser message: ${mensaje}` },

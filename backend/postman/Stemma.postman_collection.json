@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "Lineage API",
-    "description": "Requests for the Lineage backend (DurHack 2026). Set the collection variable `baseUrl` (default http://localhost:3001; use the Vercel URL for production). Run `npm run db:reset` first so the seed data (p-001...p-015, c-001) exists. Suggested flow: Piezas > Fork p-006 (saves forkId) > Edit notes of the fork > Diff fork vs parent > Canciones > Create song > Lineage tree.",
+    "name": "Stemma API",
+    "description": "Requests for the Stemma backend (DurHack 2026). Set the collection variable `baseUrl` (default http://localhost:3001; use the Vercel URL for production). Run `npm run db:reset` first so the seed data (p-001...p-015, c-001) exists. Suggested flow: Piezas > Fork p-006 (saves forkId) > Edit notes of the fork > Diff fork vs parent > Canciones > Create song > Lineage tree.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

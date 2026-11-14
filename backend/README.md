@@ -1,6 +1,6 @@
-# Lineage backend
+# Stemma backend
 
-Node + Express API for Lineage: pieces, forks, musical diff, songs, lineage tree and the copilot.
+Node + Express API for Stemma: pieces, forks, musical diff, songs, lineage tree and the copilot.
 Contracts (field names, units, routes) are the ones in `CLAUDE.md` section 4.
 
 - **Database:** PostgreSQL. In production it is a [TigerData](https://www.tigerdata.com) service (managed
@@ -21,7 +21,7 @@ npm run dev                 # http://localhost:3001 (restarts on file changes)
 
 Check it works: `GET http://localhost:3001/health` (`"database": "pglite"` locally, `"postgres"` with `DATABASE_URL`).
 
-Postman: import `postman/Lineage.postman_collection.json` (variable `baseUrl`). To look at the data in TigerData,
+Postman: import `postman/Stemma.postman_collection.json` (variable `baseUrl`). To look at the data in TigerData,
 use the SQL editor in its console or any Postgres client (`psql`, DBeaver, the VS Code PostgreSQL extension) with
 the same connection string.
 
@@ -44,6 +44,8 @@ the same connection string.
 | `PORT` | `3001` | Local only |
 | `ANTHROPIC_API_KEY` | — | Copilot. Without it `/copiloto` answers 503 and everything else works |
 | `ANTHROPIC_MODEL` | `claude-opus-5-5` | Optional override |
+| `GEMINI_API_KEY` | — | Copilot fallback used only when `ANTHROPIC_API_KEY` is empty (same prompt and tools, `src/copilot/gemini.js`) |
+| `GEMINI_MODEL` | `gemini-3.1-flash-lite` | Optional override |
 | `DATABASE_URL` | — (PGlite) | TigerData connection string, `postgres://tsdbadmin:...@<host>:<port>/tsdb?sslmode=verify-full` |
 | `PG_POOL_MAX` | `5` | Optional, max Postgres connections per server instance |
 

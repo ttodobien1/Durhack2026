@@ -10,7 +10,7 @@ export const TOOL_DEFINITIONS = [
   {
     name: 'buscar_piezas',
     description:
-      'Search the Lineage library for existing MIDI pieces. All filters are optional and are combined with AND. ' +
+      'Search the Stemma library for existing MIDI pieces. All filters are optional and are combined with AND. ' +
       'Returns real pieces: id, nombre, tipo, autor, licencia, fuente, tonalidad, tempo, estilo, compases, ' +
       'parent_id (the piece it was forked from, or null) and the number of notes. ' +
       `At most ${MAX_RESULTS} results. If nothing comes back, retry with fewer filters (drop tonalidad or texto first).`,
