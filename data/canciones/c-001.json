@@ -1,0 +1,69 @@
+{
+  "id": "c-001",
+  "nombre": "Desamor en La menor",
+  "autor": "ana",
+  "tempo": 96,
+  "pistas": [
+    {
+      "instrumento": "bateria",
+      "bloques": [
+        {
+          "pieza_id": "p-001",
+          "compas": 0
+        },
+        {
+          "pieza_id": "p-001",
+          "compas": 4
+        }
+      ]
+    },
+    {
+      "instrumento": "bateria",
+      "bloques": [
+        {
+          "pieza_id": "p-002",
+          "compas": 0
+        },
+        {
+          "pieza_id": "p-002",
+          "compas": 4
+        }
+      ]
+    },
+    {
+      "instrumento": "piano",
+      "bloques": [
+        {
+          "pieza_id": "p-006",
+          "compas": 0
+        },
+        {
+          "pieza_id": "p-006",
+          "compas": 4
+        }
+      ]
+    },
+    {
+      "instrumento": "bajo",
+      "bloques": [
+        {
+          "pieza_id": "p-007",
+          "compas": 0
+        },
+        {
+          "pieza_id": "p-007",
+          "compas": 4
+        }
+      ]
+    },
+    {
+      "instrumento": "piano",
+      "bloques": [
+        {
+          "pieza_id": "p-009",
+          "compas": 4
+        }
+      ]
+    }
+  ]
+}

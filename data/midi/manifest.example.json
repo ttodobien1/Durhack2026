@@ -1,0 +1,31 @@
+[
+  {
+    "archivo": "groove/salsa_beat_96.mid",
+    "id": "p-101",
+    "nombre": "Salsa groove (Groove MIDI, bars 9-12)",
+    "tipo": "ritmo",
+    "autor": "Google Magenta",
+    "licencia": "CC BY 4.0",
+    "fuente": "Groove MIDI Dataset",
+    "tonalidad": null,
+    "estilo": ["salsa"],
+    "desde_compas": 8,
+    "compases": 4,
+    "cuantizar": null
+  },
+  {
+    "archivo": "montuno_am.mid",
+    "id": "p-102",
+    "nombre": "Montuno en La menor",
+    "tipo": "acordes",
+    "autor": "cristobal",
+    "licencia": "CC BY 4.0",
+    "fuente": "creada en DurHack",
+    "tonalidad": "Am",
+    "estilo": ["salsa", "romantica"],
+    "tempo": 96,
+    "pista": 0,
+    "compases": 4,
+    "cuantizar": 0.25
+  }
+]

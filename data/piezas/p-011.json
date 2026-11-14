@@ -1,0 +1,30 @@
+{
+  "id": "p-011",
+  "nombre": "Progresión ii-V-i en La menor",
+  "tipo": "acordes",
+  "autor": "diego",
+  "licencia": "CC BY 4.0",
+  "fuente": "Placeholder seed data (replace with role C pieces)",
+  "tonalidad": "Am",
+  "tempo": 96,
+  "estilo": ["salsa","romantica"],
+  "compases": 4,
+  "parent_id": null,
+  "notas": [
+    {"tono":59,"inicio":0,"duracion":4,"velocidad":0.7},
+    {"tono":62,"inicio":0,"duracion":4,"velocidad":0.7},
+    {"tono":65,"inicio":0,"duracion":4,"velocidad":0.7},
+    {"tono":69,"inicio":0,"duracion":4,"velocidad":0.7},
+    {"tono":56,"inicio":4,"duracion":4,"velocidad":0.7},
+    {"tono":59,"inicio":4,"duracion":4,"velocidad":0.7},
+    {"tono":62,"inicio":4,"duracion":4,"velocidad":0.7},
+    {"tono":64,"inicio":4,"duracion":4,"velocidad":0.7},
+    {"tono":57,"inicio":8,"duracion":4,"velocidad":0.7},
+    {"tono":60,"inicio":8,"duracion":4,"velocidad":0.7},
+    {"tono":64,"inicio":8,"duracion":4,"velocidad":0.7},
+    {"tono":57,"inicio":12,"duracion":4,"velocidad":0.7},
+    {"tono":60,"inicio":12,"duracion":4,"velocidad":0.7},
+    {"tono":64,"inicio":12,"duracion":4,"velocidad":0.7},
+    {"tono":67,"inicio":12,"duracion":4,"velocidad":0.7}
+  ]
+}
