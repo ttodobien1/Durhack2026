@@ -7,7 +7,8 @@ from pathlib import Path
 DATA_DIR = Path(__file__).resolve().parent.parent
 RAW_DIR = DATA_DIR / "raw"
 BUILD_DIR = DATA_DIR / "build"
-SEEDS_DIR = DATA_DIR / "seeds"
+PIEZAS_DIR = DATA_DIR / "piezas"  # read by the backend seed (npm run db:seed)
+PROVENANCE_DIR = DATA_DIR / "provenance"  # where each piece came from + rejects
 
 
 def write_json(path: Path, data) -> None:

@@ -26,12 +26,14 @@ SOURCE_LABELS = {"groove": "Groove MIDI"}
 
 # genre -> (name label, styles). The original genre is kept as a style tag
 # so the copilot can search by it and the origin stays traceable.
+# Tags are single words with no hyphens or spaces: the backend splits tags on
+# both ("boom-bap" would be stored as "boom" + "bap").
 GENRE_STYLES = {
-    "hiphop": ("Hip-hop beat", ["rap", "boom-bap", "hiphop"]),
-    "funk": ("Funk break", ["rap", "boom-bap", "funk"]),
-    "soul": ("Soul groove", ["rap", "boom-bap", "soul"]),
-    "neworleans": ("New Orleans groove", ["rap", "boom-bap", "neworleans"]),
-    "jazz": ("Jazz beat", ["rap", "lo-fi", "jazz"]),
+    "hiphop": ("Hip-hop beat", ["rap", "boombap", "hiphop"]),
+    "funk": ("Funk break", ["rap", "boombap", "funk"]),
+    "soul": ("Soul groove", ["rap", "boombap", "soul"]),
+    "neworleans": ("New Orleans groove", ["rap", "boombap", "neworleans"]),
+    "jazz": ("Jazz beat", ["rap", "lofi", "jazz"]),
 }
 
 DEMO_GENRES = {"hiphop", "funk"}

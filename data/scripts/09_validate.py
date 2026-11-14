@@ -2,7 +2,7 @@
 
 Input:  data/build/08_dedupe.json
 Output: data/build/09_validate.json (valid pieces)
-        data/seeds/rejected.json     (failed pieces + why, for the record)
+        data/provenance/rejected.json (failed pieces + why, for the record)
 
 Rules live in contract.py. ids are not assigned yet (stage 10), so they are
 not required here; stage 10 checks again with ids.
@@ -10,12 +10,12 @@ not required here; stage 10 checks again with ids.
 
 from collections import Counter
 
-from common import BUILD_DIR, SEEDS_DIR, print_report, read_json, write_json
+from common import BUILD_DIR, PROVENANCE_DIR, print_report, read_json, write_json
 from contract import validate_piece
 
 INPUT = BUILD_DIR / "08_dedupe.json"
 OUTPUT = BUILD_DIR / "09_validate.json"
-REJECTED = SEEDS_DIR / "rejected.json"
+REJECTED = PROVENANCE_DIR / "rejected.json"
 
 
 def main() -> None:
