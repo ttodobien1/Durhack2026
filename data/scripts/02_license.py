@@ -3,8 +3,8 @@
 Input:  data/build/01_ingest.json
 Output: data/build/02_license.json
 
-Rule (ROL_C.md, section 4.2): CC0, public domain or CC BY. Nothing with
-SA, NC, ND or an unknown license.
+Rule (ROL_C.md, section 4.2): CC0, public domain, CC BY or MIT (the allow-list
+lives in contract.py). Nothing with SA, NC, ND or an unknown license.
 
 A record can carry its own "license" (e.g. PDMX, per file). Otherwise it
 inherits the license of its collection from SOURCES below. Each kept record
@@ -14,6 +14,7 @@ gets "license" and "source_url" fields for the metadata stage.
 from collections import Counter
 
 from common import BUILD_DIR, print_report, read_json, write_json
+from contract import ALLOWED_LICENSES as ALLOWED
 
 INPUT = BUILD_DIR / "01_ingest.json"
 OUTPUT = BUILD_DIR / "02_license.json"
@@ -26,7 +27,6 @@ SOURCES = {
     },
 }
 
-ALLOWED = {"CC0", "CC0 1.0", "Public Domain", "CC BY 3.0", "CC BY 4.0"}
 FORBIDDEN_MARKERS = ("SA", "NC", "ND")
 
 
