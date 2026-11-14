@@ -51,16 +51,27 @@ drum.volume.value = -4
 const CONGA_HZ = { 62: 340, 63: 300, 64: 210 }
 const TOM_HZ = { 41: 90, 43: 110, 45: 130, 47: 160, 48: 190, 50: 220 }
 
+// One-voice synths throw if asked to start twice at the same instant (e.g. closed + open hat on one beat in
+// Groove MIDI data): nudge the second hit 1 ms later instead of losing it.
+const lastStart = new Map()
+function slot(synth, time) {
+  const prev = lastStart.get(synth)
+  time = Math.max(time, Tone.getContext().currentTime) // Tone clamps late starts to now; nudge from there
+  const t = prev !== undefined && time <= prev ? prev + 0.001 : time
+  lastStart.set(synth, t)
+  return t
+}
+
 function hitDrum(tono, time, vel) {
-  if (tono === 35 || tono === 36) kick.triggerAttackRelease('C1', 0.3, time, vel)
+  if (tono === 35 || tono === 36) kick.triggerAttackRelease('C1', 0.3, slot(kick, time), vel)
   else if (tono === 38 || tono === 40 || tono === 37 || tono === 39) {
-    snareNoise.triggerAttackRelease(tono === 37 ? 0.03 : 0.12, time, vel)
-    if (tono !== 39) snareBody.triggerAttackRelease(185, 0.08, time, vel)
-  } else if (tono === 42 || tono === 44 || tono === 22) hat.triggerAttackRelease(400, 0.04, time, vel)
-  else if (tono === 46 || tono === 26) hat.triggerAttackRelease(400, 0.25, time, vel)
-  else if ([49, 51, 52, 53, 55, 57, 59].includes(tono)) cymbal.triggerAttackRelease(300, tono === 51 || tono === 59 ? 0.3 : 1, time, vel * 0.8)
+    snareNoise.triggerAttackRelease(tono === 37 ? 0.03 : 0.12, slot(snareNoise, time), vel)
+    if (tono !== 39) snareBody.triggerAttackRelease(185, 0.08, slot(snareBody, time), vel)
+  } else if (tono === 42 || tono === 44 || tono === 22) hat.triggerAttackRelease(400, 0.04, slot(hat, time), vel)
+  else if (tono === 46 || tono === 26) hat.triggerAttackRelease(400, 0.25, slot(hat, time), vel)
+  else if ([49, 51, 52, 53, 55, 57, 59].includes(tono)) cymbal.triggerAttackRelease(300, tono === 51 || tono === 59 ? 0.3 : 1, slot(cymbal, time), vel * 0.8)
   else if (TOM_HZ[tono]) drum.triggerAttackRelease(TOM_HZ[tono], 0.3, time, vel)
-  else if (tono === 75 || tono === 76 || tono === 77) clave.triggerAttackRelease(2500, 0.05, time, vel)
+  else if (tono === 75 || tono === 76 || tono === 77) clave.triggerAttackRelease(2500, 0.05, slot(clave, time), vel)
   else if (tono === 56) bell.triggerAttackRelease([540, 800], 0.1, time, vel)
   else drum.triggerAttackRelease(CONGA_HZ[tono] ?? Tone.Frequency(tono, 'midi').toFrequency(), 0.2, time, vel)
 }
@@ -74,12 +85,15 @@ function trigger(name, n, time) {
   const dur = `${Math.round(n.duracion * transport.PPQ)}i`
   const freq = Tone.Frequency(n.tono, 'midi').toFrequency()
   if (instrument === 'drums') hitDrum(n.tono, time, n.velocidad)
-  else if (instrument === 'bass') bass.triggerAttackRelease(freq, dur, time, n.velocidad)
+  else if (instrument === 'bass') bass.triggerAttackRelease(freq, dur, slot(bass, time), n.velocidad)
   else if (instrument === 'lead') lead.triggerAttackRelease(freq, dur, time, n.velocidad)
   else (pianoReady ? piano : pianoFallback).triggerAttackRelease(freq, dur, time, n.velocidad)
 }
 
 let part = null
+let mix = [] // per song lane: { vol: 0–1, mute }
+/** Lane mix for events that carry `lane`. Velocity scales linearly with gain in Tone's voices. */
+export const setMix = (m) => (mix = m)
 let pos = 0 // playhead in beats while not running: 0 after stop, kept on pause and seek
 const ticks = (beats) => `${Math.round(beats * transport.PPQ)}i`
 
@@ -95,7 +109,11 @@ export async function play({ events, bpm, lengthBeats, loop, onEnd, from = pos }
   await Tone.start()
   halt()
   transport.bpm.value = bpm
-  part = new Tone.Part((time, ev) => trigger(ev.instrument, ev, time), events.map((e) => [ticks(e.inicio), e]))
+  part = new Tone.Part((time, ev) => {
+    const m = mix[ev.lane] // read at trigger time so lane faders and mutes apply while playing
+    if (m?.mute) return
+    trigger(ev.instrument, m ? { ...ev, velocidad: ev.velocidad * m.vol } : ev, time)
+  }, events.map((e) => [ticks(e.inicio), e]))
   part.start(0)
   if (loop) Object.assign(transport, { loop: true, loopStart: 0, loopEnd: ticks(lengthBeats) })
   else {

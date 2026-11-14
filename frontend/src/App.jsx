@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { GitBranch, Pause, Play, Save, Square, Volume2, VolumeX } from 'lucide-react'
 import { api, isMock, ME } from './api.js'
 import * as audio from './audio.js'
@@ -8,6 +8,7 @@ import { PianoRoll } from './components/PianoRoll.jsx'
 import { Copilot } from './components/Copilot.jsx'
 import { OriginTree } from './components/OriginTree.jsx'
 import { usePlayhead } from './usePlayhead.js'
+import { recordContribution } from './profile.js'
 
 
 const FILL_BARS = 8 // a piece added from the Browser repeats across the first 8 bars
@@ -42,6 +43,17 @@ export default function App({ projectId = 'new' }) {
 
   const fail = (e) => setError(e.message || String(e))
   const [volume, setVolume] = useState(audio.getVolume)
+  // Per-lane fader and mute, by lane index. Not saved: the song contract (§4.2) has no mix fields.
+  const [mix, setMix] = useState([])
+  useEffect(() => {
+    audio.setMix(mix)
+  }, [mix])
+  const setLaneMix = (i, patch) =>
+    setMix((m) => {
+      const next = [...m]
+      next[i] = { vol: 1, mute: false, ...m[i], ...patch }
+      return next
+    })
 
   // Load the project from the landing page ("new" starts empty); stop audio when leaving the page.
   useEffect(() => {
@@ -49,6 +61,7 @@ export default function App({ projectId = 'new' }) {
       api.project(projectId).then(async (p) => {
         const ids = [...new Set(p.pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id)))]
         remember(await Promise.all(ids.map(api.getPiece)))
+        undoLog.current.skip = true // loading is not an undo step
         setSong(p)
         setSavedJson(JSON.stringify(p))
       }, fail)
@@ -58,9 +71,9 @@ export default function App({ projectId = 'new' }) {
   // Song playback ----------------------------------------------------------
   const songEvents = useMemo(
     () =>
-      song.pistas.flatMap((pista) =>
+      song.pistas.flatMap((pista, lane) =>
         pista.bloques.flatMap((b) =>
-          (pieces[b.pieza_id]?.notas ?? []).map((n) => ({ ...n, instrument: pista.instrumento, inicio: n.inicio + b.compas * 4 })),
+          (pieces[b.pieza_id]?.notas ?? []).map((n) => ({ ...n, instrument: pista.instrumento, lane, inicio: n.inicio + b.compas * 4 })),
         ),
       ),
     [song, pieces],
@@ -116,12 +129,39 @@ export default function App({ projectId = 'new' }) {
     audio.setBpm(song.tempo)
   }, [song.tempo])
 
-  // Space toggles the song (except while typing); Ctrl/Cmd+S saves the project.
+  // Undo / redo for the song: every change to it (clips, tracks, tempo, name) is one step.
+  const undoLog = useRef({ past: [], future: [], prev: null, skip: true })
+  useEffect(() => {
+    const u = undoLog.current
+    if (u.skip) u.skip = false
+    else if (u.prev && u.prev !== song) {
+      u.past = [...u.past.slice(-99), u.prev]
+      u.future = []
+    }
+    u.prev = song
+  }, [song])
+  const travel = (from, to) => {
+    const u = undoLog.current
+    if (!u[from].length) return
+    u[to].push(song)
+    u.skip = true
+    setSong({ ...u[from].pop(), id: song.id }) // keep the saved id so the next save updates instead of duplicating
+  }
+
+  // Space toggles the song (except while typing); Ctrl/Cmd+S saves; Ctrl/Cmd+Z undoes and Ctrl/Cmd+Y (or Shift+Z) redoes.
   useEffect(() => {
     const onKey = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      const mod = e.ctrlKey || e.metaKey
+      const k = e.key.toLowerCase()
+      if (mod && k === 's') {
         e.preventDefault()
         return saveProject()
+      }
+      if (mod && (k === 'z' || k === 'y')) {
+        if (e.target.closest('input, textarea, select')) return // native text undo
+        if (selected?.autor === ME && !diff && !e.target.closest('.playlist')) return // the piano roll undoes its own notes
+        e.preventDefault()
+        return k === 'y' || e.shiftKey ? travel('future', 'past') : travel('past', 'future')
       }
       if (e.code !== 'Space' || e.target.closest('input, textarea, button, select')) return
       e.preventDefault()
@@ -140,6 +180,8 @@ export default function App({ projectId = 'new' }) {
     try {
       if ((draft || draftBars) && !(await save())) return
       const saved = await api.saveProject(song)
+      recordContribution()
+      undoLog.current.skip = true // saving is not an undo step
       setSong(saved)
       setSavedJson(JSON.stringify(saved))
       if (!location.hash.endsWith(saved.id)) history.replaceState(null, '', `#/project/${saved.id}`) // new id, same page
@@ -168,14 +210,17 @@ export default function App({ projectId = 'new' }) {
       fail(e)
     }
   }
-  const removeLane = (i) => setSong((s) => ({ ...s, pistas: s.pistas.filter((_, j) => j !== i) }))
+  const removeLane = (i) => {
+    setSong((s) => ({ ...s, pistas: s.pistas.filter((_, j) => j !== i) }))
+    setMix((m) => m.toSpliced(i, 1))
+  }
   const editLanes = (fn) => setSong((s) => ({ ...s, pistas: fn(s.pistas.map((t) => ({ ...t, bloques: [...t.bloques] }))) }))
-  // Move (or copy) block j of lane `from` to bar `compas` of lane `to`.
-  const moveBlock = (from, j, to, compas, copy) =>
+  // Move (or copy) blocks [{ lane, j }] by dLane lanes and dBar bars; Playlist checks the target is free.
+  const moveBlocks = (items, dLane, dBar, copy) =>
     editLanes((pistas) => {
-      const block = { ...pistas[from].bloques[j], compas }
-      if (!copy) pistas[from].bloques.splice(j, 1)
-      pistas[to].bloques.push(block)
+      const moved = items.map(({ lane, j }) => ({ lane, block: pistas[lane].bloques[j] }))
+      if (!copy) for (const t of pistas) t.bloques = t.bloques.filter((b) => !moved.some((m) => m.block === b))
+      for (const { lane, block } of moved) pistas[lane + dLane].bloques.push({ ...block, compas: block.compas + dBar })
       return pistas
     })
   const addBlock = (lane, pieza_id, compas) => editLanes((pistas) => (pistas[lane].bloques.push({ pieza_id, compas }), pistas))
@@ -193,7 +238,8 @@ export default function App({ projectId = 'new' }) {
         return { ...t, bloques }
       }),
     )
-  const removeBlock = (lane, j) => editLanes((pistas) => (pistas[lane].bloques.splice(j, 1), pistas))
+  const removeBlocks = (items) =>
+    editLanes((pistas) => pistas.map((t, lane) => ({ ...t, bloques: t.bloques.filter((_, j) => !items.some((x) => x.lane === lane && x.j === j)) })))
 
   // Piece editing ----------------------------------------------------------
   const select = async (id) => {
@@ -215,6 +261,7 @@ export default function App({ projectId = 'new' }) {
   const fork = async () => {
     try {
       const copy = await api.fork(selected.id, ME)
+      recordContribution()
       remember([copy])
       // The song now uses your version wherever it used the original.
       setSong((s) => ({
@@ -233,6 +280,7 @@ export default function App({ projectId = 'new' }) {
   const save = async () => {
     try {
       const saved = await api.saveNotes(selected.id, notes, bars)
+      recordContribution()
       remember([{ ...selected, ...saved, notas: saved.notas ?? notes, compases: saved.compases ?? bars }])
       if (bars !== selected.compases) ripple(selected.id, bars)
       setDraft(null)
@@ -260,9 +308,9 @@ export default function App({ projectId = 'new' }) {
   return (
     <div className="app">
       <header className="toolbar">
-        <a className="brand" href="#/" title="Back to Lineage home">
-          <LineageMark />
-          <span>Lineage</span>
+        <a className="brand" href="#/" title="Back to Stemma home">
+          <StemmaMark />
+          <span>Stemma</span>
         </a>
         <input
           className="song-name"
@@ -338,9 +386,11 @@ export default function App({ projectId = 'new' }) {
           onSelect={select}
           songBars={songBars}
           onRemoveLane={removeLane}
-          onMoveBlock={moveBlock}
+          onMoveBlocks={moveBlocks}
           onAddBlock={addBlock}
-          onRemoveBlock={removeBlock}
+          onRemoveBlocks={removeBlocks}
+          mix={mix}
+          onMix={setLaneMix}
           onSeek={seek}
           onStarter={() => setAsk({ at: Date.now() })}
           playhead={songPos}
@@ -371,7 +421,7 @@ export default function App({ projectId = 'new' }) {
   )
 }
 
-export function LineageMark() {
+export function StemmaMark() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
       <path d="M5 3v8a4 4 0 0 0 4 4h2M5 11a4 4 0 0 1 4-4h4" fill="none" stroke="currentColor" strokeWidth="2" />

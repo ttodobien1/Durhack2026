@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Check, GitBranch, Plus, Send } from 'lucide-react'
 import { api, ME } from '../api.js'
+import { typeLabel } from './Browser.jsx'
 
 export const STARTER = 'A laid-back boom bap beat for late-night verses'
 
@@ -63,8 +64,13 @@ export function Copilot({ song, pieces, onAddMany, onSelect, onTree, remember, f
                     const p = pieces[id]
                     return (
                       <li key={id}>
-                        <button className="sugg-main" onClick={() => onSelect(id)}>
-                          <span className="code">{id}</span> {p?.nombre ?? id} <span className="dim">· {p?.autor}</span>
+                        <button className="sugg-main" onClick={() => onSelect(id)} title={p ? `${p.nombre} · ${p.autor} · ${p.licencia}` : id}>
+                          <span className="code">{id}</span>
+                          <span className="sugg-name">{p?.nombre ?? id}</span>
+                          <span className="sugg-by">
+                            {p?.autor}
+                            {p && ` · ${typeLabel(p.tipo)}`}
+                          </span>
                         </button>
                         {used.has(id) ? (
                           <span className="in-song" title="In song" aria-label="In song">

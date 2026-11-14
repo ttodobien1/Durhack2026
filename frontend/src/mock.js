@@ -149,7 +149,7 @@ export const mock = {
   get,
   fork(id, { autor = 'you' } = {}) {
     const src = get(id)
-    const copy = { ...src, id: `p-${nextId++}`, autor, parent_id: id, fuente: 'forked in Lineage', nombre: `${src.nombre} (fork)` }
+    const copy = { ...src, id: `p-${nextId++}`, autor, parent_id: id, fuente: 'forked in Stemma', nombre: `${src.nombre} (fork)` }
     db.set(copy.id, copy)
     return structuredClone(copy)
   },

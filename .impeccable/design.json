@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-11-14T00:00:00Z",
-  "title": "Design System: Lineage",
+  "title": "Design System: Stemma",
   "extensions": {
     "colorMeta": {
       "orange": { "role": "primary", "displayName": "FL Orange", "canonical": "#ff9a1f", "tonalRamp": ["#3a2006", "#5e340a", "#8a4c0e", "#c27720", "#f08a10", "#ff9a1f", "#ffc785", "#ffe6c7"] },
@@ -109,7 +109,7 @@
   ],
   "narrative": {
     "northStar": "The Credited Studio",
-    "overview": "Lineage looks and behaves like the DAW judges already know: FL Studio's default theme and working layout (Browser left, Playlist over Piano Roll in the centre, a dock on the right), in FL's own slate-and-orange palette. This is a pinned brand commitment: FL's conventions and colours, never its logo, fruit mark or name.\n\nThe difference is that authorship is drawn into the instrument itself, not parked in a side panel. Every playlist clip header, browser row and piano-roll title names its author and licence; the user's own pieces burn orange everywhere they appear. Density is high (12px UI, 2–3px gutters, 24–28px controls) because this is a working tool, not a landing page.",
+    "overview": "Stemma looks and behaves like the DAW judges already know: FL Studio's default theme and working layout (Browser left, Playlist over Piano Roll in the centre, a dock on the right), in FL's own slate-and-orange palette. This is a pinned brand commitment: FL's conventions and colours, never its logo, fruit mark or name.\n\nThe difference is that authorship is drawn into the instrument itself, not parked in a side panel. Every playlist clip header, browser row and piano-roll title names its author and licence; the user's own pieces burn orange everywhere they appear. Density is high (12px UI, 2–3px gutters, 24–28px controls) because this is a working tool, not a landing page.",
     "keyCharacteristics": [
       "Slate panels with 1px top-light / bottom-dark bevels and near-black hairline borders.",
       "Orange is the single \"live\" signal: active toggles, play, focus, playhead, and \"this is yours\".",

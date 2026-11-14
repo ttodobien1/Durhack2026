@@ -1,5 +1,5 @@
 ---
-name: Lineage
+name: Stemma
 description: A DAW-style studio where every block and note carries its author.
 colors:
   workspace: "#3e464c"
@@ -108,13 +108,13 @@ components:
     height: "13px"
 ---
 
-# Design System: Lineage
+# Design System: Stemma
 
 ## Overview
 
 **Creative North Star: "The Credited Studio"**
 
-Lineage looks and behaves like the DAW judges already know: FL Studio's default theme and working layout (Browser left, Playlist over Piano Roll in the centre, a dock on the right), in FL's own slate-and-orange palette. This is a pinned brand commitment: FL's conventions and colours, never its logo, fruit mark or name.
+Stemma looks and behaves like the DAW judges already know: FL Studio's default theme and working layout (Browser left, Playlist over Piano Roll in the centre, a dock on the right), in FL's own slate-and-orange palette. This is a pinned brand commitment: FL's conventions and colours, never its logo, fruit mark or name.
 
 The difference is that authorship is drawn into the instrument itself, not parked in a side panel. Every playlist clip header, browser row and piano-roll title names its author and licence; the user's own pieces burn orange everywhere they appear. Density is high (12px UI, 2–3px gutters, 24–28px controls) because this is a working tool, not a landing page.
 

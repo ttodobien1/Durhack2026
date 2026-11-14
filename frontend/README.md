@@ -1,4 +1,4 @@
-# Lineage frontend
+# Stemma frontend
 
 ```sh
 cd frontend
@@ -13,8 +13,10 @@ node src/diff.test.js   # diff self-check
 
 - `#/` landing (`src/Landing.jsx`): hero, public projects with search, tag filters and preview, Log in / Sign up.
 - `#/project/<id>` project page (`src/App.jsx`); `#/project/new` starts empty.
+- `#/u/<name>` profile (`src/Profile.jsx`): README, pinned projects, contribution graph, projects and pieces tabs.
+- `#/settings` profile settings (`src/Settings.jsx`): name, bio, picture, accent colour, README, pins.
 
-Log in / Sign up only remember a username in this browser: accounts are out of scope in CLAUDE.md §2.
+Log in / Sign up and profiles only live in this browser (`src/profile.js`): accounts are out of scope in CLAUDE.md §2. The contribution graph is seeded per username until the backend stores dates; forks and saves made in this browser are added on top.
 
 ## For the backend (role B)
 

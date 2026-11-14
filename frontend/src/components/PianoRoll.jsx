@@ -112,7 +112,7 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
   useEffect(() => {
     if (!editable) return
     const onKey = (e) => {
-      if (e.target.closest('input, textarea, select')) return
+      if (e.target.closest('input, textarea, select, .playlist')) return // the playlist has its own Delete / Ctrl+A
       const mod = e.ctrlKey || e.metaKey
       const k = e.key.toLowerCase()
       const pick = new Set(sel)

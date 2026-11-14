@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, LogOut, Play, Plus, Search, Square, X } from 'lucide-react'
+import { ArrowRight, Play, Plus, Search, Square, X } from 'lucide-react'
 import { api } from './api.js'
 import * as audio from './audio.js'
 import { diffNotes } from './diff.js'
-import { LineageMark } from './App.jsx'
+import { SiteBar } from './Site.jsx'
+import { useUser } from './profile.js'
 import { MiniNotes } from './components/Playlist.jsx'
 import './landing.css'
 
@@ -13,22 +14,10 @@ function updated(iso) {
   return Math.abs(h) < 24 ? ago.format(Math.round(h), 'hour') : ago.format(Math.round(h / 24), 'day')
 }
 
-// shortcut: accounts are out of scope (CLAUDE.md §2); this only remembers a display name in this browser.
-// Replace with real auth if the team ever adds it to the contract.
-const USER_KEY = 'lineage-user'
-const loadUser = () => {
-  try {
-    return JSON.parse(localStorage.getItem(USER_KEY))
-  } catch {
-    return null
-  }
-}
-
 export function Landing() {
   const [projects, setProjects] = useState(null)
   const [pieces, setPieces] = useState({})
-  const [user, setUser] = useState(loadUser)
-  const [auth, setAuth] = useState(null) // 'login' | 'signup' | null
+  const [user, setUser] = useUser()
   const [playing, setPlaying] = useState(null)
 
   const [chain, setChain] = useState(null) // [parent, fork] from the library, for the hero
@@ -40,6 +29,7 @@ export function Landing() {
       const byId = Object.fromEntries(loaded.filter(Boolean).map((p) => [p.id, p]))
       setPieces(byId)
       setProjects(list.map((p) => withMeta(p, byId)))
+      if (location.hash === '#explore') requestAnimationFrame(() => document.getElementById('explore')?.scrollIntoView()) // arrived from another page
       // Hero: the first real fork in the library whose parent we can show.
       for (const tipo of ['acordes', 'melodia', 'bajo']) {
         const found = await api.search({ tipo }).catch(() => [])
@@ -49,15 +39,6 @@ export function Landing() {
     }, (e) => setProjects([]) || console.error(e))
     return () => audio.stop()
   }, [])
-
-  const signOut = () => {
-    try {
-      localStorage.removeItem(USER_KEY)
-    } catch {
-      /* storage blocked: nothing to clear */
-    }
-    setUser(null)
-  }
 
   const preview = (project) => {
     if (playing === project.id) {
@@ -74,44 +55,14 @@ export function Landing() {
 
   return (
     <div className="site">
-      <header className="toolbar site-bar">
-        <a className="brand" href="#/">
-          <LineageMark />
-          <span>Lineage</span>
-        </a>
-        <nav className="site-nav" aria-label="Main">
-          <a href="#explore">Explore</a>
-          <a href="#/project/new">New project</a>
-        </nav>
-        <div className="spacer" />
-        {user ? (
-          <div className="user">
-            <span className="avatar" aria-hidden="true">
-              {user.name[0]?.toUpperCase()}
-            </span>
-            <span>{user.name}</span>
-            <button className="icon" onClick={signOut} aria-label="Log out" title="Log out">
-              <LogOut size={14} />
-            </button>
-          </div>
-        ) : (
-          <>
-            <button className="tbtn" onClick={() => setAuth('login')}>
-              Log in
-            </button>
-            <button className="tbtn accent" onClick={() => setAuth('signup')}>
-              Sign up
-            </button>
-          </>
-        )}
-      </header>
+      <SiteBar user={user} onUser={setUser} />
 
       <main>
         <section className="hero">
           <div className="hero-copy">
             <h1>Compose with pieces that remember who made them.</h1>
             <p>
-              Lineage is version control for musical ideas. Find a short MIDI piece, fork it, change the notes, see exactly what changed, and trace every
+              Stemma is version control for musical ideas. Find a short MIDI piece, fork it, change the notes, see exactly what changed, and trace every
               piece in your song back to its author.
             </p>
             <div className="hero-cta">
@@ -146,27 +97,16 @@ export function Landing() {
       </main>
 
       <footer className="site-foot">
-        <span>Lineage · DurHack 2026</span>
+        <span>Stemma · DurHack 2026</span>
         <span>Demo projects and pieces are sample data.</span>
       </footer>
 
-      {auth && (
-        <AuthDialog
-          mode={auth}
-          onMode={setAuth}
-          onClose={() => setAuth(null)}
-          onDone={(u) => {
-            setUser(u)
-            setAuth(null)
-          }}
-        />
-      )}
     </div>
   )
 }
 
 /** Songs from the backend carry only contract fields: derive tags and a description from their pieces. */
-function withMeta(p, pieces) {
+export function withMeta(p, pieces) {
   const used = [...new Set(p.pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id)))].map((id) => pieces[id]).filter(Boolean)
   const tags = [...new Set(used.flatMap((x) => [...(x.estilo ?? []), x.tonalidad && `${x.tonalidad.toLowerCase()}`]).filter(Boolean))]
   const names = used.map((x) => x.nombre)
@@ -289,9 +229,12 @@ function Explore({ projects, pieces, playing, onPreview }) {
           return (
             <li key={p.id} className="proj">
               <div className="proj-main">
-                <a className="proj-name" href={`#/project/${p.id}`}>
-                  <span className="dim">{p.autor} /</span> {p.nombre}
-                </a>
+                <div className="proj-name">
+                  <a className="owner" href={`#/u/${encodeURIComponent(p.autor)}`}>
+                    {p.autor}
+                  </a>{' '}
+                  / <a href={`#/project/${p.id}`}>{p.nombre}</a>
+                </div>
                 <p>{p.descripcion}</p>
                 <div className="proj-tags">
                   {p.etiquetas.map((t) => (
@@ -324,7 +267,7 @@ function Explore({ projects, pieces, playing, onPreview }) {
   )
 }
 
-function Arrangement({ song, pieces }) {
+export function Arrangement({ song, pieces }) {
   const bars = Math.max(8, ...song.pistas.flatMap((t) => t.bloques.map((b) => b.compas + (pieces[b.pieza_id]?.compases ?? 0))))
   return (
     <div className="arr" aria-hidden="true">
@@ -336,76 +279,6 @@ function Arrangement({ song, pieces }) {
           })}
         </div>
       ))}
-    </div>
-  )
-}
-
-function AuthDialog({ mode, onMode, onClose, onDone }) {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [error, setError] = useState(null)
-  const signup = mode === 'signup'
-
-  useEffect(() => {
-    const onKey = (e) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-
-  const submit = (e) => {
-    e.preventDefault()
-    const clean = name.trim()
-    if (!/^[\w-]{2,24}$/.test(clean)) return setError('Use 2–24 letters, numbers, dashes or underscores.')
-    if (signup && !/^\S+@\S+\.\S+$/.test(email)) return setError('Enter a valid email address.')
-    const user = { name: clean }
-    try {
-      localStorage.setItem(USER_KEY, JSON.stringify(user)) // the name only; the password is never kept
-    } catch {
-      /* storage blocked: signed in for this visit only */
-    }
-    onDone(user)
-  }
-
-  return (
-    <div className="window-backdrop" onClick={onClose}>
-      <form className="panel window auth" role="dialog" aria-modal="true" aria-labelledby="auth-title" onClick={(e) => e.stopPropagation()} onSubmit={submit}>
-        <h2 className="title roll-title" id="auth-title">
-          <span>{signup ? 'Create your account' : 'Log in to Lineage'}</span>
-          <button type="button" className="icon small" onClick={onClose} aria-label="Close">
-            <X size={13} />
-          </button>
-        </h2>
-        <div className="auth-body">
-          <label>
-            Username
-            <input autoFocus value={name} onChange={(e) => (setName(e.target.value), setError(null))} autoComplete="username" />
-          </label>
-          {signup && (
-            <label>
-              Email
-              <input type="email" value={email} onChange={(e) => (setEmail(e.target.value), setError(null))} autoComplete="email" />
-            </label>
-          )}
-          <label>
-            Password
-            <input type="password" autoComplete={signup ? 'new-password' : 'current-password'} />
-          </label>
-          {error && (
-            <p className="auth-error" role="alert">
-              {error}
-            </p>
-          )}
-          <button className="tbtn accent big" type="submit">
-            {signup ? 'Sign up' : 'Log in'}
-          </button>
-          <p className="fine">
-            Hackathon demo: your username stays in this browser and nothing is sent anywhere.{' '}
-            <button type="button" className="link" onClick={() => onMode(signup ? 'login' : 'signup')}>
-              {signup ? 'Already have an account? Log in' : 'New here? Sign up'}
-            </button>
-          </p>
-        </div>
-      </form>
     </div>
   )
 }

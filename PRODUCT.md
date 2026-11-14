@@ -16,7 +16,7 @@ Hackathon judges at DurHack 2026 (theme: "Composition"), clicking through the ap
 
 ## Product Purpose
 
-Lineage is "the GitHub of musical ideas": songs are composed from short reusable MIDI pieces (rhythm, chords, melody, bass). Each piece keeps its author, license and parent. The user searches pieces, forks one, edits notes in a piano roll, sees a readable musical diff against the parent, and sees the origin tree of their song: which pieces, whose, and what they contributed. Success = a judge understands, within a minute of clicking, who made what in a song.
+Stemma is "the GitHub of musical ideas": songs are composed from short reusable MIDI pieces (rhythm, chords, melody, bass). Each piece keeps its author, license and parent. The user searches pieces, forks one, edits notes in a piano roll, sees a readable musical diff against the parent, and sees the origin tree of their song: which pieces, whose, and what they contributed. Success = a judge understands, within a minute of clicking, who made what in a song.
 
 ## Positioning
 
