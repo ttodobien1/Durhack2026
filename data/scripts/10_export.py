@@ -55,7 +55,7 @@ def fuentes_md(counts: Counter, id_ranges: dict) -> str:
     lines = [
         "# Fuentes",
         "",
-        "Atribución de cada colección usada para las piezas semilla de Lineage.",
+        "Atribución de cada colección usada para las piezas semilla de Stemma.",
         "Este archivo lo genera `data/scripts/10_export.py`; no editarlo a mano.",
         "",
     ]
@@ -71,7 +71,7 @@ def fuentes_md(counts: Counter, id_ranges: dict) -> str:
             f"- **Dataset authors:** {c['authors']}",
             f"- **Performers:** {c['performers']}",
             f"- **Cite as:** {c['citation']}",
-            f"- **Pieces in Lineage:** {counts[key]} (`{first}` to `{last}`), "
+            f"- **Pieces in Stemma:** {counts[key]} (`{first}` to `{last}`), "
             f"each with `autor`, `licencia` and `fuente` set",
             "- **Changes made** (CC BY requires saying so):",
             *[f"  - {change}" for change in c["changes"]],
