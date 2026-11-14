@@ -19,6 +19,16 @@ Este archivo lo genera `data/scripts/10_export.py`; no editarlo a mano.
   - Merged repeated hits of the same sound on the same 16th note.
   - Removed near-duplicate loops from the same recording.
 
+## Sounds: FluidR3_GM (pre-rendered by gleitz/midi-js-soundfonts)
+
+- **Author:** Frank Wen
+- **License:** [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/us/) (evidence: https://github.com/gleitz/midi-js-soundfonts#readme (Fluid Soundfont section))
+- **Repository:** https://github.com/gleitz/midi-js-soundfonts
+- **Used for:** `rhodes` (electric_piano_1), `bajo_electrico` (electric_bass_finger), `bajo_synth` (synth_bass_1), `pad` (pad_2_warm), `vibrafono` (vibraphone)
+- **Files:** 150 mp3, each with its URL and sha256 in `frontend/public/samples/fluidr3/manifest.json`
+- **Changes:** None. Files are copied byte for byte from the repository's GitHub Pages site.
+- Full sound credits (including the Salamander piano): `frontend/public/samples/CREDITS.md`
+
 ## Excluded
 
 - **Lakh MIDI Dataset:** not used, it contains many copyrighted works.

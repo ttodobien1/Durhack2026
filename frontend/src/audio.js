@@ -19,6 +19,34 @@ const piano = new Tone.Sampler({
 const pianoFallback = new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'triangle' }, envelope: { release: 0.4 } }).connect(out)
 pianoFallback.volume.value = -10
 
+// Extra sampled instruments: FluidR3_GM by Frank Wen (CC BY 3.0), copied into public/samples/fluidr3/ by
+// data/scripts/sounds_fluidr3.py. Credits: public/samples/CREDITS.md; per-file URL + sha256: fluidr3/manifest.json.
+// Key = `pista.instrumento` value; loaded the first time a song uses it, a synth plays until the files arrive.
+const SAMPLED = {
+  rhodes: { gm: 'electric_piano_1', release: 1 },
+  bajo_electrico: { gm: 'electric_bass_finger', release: 0.4, low: true },
+  bajo_synth: { gm: 'synth_bass_1', release: 0.3, low: true },
+  pad: { gm: 'pad_2_warm', release: 1.5 },
+  vibrafono: { gm: 'vibraphone', release: 1.2 },
+}
+export const SAMPLED_INSTRUMENTS = Object.keys(SAMPLED)
+const FLUID_NOTES = ['A0', ...[1, 2, 3, 4, 5, 6, 7].flatMap((o) => ['C', 'Eb', 'Gb', 'A'].map((n) => `${n}${o}`)), 'C8']
+const samplers = {}
+function sampler(name) {
+  if (!samplers[name]) {
+    const { gm, release } = SAMPLED[name]
+    const s = { ready: false }
+    s.voice = new Tone.Sampler({
+      urls: Object.fromEntries(FLUID_NOTES.map((n) => [n, `${n}.mp3`])),
+      baseUrl: `${import.meta.env.BASE_URL}samples/fluidr3/${gm}/`,
+      release,
+      onload: () => (s.ready = true),
+    }).connect(out)
+    samplers[name] = s
+  }
+  return samplers[name]
+}
+
 const bass = new Tone.MonoSynth({
   oscillator: { type: 'sawtooth' },
   filter: { Q: 1, type: 'lowpass' },
@@ -84,7 +112,12 @@ function trigger(name, n, time) {
   const instrument = VOICE[name] ?? 'piano'
   const dur = `${Math.round(n.duracion * transport.PPQ)}i`
   const freq = Tone.Frequency(n.tono, 'midi').toFrequency()
-  if (instrument === 'drums') hitDrum(n.tono, time, n.velocidad)
+  if (SAMPLED[name]) {
+    const s = sampler(name)
+    if (s.ready) s.voice.triggerAttackRelease(freq, dur, time, n.velocidad)
+    else if (SAMPLED[name].low) bass.triggerAttackRelease(freq, dur, slot(bass, time), n.velocidad)
+    else pianoFallback.triggerAttackRelease(freq, dur, time, n.velocidad)
+  } else if (instrument === 'drums') hitDrum(n.tono, time, n.velocidad)
   else if (instrument === 'bass') bass.triggerAttackRelease(freq, dur, slot(bass, time), n.velocidad)
   else if (instrument === 'lead') lead.triggerAttackRelease(freq, dur, time, n.velocidad)
   else (pianoReady ? piano : pianoFallback).triggerAttackRelease(freq, dur, time, n.velocidad)
@@ -107,6 +140,9 @@ function halt() {
 /** events: [{ instrument, tono, inicio, duracion, velocidad }] in beats. Starts at `from` (default: last position). */
 export async function play({ events, bpm, lengthBeats, loop, onEnd, from = pos }) {
   await Tone.start()
+  // Start loading the sampled instruments this song uses; wait briefly so the first bar is not a synth.
+  const wanted = [...new Set(events.map((e) => e.instrument))].filter((name) => SAMPLED[name] && !sampler(name).ready)
+  if (wanted.length) await Promise.race([Tone.loaded(), new Promise((r) => setTimeout(r, 3000))])
   halt()
   transport.bpm.value = bpm
   part = new Tone.Part((time, ev) => {

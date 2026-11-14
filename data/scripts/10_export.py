@@ -10,6 +10,7 @@ and placeholder pieces in data/piezas/, so the seed never hits a duplicate id.
 Every piece is validated again, now with its id; any failure stops the export.
 """
 
+import json
 from collections import Counter
 
 from common import (BUILD_DIR, DATA_DIR, PIEZAS_DIR, PROVENANCE_DIR, read_json,
@@ -20,6 +21,7 @@ INPUT = BUILD_DIR / "09_validate.json"
 PIEZAS_OUT = PIEZAS_DIR / "groove.json"
 PROVENANCE_OUT = PROVENANCE_DIR / "groove.json"
 FUENTES_OUT = DATA_DIR / "FUENTES.md"
+SOUNDS_MANIFEST = DATA_DIR.parent / "frontend" / "public" / "samples" / "fluidr3" / "manifest.json"
 
 ID_START = 101
 
@@ -51,6 +53,28 @@ def to_contract(piece: dict, piece_id: str) -> dict:
     return {field: full[field] for field in FIELDS}
 
 
+def sounds_md() -> list[str]:
+    """Credits for the sampled instruments the app plays (written by sounds_fluidr3.py)."""
+    manifest_path = SOUNDS_MANIFEST
+    if not manifest_path.exists():
+        return []
+    m = json.loads(manifest_path.read_text(encoding="utf-8"))
+    s = m["source"]
+    return [
+        f"## Sounds: {s['name']}",
+        "",
+        f"- **Author:** {s['author']}",
+        f"- **License:** [{s['license']}]({s['license_url']}) (evidence: {s['license_evidence']})",
+        f"- **Repository:** {s['repository']}",
+        f"- **Used for:** {', '.join(f'`{k}` ({v})' for k, v in m['instruments'].items())}",
+        f"- **Files:** {len(m['files'])} mp3, each with its URL and sha256 in "
+        "`frontend/public/samples/fluidr3/manifest.json`",
+        f"- **Changes:** {s['changes']}",
+        "- Full sound credits (including the Salamander piano): `frontend/public/samples/CREDITS.md`",
+        "",
+    ]
+
+
 def fuentes_md(counts: Counter, id_ranges: dict) -> str:
     lines = [
         "# Fuentes",
@@ -77,6 +101,7 @@ def fuentes_md(counts: Counter, id_ranges: dict) -> str:
             *[f"  - {change}" for change in c["changes"]],
             "",
         ]
+    lines += sounds_md()
     lines += [
         "## Excluded",
         "",
