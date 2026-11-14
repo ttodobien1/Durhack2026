@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-14T00:00:00Z",
+  "title": "Design System: Lineage",
+  "extensions": {
+    "colorMeta": {
+      "orange": { "role": "primary", "displayName": "FL Orange", "canonical": "#ff9a1f", "tonalRamp": ["#3a2006", "#5e340a", "#8a4c0e", "#c27720", "#f08a10", "#ff9a1f", "#ffc785", "#ffe6c7"] },
+      "note-green": { "role": "secondary", "displayName": "Note Green", "canonical": "#8bd16b", "tonalRamp": ["#142411", "#22401b", "#355f24", "#4f8a38", "#6db251", "#8bd16b", "#b8e6a2", "#d6f5c4"] },
+      "type-rhythm": { "role": "tertiary", "displayName": "Rhythm Clay", "canonical": "#d2766e" },
+      "type-chords": { "role": "tertiary", "displayName": "Chord Sky", "canonical": "#72a6d2" },
+      "type-bass": { "role": "tertiary", "displayName": "Bass Lilac", "canonical": "#a98bd6" },
+      "type-melody": { "role": "tertiary", "displayName": "Melody Jade", "canonical": "#6cbca1" },
+      "diff-new": { "role": "semantic", "displayName": "Diff Green", "canonical": "#46e06a" },
+      "diff-deleted": { "role": "semantic", "displayName": "Diff Red", "canonical": "#ff5a52" },
+      "diff-moved": { "role": "semantic", "displayName": "Diff Yellow", "canonical": "#ffd23f" },
+      "diff-same": { "role": "semantic", "displayName": "Diff Grey", "canonical": "#6c777d" },
+      "workspace": { "role": "neutral", "displayName": "Workspace Slate", "canonical": "#3e464c", "tonalRamp": ["#171b1d", "#1c2124", "#262b2f", "#2a3034", "#343b40", "#3e464c", "#58636b", "#d3d9dc"] },
+      "panel": { "role": "neutral", "displayName": "Panel Slate", "canonical": "#343b40" },
+      "well": { "role": "neutral", "displayName": "Well", "canonical": "#2a3034" },
+      "line": { "role": "neutral", "displayName": "Hairline", "canonical": "#1c2124" },
+      "text": { "role": "neutral", "displayName": "Console Text", "canonical": "#d3d9dc" },
+      "text-dim": { "role": "neutral", "displayName": "Dim Text", "canonical": "#a1adb3" }
+    },
+    "typographyMeta": {
+      "brand": { "displayName": "Brand", "purpose": "Toolbar wordmark only." },
+      "title": { "displayName": "Title", "purpose": "Panel title bars, song name." },
+      "body": { "displayName": "Body", "purpose": "All UI text, tabular numerals." },
+      "label": { "displayName": "Label", "purpose": "Piece meta, clip headers, segmented buttons." },
+      "readout": { "displayName": "Readout", "purpose": "LCD tempo and cursor readouts." },
+      "code": { "displayName": "Code", "purpose": "Piece ids." }
+    },
+    "shadows": [
+      { "name": "bevel", "value": "inset 0 1px 0 #5b676f", "purpose": "Raised top highlight on panels and toolbar." },
+      { "name": "bevel-button", "value": "inset 0 1px 0 #6c7880", "purpose": "Raised top highlight on buttons." },
+      { "name": "sunken", "value": "inset 0 1px 3px rgb(0 0 0 / 0.5)", "purpose": "LCD wells; pressed buttons at 0.45." },
+      { "name": "window", "value": "0 18px 50px rgb(0 0 0 / 0.55)", "purpose": "Origin-tree modal window." },
+      { "name": "node", "value": "0 3px 10px rgb(0 0 0 / 0.35)", "purpose": "Origin-tree nodes." },
+      { "name": "node-mine", "value": "0 0 0 2px rgb(255 154 31 / 0.35), 0 3px 10px rgb(0 0 0 / 0.35)", "purpose": "The user's own tree node." },
+      { "name": "playhead-glow", "value": "0 0 4px rgb(255 154 31 / 0.5)", "purpose": "Playhead line." }
+    ],
+    "motion": [],
+    "breakpoints": [
+      { "name": "stack", "value": "1000px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "FL-style raised steel button.",
+      "html": "<button class=\"ds-tbtn\">Fork</button>",
+      "css": ".ds-tbtn { display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 10px; border:1px solid var(--line, #1c2124); border-radius:2px; background:linear-gradient(#56616a,#48525a); box-shadow:inset 0 1px 0 #6c7880; color:#d3d9dc; font:12px 'Segoe UI', system-ui, sans-serif; cursor:pointer; } .ds-tbtn:hover { background:linear-gradient(#5f6b74,#505b63); } .ds-tbtn:active { box-shadow:inset 0 1px 3px rgb(0 0 0 / 0.45); background:#444d54; } .ds-tbtn:focus-visible { outline:2px solid #ff9a1f; outline-offset:1px; }"
+    },
+    {
+      "name": "Button On",
+      "kind": "button",
+      "refersTo": "button-on",
+      "description": "Active toggle or primary action in orange.",
+      "html": "<button class=\"ds-tbtn-on\">Diff</button>",
+      "css": ".ds-tbtn-on { display:inline-flex; align-items:center; height:26px; padding:0 10px; border:1px solid #1c2124; border-radius:2px; background:linear-gradient(#ffad45,#f08a10); box-shadow:inset 0 1px 0 #ffd199; color:#1d1a14; font:600 12px 'Segoe UI', system-ui, sans-serif; cursor:pointer; } .ds-tbtn-on:active { box-shadow:inset 0 1px 3px rgb(0 0 0 / 0.45); } .ds-tbtn-on:focus-visible { outline:2px solid #ff9a1f; outline-offset:1px; }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "Sunken well input; border turns orange on focus.",
+      "html": "<label class=\"ds-search\"><input placeholder=\"Search pieces\"></label>",
+      "css": ".ds-search { display:flex; align-items:center; height:28px; padding:0 8px; background:#2a3034; border:1px solid #1c2124; border-radius:2px; } .ds-search:focus-within { border-color:#ff9a1f; } .ds-search input { flex:1; background:none; border:0; outline:none; color:#d3d9dc; font:12px 'Segoe UI', system-ui, sans-serif; } .ds-search input::placeholder { color:#8d999f; }"
+    },
+    {
+      "name": "Type Filter",
+      "kind": "chip",
+      "refersTo": "segmented-on",
+      "description": "Segmented control; selection fills orange.",
+      "html": "<div class=\"ds-seg\"><button class=\"on\">All</button><button>Rhythm</button><button>Chords</button><button>Bass</button></div>",
+      "css": ".ds-seg { display:flex; border:1px solid #1c2124; border-radius:2px; overflow:hidden; } .ds-seg button { flex:1; padding:4px 8px; border:0; border-right:1px solid #1c2124; background:#4a545b; color:#d3d9dc; font:11px 'Segoe UI', system-ui, sans-serif; cursor:pointer; } .ds-seg button:last-child { border-right:0; } .ds-seg button.on { background:#ff9a1f; color:#1d1a14; font-weight:600; } .ds-seg button:focus-visible { outline:2px solid #ff9a1f; outline-offset:-2px; }"
+    },
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "panel-title",
+      "description": "Bevelled slate panel with steel title bar.",
+      "html": "<section class=\"ds-panel\"><h2 class=\"ds-title\">Browser</h2><p>Pieces</p></section>",
+      "css": ".ds-panel { background:#343b40; border:1px solid #1c2124; box-shadow:inset 0 1px 0 #5b676f; color:#d3d9dc; font:12px/1.4 'Segoe UI', system-ui, sans-serif; } .ds-panel p { margin:0; padding:8px; } .ds-title { margin:0; height:24px; display:flex; align-items:center; padding:0 8px; background:linear-gradient(#58636b,#4a545b); border-bottom:1px solid #1c2124; font-size:12px; font-weight:600; }"
+    },
+    {
+      "name": "Playlist Clip",
+      "kind": "custom",
+      "description": "Type-coloured pattern clip carrying name and author; the user's own clip is orange.",
+      "html": "<div class=\"ds-clips\"><div class=\"ds-clip\" style=\"--tc:#72a6d2\"><div class=\"ds-clip-head\"><span>Montuno in Am</span><span class=\"by\">ana</span></div></div><div class=\"ds-clip mine\" style=\"--tc:#72a6d2\"><div class=\"ds-clip-head\"><span>Montuno fork</span><span class=\"by\">you</span></div></div></div>",
+      "css": ".ds-clips { display:flex; gap:4px; padding:4px; background:#2a3034; } .ds-clip { width:160px; height:46px; border:1px solid rgb(0 0 0 / 0.55); border-radius:2px; overflow:hidden; background:color-mix(in srgb, var(--tc) 30%, #2a3034); } .ds-clip-head { display:flex; justify-content:space-between; gap:6px; padding:0 5px; background:var(--tc); color:#15191b; font:600 11px/15px 'Segoe UI', system-ui, sans-serif; } .ds-clip-head .by { font-weight:400; opacity:0.85; } .ds-clip.mine .ds-clip-head { background:#ff9a1f; }"
+    },
+    {
+      "name": "Diff Notes",
+      "kind": "custom",
+      "description": "Piano-roll diff states: same grey, new green, deleted red ghost, moved yellow with dashed ghost.",
+      "html": "<div class=\"ds-roll\"><i class=\"n same\" style=\"left:8px;top:6px\"></i><i class=\"n new\" style=\"left:60px;top:22px\"></i><i class=\"n del\" style=\"left:112px;top:38px\"></i><i class=\"n was\" style=\"left:150px;top:6px\"></i><i class=\"n mov\" style=\"left:190px;top:6px\"></i></div>",
+      "css": ".ds-roll { position:relative; width:260px; height:60px; background:#2e353a; } .ds-roll .n { position:absolute; width:40px; height:13px; border-radius:2px; border:1px solid #355f24; background:#8bd16b; } .ds-roll .same { background:#6c777d; border-color:#4b5459; } .ds-roll .new { background:#46e06a; border-color:#1d6b31; box-shadow:0 0 0 1px rgb(70 224 106 / 0.35); } .ds-roll .del { background:rgb(255 90 82 / 0.16); border:1.5px dashed #ff5a52; } .ds-roll .was { background:transparent; border:1px dashed rgb(255 210 63 / 0.6); } .ds-roll .mov { background:#ffd23f; border-color:#7a6110; }"
+    },
+    {
+      "name": "LCD Readout",
+      "kind": "custom",
+      "refersTo": "lcd-readout",
+      "description": "Sunken tempo display with orange mono digits.",
+      "html": "<div class=\"ds-lcd\">96<span>BPM</span></div>",
+      "css": ".ds-lcd { display:inline-flex; align-items:center; gap:4px; height:28px; padding:0 8px; background:#171b1d; border:1px solid #1c2124; border-radius:2px; box-shadow:inset 0 1px 3px rgb(0 0 0 / 0.5); color:#ff9a1f; font:600 13px ui-monospace, Menlo, Consolas, monospace; } .ds-lcd span { font-size:10px; color:#c27720; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Credited Studio",
+    "overview": "Lineage looks and behaves like the DAW judges already know: FL Studio's default theme and working layout (Browser left, Playlist over Piano Roll in the centre, a dock on the right), in FL's own slate-and-orange palette. This is a pinned brand commitment: FL's conventions and colours, never its logo, fruit mark or name.\n\nThe difference is that authorship is drawn into the instrument itself, not parked in a side panel. Every playlist clip header, browser row and piano-roll title names its author and licence; the user's own pieces burn orange everywhere they appear. Density is high (12px UI, 2–3px gutters, 24–28px controls) because this is a working tool, not a landing page.",
+    "keyCharacteristics": [
+      "Slate panels with 1px top-light / bottom-dark bevels and near-black hairline borders.",
+      "Orange is the single \"live\" signal: active toggles, play, focus, playhead, and \"this is yours\".",
+      "Piece type is colour-coded once and reused across clips, browser rows and tree nodes.",
+      "Tabular mono readouts in sunken LCD wells."
+    ],
+    "rules": [
+      { "name": "The You Are Orange Rule", "body": "A piece whose author is the current user renders orange wherever authorship shows: clip header and mini-roll, credits name, tree node head and border. No other piece may use orange as its identity colour.", "section": "colors" },
+      { "name": "The One Map Rule", "body": "Piece-type colours and diff colours are separate vocabularies. Never reuse a type colour to mean a diff state or vice versa.", "section": "colors" },
+      { "name": "The Numbers Are Mono Rule", "body": "Tempo, bar numbers, pitch/beat/length readouts and piece ids are monospace; prose never is.", "section": "typography" },
+      { "name": "The Bevel Not Float Rule", "body": "In-app chrome is raised or sunken with 1px insets. Drop shadows are reserved for windows and graph nodes.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use orange (#ff9a1f) only for live state, focus, the playhead, and the current user's pieces.",
+      "Do colour a piece by its type through the shared type variable so clips, browser stripes and tree heads stay in sync.",
+      "Do keep the diff mapping fixed: green new, red dashed ghost deleted, yellow moved with dashed ghost and connector, grey unchanged.",
+      "Do show author and licence wherever a piece is shown.",
+      "Do keep raised/sunken depth to 1px insets and 2px corners."
+    ],
+    "donts": [
+      "Don't use FL Studio's logo, fruit mark or name anywhere.",
+      "Don't give a non-user piece an orange identity, or use a type colour to signal a diff state.",
+      "Don't put drop shadows on in-app chrome; they belong to the tree window and nodes.",
+      "Don't use dashed borders except for diff ghosts."
+    ]
+  }
+}

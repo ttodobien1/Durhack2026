@@ -1,0 +1,89 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/assigned.html"
+        ],
+        "createdAt": "2026-11-14T18:56:39.230Z",
+        "reason": "agent: discarded decision-round sketch, not shipped; user pinned the FL Studio direction instead"
+      },
+      {
+        "rule": "wide-tracking",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/model-pick.html"
+        ],
+        "createdAt": "2026-11-14T18:56:39.235Z",
+        "reason": "agent: discarded decision-round sketch, not shipped; user pinned the FL Studio direction instead"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/challenger-jcard.html"
+        ],
+        "createdAt": "2026-11-14T18:56:39.240Z",
+        "reason": "agent: discarded decision-round sketch, not shipped; user pinned the FL Studio direction instead"
+      },
+      {
+        "rule": "tight-leading",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/challenger-jcard.html"
+        ],
+        "createdAt": "2026-11-14T18:56:39.248Z",
+        "reason": "agent: discarded decision-round sketch, not shipped; user pinned the FL Studio direction instead"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/challenger-saville.html"
+        ],
+        "createdAt": "2026-11-14T18:56:39.253Z",
+        "reason": "agent: discarded decision-round sketch, not shipped; user pinned the FL Studio direction instead"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/assigned.html"
+        ],
+        "createdAt": "2026-11-14T19:03:23.523Z",
+        "reason": "agent: discarded decision-round sketch, not shipped; user pinned the FL Studio direction instead"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/model-pick.html"
+        ],
+        "createdAt": "2026-11-14T19:03:23.528Z",
+        "reason": "agent: discarded decision-round sketch, not shipped; user pinned the FL Studio direction instead"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/challenger-jcard.html"
+        ],
+        "createdAt": "2026-11-14T19:03:23.536Z",
+        "reason": "agent: discarded decision-round sketch, not shipped; user pinned the FL Studio direction instead"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/challenger-saville.html"
+        ],
+        "createdAt": "2026-11-14T19:03:23.541Z",
+        "reason": "agent: discarded decision-round sketch, not shipped; user pinned the FL Studio direction instead"
+      }
+    ]
+  }
+}
