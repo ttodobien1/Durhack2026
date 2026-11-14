@@ -1,20 +1,20 @@
 """Stage 1: ingest Groove MIDI's info.csv into one clean record per MIDI file.
 
 Input:  data/raw/groove/info.csv (+ the MIDI files it points to)
-Output: data/build/01_ingest.json
+Output: data/build/groove/01_ingest.json
 
 Each record:
-  source, id, drummer, session, style, genre, subgenre, bpm, beat_type,
+  source, id, author, drummer, session, style, genre, subgenre, bpm, beat_type,
   time_signature, duration_s, midi_path (relative to data/raw/groove)
 """
 
 import csv
 from collections import Counter
 
-from common import BUILD_DIR, RAW_DIR, print_report, write_json
+from common import SOURCE_DIRS, print_report, rel, stage_file, write_json
 
-GROOVE_DIR = RAW_DIR / "groove"
-OUTPUT = BUILD_DIR / "01_ingest.json"
+GROOVE_DIR = SOURCE_DIRS["groove"]
+OUTPUT = stage_file("groove", "01_ingest")
 
 
 def parse_row(row: dict) -> dict:
@@ -23,6 +23,7 @@ def parse_row(row: dict) -> dict:
     return {
         "source": "groove",
         "id": row["id"].strip(),
+        "author": row["drummer"].strip(),
         "drummer": row["drummer"].strip(),
         "session": row["session"].strip(),
         "style": style,
@@ -65,7 +66,7 @@ def main() -> None:
     print(f"drummers: {len({r['drummer'] for r in records})}")
     print(f"genres:   {len({r['genre'] for r in records})}")
     print(f"total:    {sum(r['duration_s'] for r in records) / 3600:.1f} h")
-    print(f"written:  {OUTPUT.relative_to(OUTPUT.parents[2])}")
+    print(f"written:  {rel(OUTPUT)}")
 
 
 if __name__ == "__main__":

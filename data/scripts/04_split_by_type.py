@@ -1,7 +1,7 @@
 """Stage 4: read each MIDI and split its notes into parts by contract type.
 
-Input:  data/build/03_content_filter.json (+ MIDI files)
-Output: data/build/04_split_by_type.json
+Input:  data/build/<source>/03_content_filter.json (+ MIDI files)
+Output: data/build/<source>/04_split_by_type.json
 
 Rules (ROL_C.md, section 4.4), applied per (track, channel) group of notes:
   - percussion channel (MIDI channel 10 = index 9)  -> "ritmo"
@@ -9,8 +9,14 @@ Rules (ROL_C.md, section 4.4), applied per (track, channel) group of notes:
   - monophonic and low (mean pitch < BASS_MAX_MEAN) -> "bajo"
   - monophonic and higher                           -> "melodia"
 
-Groove MIDI is all drums, so everything becomes "ritmo"; the melodic rules
-are here for the collections that come later.
+Groove MIDI is all drums, so everything becomes "ritmo".
+
+Bass split (BASS_SPLIT_BELOW): in free-midi-chords every chord is voiced with
+one low root note under it (always < 48, chord tones always >= 48). That low
+line is in the original file, so it is split out as its own "bajo" part when
+it is monophonic; nothing is invented, and both parts trace back to the same file.
+
+Team pieces declare their tipo: all their non-drum notes become one part of that tipo.
 
 Times stay in MIDI ticks plus the file's ticks-per-beat (ppq); stage 5
 converts them to beats when slicing.
@@ -20,14 +26,12 @@ from collections import Counter, defaultdict
 
 import mido
 
-from common import BUILD_DIR, RAW_DIR, print_report, read_json, write_json
-
-INPUT = BUILD_DIR / "03_content_filter.json"
-OUTPUT = BUILD_DIR / "04_split_by_type.json"
+from common import SOURCE_DIRS, print_report, read_json, rel, source_from_args, stage_file, write_json
 
 DRUM_CHANNEL = 9
 POLYPHONY_THRESHOLD = 0.2  # share of notes that overlap another note
 BASS_MAX_MEAN = 55  # G3
+BASS_SPLIT_BELOW = {"fmc": 48}  # source -> pitch under which notes form the bass line
 
 
 def read_notes(midi: mido.MidiFile) -> dict[tuple[int, int], list[dict]]:
@@ -71,12 +75,38 @@ def classify(channel: int, notes: list[dict]) -> str:
     return "bajo" if mean_pitch < BASS_MAX_MEAN else "melodia"
 
 
+def split_groups(rec: dict, groups: dict, stats: Counter) -> list[tuple[str, int, int, list[dict]]]:
+    """Return [(tipo, track, channel, notes)] for one file."""
+    declared = rec.get("declared_tipo")
+    if declared and declared != "ritmo":
+        melodic = [n for (t, ch), ns in groups.items() if ch != DRUM_CHANNEL for n in ns]
+        return [(declared, 0, 0, melodic)] if melodic else []
+    out = []
+    for (track, channel), notes in sorted(groups.items()):
+        if not notes:
+            continue
+        threshold = BASS_SPLIT_BELOW.get(rec["source"])
+        if threshold and channel != DRUM_CHANNEL:
+            low = [n for n in notes if n["pitch"] < threshold]
+            high = [n for n in notes if n["pitch"] >= threshold]
+            if low and high and polyphony(low) == 0:
+                stats["bass lines split from chord voicings"] += 1
+                out.append(("bajo", track, channel, low))
+                out.append((classify(channel, high), track, channel, high))
+                continue
+        out.append((classify(channel, notes), track, channel, notes))
+    return out
+
+
 def main() -> None:
-    records = read_json(INPUT)
-    kept, reasons, types, n_notes = [], Counter(), Counter(), 0
+    source = source_from_args(__doc__)
+    input_path = stage_file(source, "03_content_filter")
+    output_path = stage_file(source, "04_split_by_type")
+    records = read_json(input_path)
+    kept, reasons, types, n_notes, stats = [], Counter(), Counter(), 0, Counter()
 
     for rec in records:
-        path = RAW_DIR / rec["source"] / rec["midi_path"]
+        path = SOURCE_DIRS[rec["source"]] / rec["midi_path"]
         try:
             midi = mido.MidiFile(path)
         except (OSError, ValueError, EOFError) as err:
@@ -84,10 +114,7 @@ def main() -> None:
             continue
 
         parts = []
-        for (track, channel), notes in sorted(read_notes(midi).items()):
-            if not notes:
-                continue
-            tipo = classify(channel, notes)
+        for tipo, track, channel, notes in split_groups(rec, read_notes(midi), stats):
             parts.append({"tipo": tipo, "track": track, "channel": channel,
                           "notes": sorted(notes, key=lambda n: n["tick"])})
             types[tipo] += 1
@@ -98,11 +125,13 @@ def main() -> None:
             continue
         kept.append({**rec, "ppq": midi.ticks_per_beat, "parts": parts})
 
-    write_json(OUTPUT, kept)
-    print_report("stage 4 (split by type)", len(records), len(kept), reasons)
+    write_json(output_path, kept)
+    print_report(f"stage 4 (split by type) [{source}]", len(records), len(kept), reasons)
     print(f"parts by type: {dict(types)}")
+    for k, v in stats.items():
+        print(f"{k}: {v}")
     print(f"notes total:   {n_notes}")
-    print(f"written: {OUTPUT.relative_to(OUTPUT.parents[2])}")
+    print(f"written: {rel(output_path)}")
 
 
 if __name__ == "__main__":

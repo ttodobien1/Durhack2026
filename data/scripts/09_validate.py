@@ -1,8 +1,8 @@
 """Stage 9: validate every piece against the contract.
 
-Input:  data/build/08_dedupe.json
-Output: data/build/09_validate.json (valid pieces)
-        data/provenance/rejected.json (failed pieces + why, for the record)
+Input:  data/build/<source>/08_dedupe.json
+Output: data/build/<source>/09_validate.json (valid pieces)
+        data/provenance/<source>.rejected.json (failed pieces + why, for the record)
 
 Rules live in contract.py. ids are not assigned yet (stage 10), so they are
 not required here; stage 10 checks again with ids.
@@ -10,16 +10,16 @@ not required here; stage 10 checks again with ids.
 
 from collections import Counter
 
-from common import BUILD_DIR, PROVENANCE_DIR, print_report, read_json, write_json
+from common import PROVENANCE_DIR, print_report, read_json, rel, source_from_args, stage_file, write_json
 from contract import validate_piece
 
-INPUT = BUILD_DIR / "08_dedupe.json"
-OUTPUT = BUILD_DIR / "09_validate.json"
-REJECTED = PROVENANCE_DIR / "rejected.json"
 
 
 def main() -> None:
-    pieces = read_json(INPUT)
+    source = source_from_args(__doc__)
+    input_path = stage_file(source, "08_dedupe")
+    output_path = stage_file(source, "09_validate")
+    pieces = read_json(input_path)
     valid, rejected, reasons = [], [], Counter()
 
     for p in pieces:
@@ -35,11 +35,12 @@ def main() -> None:
         else:
             valid.append(p)
 
-    write_json(OUTPUT, valid)
-    write_json(REJECTED, rejected)
-    print_report("stage 9 (validate)", len(pieces), len(valid), reasons)
-    print(f"written: {OUTPUT.relative_to(OUTPUT.parents[2])}, "
-          f"{REJECTED.relative_to(REJECTED.parents[2])} ({len(rejected)} rejected)")
+    write_json(output_path, valid)
+    rejected_path = PROVENANCE_DIR / f"{source}.rejected.json"
+    write_json(rejected_path, rejected)
+    print_report(f"stage 9 (validate) [{source}]", len(pieces), len(valid), reasons)
+    print(f"written: {rel(output_path)}, "
+          f"{rel(rejected_path)} ({len(rejected)} rejected)")
 
 
 if __name__ == "__main__":

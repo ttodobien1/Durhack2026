@@ -9,7 +9,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/1_funk_80_beat_4-4.mid",
   "start_bar": 20,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-102": {
   "source": "groove",
@@ -21,7 +22,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/1_funk_80_beat_4-4.mid",
   "start_bar": 2,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-103": {
   "source": "groove",
@@ -33,7 +35,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/1_funk_80_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-104": {
   "source": "groove",
@@ -45,7 +48,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/2_funk_80_beat_4-4.mid",
   "start_bar": 14,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-105": {
   "source": "groove",
@@ -57,7 +61,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/2_funk_80_beat_4-4.mid",
   "start_bar": 6,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-106": {
   "source": "groove",
@@ -69,7 +74,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/2_funk_80_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-107": {
   "source": "groove",
@@ -81,7 +87,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/3_funk_80_beat_4-4.mid",
   "start_bar": 20,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-108": {
   "source": "groove",
@@ -93,7 +100,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/3_funk_80_beat_4-4.mid",
   "start_bar": 34,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-109": {
   "source": "groove",
@@ -105,7 +113,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/3_funk_80_beat_4-4.mid",
   "start_bar": 38,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-110": {
   "source": "groove",
@@ -117,7 +126,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/6_funk_80_beat_4-4.mid",
   "start_bar": 14,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-111": {
   "source": "groove",
@@ -129,7 +139,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/6_funk_80_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-112": {
   "source": "groove",
@@ -141,7 +152,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/6_funk_80_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-113": {
   "source": "groove",
@@ -153,7 +165,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/7_funk_80_beat_4-4.mid",
   "start_bar": 20,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-114": {
   "source": "groove",
@@ -165,7 +178,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/7_funk_80_beat_4-4.mid",
   "start_bar": 26,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-115": {
   "source": "groove",
@@ -177,7 +191,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/7_funk_80_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-116": {
   "source": "groove",
@@ -189,7 +204,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/11_funk_81_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-117": {
   "source": "groove",
@@ -201,7 +217,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/11_funk_81_beat_4-4.mid",
   "start_bar": 16,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-118": {
   "source": "groove",
@@ -213,7 +230,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/11_funk_81_beat_4-4.mid",
   "start_bar": 18,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-119": {
   "source": "groove",
@@ -225,7 +243,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/12_funk_81_beat_4-4.mid",
   "start_bar": 10,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-120": {
   "source": "groove",
@@ -237,7 +256,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/12_funk_81_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-121": {
   "source": "groove",
@@ -249,7 +269,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/12_funk_81_beat_4-4.mid",
   "start_bar": 48,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-122": {
   "source": "groove",
@@ -261,7 +282,8 @@
   "subgenre": "groove5",
   "midi_path": "drummer1/eval_session/5_funk-groove5_84_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-123": {
   "source": "groove",
@@ -273,7 +295,8 @@
   "subgenre": "groove5",
   "midi_path": "drummer1/eval_session/5_funk-groove5_84_beat_4-4.mid",
   "start_bar": 14,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-124": {
   "source": "groove",
@@ -285,7 +308,8 @@
   "subgenre": "groove5",
   "midi_path": "drummer1/eval_session/5_funk-groove5_84_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-125": {
   "source": "groove",
@@ -297,7 +321,8 @@
   "subgenre": "groove5",
   "midi_path": "drummer5/eval_session/5_funk-groove5_84_beat_4-4.mid",
   "start_bar": 2,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-126": {
   "source": "groove",
@@ -309,7 +334,8 @@
   "subgenre": "groove5",
   "midi_path": "drummer5/eval_session/5_funk-groove5_84_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-127": {
   "source": "groove",
@@ -321,7 +347,8 @@
   "subgenre": "groove5",
   "midi_path": "drummer5/eval_session/5_funk-groove5_84_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-128": {
   "source": "groove",
@@ -333,7 +360,8 @@
   "subgenre": "groove5",
   "midi_path": "drummer7/eval_session/5_funk-groove5_84_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-129": {
   "source": "groove",
@@ -345,7 +373,8 @@
   "subgenre": "groove5",
   "midi_path": "drummer7/eval_session/5_funk-groove5_84_beat_4-4.mid",
   "start_bar": 6,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-130": {
   "source": "groove",
@@ -357,7 +386,8 @@
   "subgenre": "groove5",
   "midi_path": "drummer7/eval_session/5_funk-groove5_84_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-131": {
   "source": "groove",
@@ -369,7 +399,8 @@
   "subgenre": "groove5",
   "midi_path": "drummer8/eval_session/5_funk-groove5_84_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-132": {
   "source": "groove",
@@ -381,7 +412,8 @@
   "subgenre": "groove5",
   "midi_path": "drummer8/eval_session/5_funk-groove5_84_beat_4-4.mid",
   "start_bar": 14,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-133": {
   "source": "groove",
@@ -393,7 +425,8 @@
   "subgenre": "groove5",
   "midi_path": "drummer8/eval_session/5_funk-groove5_84_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-134": {
   "source": "groove",
@@ -405,7 +438,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/5_funk_91_beat_4-4.mid",
   "start_bar": 18,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-135": {
   "source": "groove",
@@ -417,7 +451,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/5_funk_91_beat_4-4.mid",
   "start_bar": 36,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-136": {
   "source": "groove",
@@ -429,7 +464,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/6_funk_91_beat_4-4.mid",
   "start_bar": 28,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-137": {
   "source": "groove",
@@ -441,7 +477,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/6_funk_91_beat_4-4.mid",
   "start_bar": 38,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-138": {
   "source": "groove",
@@ -453,7 +490,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/6_funk_91_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-139": {
   "source": "groove",
@@ -465,7 +503,8 @@
   "subgenre": "rock",
   "midi_path": "drummer1/session2/90_funk-rock_92_beat_4-4.mid",
   "start_bar": 10,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-140": {
   "source": "groove",
@@ -477,7 +516,8 @@
   "subgenre": "rock",
   "midi_path": "drummer1/session2/90_funk-rock_92_beat_4-4.mid",
   "start_bar": 16,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-141": {
   "source": "groove",
@@ -489,7 +529,8 @@
   "subgenre": "rock",
   "midi_path": "drummer1/session2/90_funk-rock_92_beat_4-4.mid",
   "start_bar": 20,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-142": {
   "source": "groove",
@@ -501,7 +542,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/1_funk_92_beat_4-4.mid",
   "start_bar": 10,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-143": {
   "source": "groove",
@@ -513,7 +555,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/1_funk_92_beat_4-4.mid",
   "start_bar": 40,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-144": {
   "source": "groove",
@@ -525,7 +568,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/1_funk_92_beat_4-4.mid",
   "start_bar": 48,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-145": {
   "source": "groove",
@@ -537,7 +581,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/2_funk_92_beat_4-4.mid",
   "start_bar": 2,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-146": {
   "source": "groove",
@@ -549,7 +594,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/2_funk_92_beat_4-4.mid",
   "start_bar": 36,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-147": {
   "source": "groove",
@@ -561,7 +607,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/2_funk_92_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-148": {
   "source": "groove",
@@ -573,7 +620,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/102_funk_95_beat_4-4.mid",
   "start_bar": 22,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-149": {
   "source": "groove",
@@ -585,7 +633,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/102_funk_95_beat_4-4.mid",
   "start_bar": 24,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-150": {
   "source": "groove",
@@ -597,7 +646,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/102_funk_95_beat_4-4.mid",
   "start_bar": 44,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-151": {
   "source": "groove",
@@ -609,7 +659,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/1_funk_95_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-152": {
   "source": "groove",
@@ -621,7 +672,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/1_funk_95_beat_4-4.mid",
   "start_bar": 16,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-153": {
   "source": "groove",
@@ -633,7 +685,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/2_funk_95_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-154": {
   "source": "groove",
@@ -645,7 +698,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/2_funk_95_beat_4-4.mid",
   "start_bar": 40,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-155": {
   "source": "groove",
@@ -657,7 +711,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/15_funk_95_beat_4-4.mid",
   "start_bar": 16,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-156": {
   "source": "groove",
@@ -669,7 +724,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/15_funk_95_beat_4-4.mid",
   "start_bar": 26,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-157": {
   "source": "groove",
@@ -681,7 +737,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/15_funk_95_beat_4-4.mid",
   "start_bar": 52,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-158": {
   "source": "groove",
@@ -693,7 +750,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/16_funk_95_beat_4-4.mid",
   "start_bar": 10,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-159": {
   "source": "groove",
@@ -705,7 +763,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/16_funk_95_beat_4-4.mid",
   "start_bar": 20,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-160": {
   "source": "groove",
@@ -717,7 +776,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/16_funk_95_beat_4-4.mid",
   "start_bar": 6,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-161": {
   "source": "groove",
@@ -729,7 +789,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/8_funk_96_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-162": {
   "source": "groove",
@@ -741,7 +802,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/8_funk_96_beat_4-4.mid",
   "start_bar": 20,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-163": {
   "source": "groove",
@@ -753,7 +815,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/8_funk_96_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-164": {
   "source": "groove",
@@ -765,7 +828,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/9_funk_96_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-165": {
   "source": "groove",
@@ -777,7 +841,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/9_funk_96_beat_4-4.mid",
   "start_bar": 16,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-166": {
   "source": "groove",
@@ -789,7 +854,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/9_funk_96_beat_4-4.mid",
   "start_bar": 28,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-167": {
   "source": "groove",
@@ -801,7 +867,8 @@
   "subgenre": null,
   "midi_path": "drummer5/session1/15_funk_100_beat_4-4.mid",
   "start_bar": 24,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-168": {
   "source": "groove",
@@ -813,7 +880,8 @@
   "subgenre": null,
   "midi_path": "drummer5/session1/15_funk_100_beat_4-4.mid",
   "start_bar": 34,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-169": {
   "source": "groove",
@@ -825,7 +893,8 @@
   "subgenre": null,
   "midi_path": "drummer5/session1/15_funk_100_beat_4-4.mid",
   "start_bar": 48,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-170": {
   "source": "groove",
@@ -837,7 +906,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session2/72_funk_100_beat_4-4.mid",
   "start_bar": 10,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-171": {
   "source": "groove",
@@ -849,7 +919,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session2/72_funk_100_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-172": {
   "source": "groove",
@@ -861,7 +932,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session2/76_funk_100_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-173": {
   "source": "groove",
@@ -873,7 +945,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session2/77_funk_100_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-174": {
   "source": "groove",
@@ -885,7 +958,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session2/78_funk_100_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-175": {
   "source": "groove",
@@ -897,7 +971,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session2/79_funk_100_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-176": {
   "source": "groove",
@@ -909,7 +984,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session2/79_funk_100_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-177": {
   "source": "groove",
@@ -921,7 +997,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session2/79_funk_100_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-178": {
   "source": "groove",
@@ -933,7 +1010,8 @@
   "subgenre": "latin",
   "midi_path": "drummer8/session1/24_funk-latin_100_beat_4-4.mid",
   "start_bar": 10,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-179": {
   "source": "groove",
@@ -945,7 +1023,8 @@
   "subgenre": "latin",
   "midi_path": "drummer8/session1/24_funk-latin_100_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-180": {
   "source": "groove",
@@ -957,7 +1036,8 @@
   "subgenre": "latin",
   "midi_path": "drummer8/session1/24_funk-latin_100_beat_4-4.mid",
   "start_bar": 22,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-181": {
   "source": "groove",
@@ -969,7 +1049,8 @@
   "subgenre": "latin",
   "midi_path": "drummer8/session1/25_funk-latin_100_beat_4-4.mid",
   "start_bar": 14,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-182": {
   "source": "groove",
@@ -981,7 +1062,8 @@
   "subgenre": "latin",
   "midi_path": "drummer8/session1/25_funk-latin_100_beat_4-4.mid",
   "start_bar": 16,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-183": {
   "source": "groove",
@@ -993,7 +1075,8 @@
   "subgenre": "latin",
   "midi_path": "drummer8/session1/25_funk-latin_100_beat_4-4.mid",
   "start_bar": 32,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-184": {
   "source": "groove",
@@ -1005,7 +1088,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/12_funk_102_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-185": {
   "source": "groove",
@@ -1017,7 +1101,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/12_funk_102_beat_4-4.mid",
   "start_bar": 14,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-186": {
   "source": "groove",
@@ -1029,7 +1114,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/12_funk_102_beat_4-4.mid",
   "start_bar": 6,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-187": {
   "source": "groove",
@@ -1041,7 +1127,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/13_funk_102_beat_4-4.mid",
   "start_bar": 10,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-188": {
   "source": "groove",
@@ -1053,7 +1140,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/13_funk_102_beat_4-4.mid",
   "start_bar": 16,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-189": {
   "source": "groove",
@@ -1065,7 +1153,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/13_funk_102_beat_4-4.mid",
   "start_bar": 24,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-190": {
   "source": "groove",
@@ -1077,7 +1166,8 @@
   "subgenre": "groove2",
   "midi_path": "drummer1/eval_session/2_funk-groove2_105_beat_4-4.mid",
   "start_bar": 10,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-191": {
   "source": "groove",
@@ -1089,7 +1179,8 @@
   "subgenre": "groove2",
   "midi_path": "drummer1/eval_session/2_funk-groove2_105_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-192": {
   "source": "groove",
@@ -1101,7 +1192,8 @@
   "subgenre": "groove2",
   "midi_path": "drummer1/eval_session/2_funk-groove2_105_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-193": {
   "source": "groove",
@@ -1113,7 +1205,8 @@
   "subgenre": "groove2",
   "midi_path": "drummer5/eval_session/2_funk-groove2_105_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-194": {
   "source": "groove",
@@ -1125,7 +1218,8 @@
   "subgenre": "groove2",
   "midi_path": "drummer5/eval_session/2_funk-groove2_105_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-195": {
   "source": "groove",
@@ -1137,7 +1231,8 @@
   "subgenre": "groove2",
   "midi_path": "drummer5/eval_session/2_funk-groove2_105_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-196": {
   "source": "groove",
@@ -1149,7 +1244,8 @@
   "subgenre": "groove2",
   "midi_path": "drummer7/eval_session/2_funk-groove2_105_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-197": {
   "source": "groove",
@@ -1161,7 +1257,8 @@
   "subgenre": "groove2",
   "midi_path": "drummer7/eval_session/2_funk-groove2_105_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-198": {
   "source": "groove",
@@ -1173,7 +1270,8 @@
   "subgenre": "groove2",
   "midi_path": "drummer8/eval_session/2_funk-groove2_105_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-199": {
   "source": "groove",
@@ -1185,7 +1283,8 @@
   "subgenre": "groove2",
   "midi_path": "drummer8/eval_session/2_funk-groove2_105_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-200": {
   "source": "groove",
@@ -1197,7 +1296,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/18_funk_108_beat_4-4.mid",
   "start_bar": 24,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-201": {
   "source": "groove",
@@ -1209,7 +1309,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/18_funk_108_beat_4-4.mid",
   "start_bar": 44,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-202": {
   "source": "groove",
@@ -1221,7 +1322,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/18_funk_108_beat_4-4.mid",
   "start_bar": 48,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-203": {
   "source": "groove",
@@ -1233,7 +1335,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/19_funk_108_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-204": {
   "source": "groove",
@@ -1245,7 +1348,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/19_funk_108_beat_4-4.mid",
   "start_bar": 44,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-205": {
   "source": "groove",
@@ -1257,7 +1361,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/19_funk_108_beat_4-4.mid",
   "start_bar": 54,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-206": {
   "source": "groove",
@@ -1269,7 +1374,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/106_hiphop_70_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-207": {
   "source": "groove",
@@ -1281,7 +1387,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/106_hiphop_70_beat_4-4.mid",
   "start_bar": 6,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-208": {
   "source": "groove",
@@ -1293,7 +1400,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/106_hiphop_70_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-209": {
   "source": "groove",
@@ -1305,7 +1413,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/92_hiphop_70_beat_4-4.mid",
   "start_bar": 10,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-210": {
   "source": "groove",
@@ -1317,7 +1426,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/92_hiphop_70_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-211": {
   "source": "groove",
@@ -1329,7 +1439,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/92_hiphop_70_beat_4-4.mid",
   "start_bar": 32,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-212": {
   "source": "groove",
@@ -1341,7 +1452,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/23_hiphop_70_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-213": {
   "source": "groove",
@@ -1353,7 +1465,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/23_hiphop_70_beat_4-4.mid",
   "start_bar": 28,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-214": {
   "source": "groove",
@@ -1365,7 +1478,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/23_hiphop_70_beat_4-4.mid",
   "start_bar": 32,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-215": {
   "source": "groove",
@@ -1377,7 +1491,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session2/87_hiphop_75_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-216": {
   "source": "groove",
@@ -1389,7 +1504,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session2/87_hiphop_75_beat_4-4.mid",
   "start_bar": 20,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-217": {
   "source": "groove",
@@ -1401,7 +1517,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session2/87_hiphop_75_beat_4-4.mid",
   "start_bar": 6,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-218": {
   "source": "groove",
@@ -1413,7 +1530,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session2/92_hiphop_75_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-219": {
   "source": "groove",
@@ -1425,7 +1543,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session2/93_hiphop_75_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-220": {
   "source": "groove",
@@ -1437,7 +1556,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session2/93_hiphop_75_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-221": {
   "source": "groove",
@@ -1449,7 +1569,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session2/93_hiphop_75_beat_4-4.mid",
   "start_bar": 6,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-222": {
   "source": "groove",
@@ -1461,7 +1582,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/10_hiphop_86_beat_4-4.mid",
   "start_bar": 16,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-223": {
   "source": "groove",
@@ -1473,7 +1595,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/10_hiphop_86_beat_4-4.mid",
   "start_bar": 18,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-224": {
   "source": "groove",
@@ -1485,7 +1608,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/10_hiphop_86_beat_4-4.mid",
   "start_bar": 28,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-225": {
   "source": "groove",
@@ -1497,7 +1621,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/9_hiphop_86_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-226": {
   "source": "groove",
@@ -1509,7 +1634,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session2/9_hiphop_86_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-227": {
   "source": "groove",
@@ -1521,7 +1647,8 @@
   "subgenre": "groove6",
   "midi_path": "drummer1/eval_session/6_hiphop-groove6_87_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-228": {
   "source": "groove",
@@ -1533,7 +1660,8 @@
   "subgenre": "groove6",
   "midi_path": "drummer1/eval_session/6_hiphop-groove6_87_beat_4-4.mid",
   "start_bar": 10,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-229": {
   "source": "groove",
@@ -1545,7 +1673,8 @@
   "subgenre": "groove6",
   "midi_path": "drummer1/eval_session/6_hiphop-groove6_87_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-230": {
   "source": "groove",
@@ -1557,7 +1686,8 @@
   "subgenre": "groove6",
   "midi_path": "drummer5/eval_session/6_hiphop-groove6_87_beat_4-4.mid",
   "start_bar": 10,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-231": {
   "source": "groove",
@@ -1569,7 +1699,8 @@
   "subgenre": "groove6",
   "midi_path": "drummer5/eval_session/6_hiphop-groove6_87_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-232": {
   "source": "groove",
@@ -1581,7 +1712,8 @@
   "subgenre": "groove6",
   "midi_path": "drummer7/eval_session/6_hiphop-groove6_87_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-233": {
   "source": "groove",
@@ -1593,7 +1725,8 @@
   "subgenre": "groove6",
   "midi_path": "drummer7/eval_session/6_hiphop-groove6_87_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-234": {
   "source": "groove",
@@ -1605,7 +1738,8 @@
   "subgenre": "groove6",
   "midi_path": "drummer8/eval_session/6_hiphop-groove6_87_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-235": {
   "source": "groove",
@@ -1617,7 +1751,8 @@
   "subgenre": "groove6",
   "midi_path": "drummer8/eval_session/6_hiphop-groove6_87_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-236": {
   "source": "groove",
@@ -1629,7 +1764,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/3_hiphop_90_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-237": {
   "source": "groove",
@@ -1641,7 +1777,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/3_hiphop_90_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-238": {
   "source": "groove",
@@ -1653,7 +1790,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/4_hiphop_90_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-239": {
   "source": "groove",
@@ -1665,7 +1803,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/4_hiphop_90_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-240": {
   "source": "groove",
@@ -1677,7 +1816,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/5_hiphop_90_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-241": {
   "source": "groove",
@@ -1689,7 +1829,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/5_hiphop_90_beat_4-4.mid",
   "start_bar": 20,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-242": {
   "source": "groove",
@@ -1701,7 +1842,8 @@
   "subgenre": null,
   "midi_path": "drummer3/session2/25_hiphop_92_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-243": {
   "source": "groove",
@@ -1713,7 +1855,8 @@
   "subgenre": null,
   "midi_path": "drummer3/session2/25_hiphop_92_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-244": {
   "source": "groove",
@@ -1725,7 +1868,8 @@
   "subgenre": null,
   "midi_path": "drummer3/session2/25_hiphop_92_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-245": {
   "source": "groove",
@@ -1737,7 +1881,8 @@
   "subgenre": null,
   "midi_path": "drummer3/session2/26_hiphop_92_beat_4-4.mid",
   "start_bar": 2,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-246": {
   "source": "groove",
@@ -1749,7 +1894,8 @@
   "subgenre": null,
   "midi_path": "drummer3/session2/26_hiphop_92_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-247": {
   "source": "groove",
@@ -1761,7 +1907,8 @@
   "subgenre": null,
   "midi_path": "drummer3/session2/26_hiphop_92_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-248": {
   "source": "groove",
@@ -1773,7 +1920,8 @@
   "subgenre": null,
   "midi_path": "drummer3/session2/31_hiphop_92_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-249": {
   "source": "groove",
@@ -1785,7 +1933,8 @@
   "subgenre": null,
   "midi_path": "drummer3/session2/32_hiphop_92_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-250": {
   "source": "groove",
@@ -1797,7 +1946,8 @@
   "subgenre": null,
   "midi_path": "drummer3/session2/33_hiphop_92_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-251": {
   "source": "groove",
@@ -1809,7 +1959,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/14_hiphop_94_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-252": {
   "source": "groove",
@@ -1821,7 +1972,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/14_hiphop_94_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-253": {
   "source": "groove",
@@ -1833,7 +1985,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/15_hiphop_94_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-254": {
   "source": "groove",
@@ -1845,7 +1998,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/15_hiphop_94_beat_4-4.mid",
   "start_bar": 38,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-255": {
   "source": "groove",
@@ -1857,7 +2011,8 @@
   "subgenre": null,
   "midi_path": "drummer8/session1/15_hiphop_94_beat_4-4.mid",
   "start_bar": 52,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-256": {
   "source": "groove",
@@ -1869,7 +2024,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/16_hiphop_100_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-257": {
   "source": "groove",
@@ -1881,7 +2037,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/16_hiphop_100_beat_4-4.mid",
   "start_bar": 16,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-258": {
   "source": "groove",
@@ -1893,7 +2050,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/16_hiphop_100_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-259": {
   "source": "groove",
@@ -1905,7 +2063,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/17_hiphop_100_beat_4-4.mid",
   "start_bar": 14,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-260": {
   "source": "groove",
@@ -1917,7 +2076,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/17_hiphop_100_beat_4-4.mid",
   "start_bar": 16,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-261": {
   "source": "groove",
@@ -1929,7 +2089,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/17_hiphop_100_beat_4-4.mid",
   "start_bar": 2,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-262": {
   "source": "groove",
@@ -1941,7 +2102,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/18_hiphop_100_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-263": {
   "source": "groove",
@@ -1953,7 +2115,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/18_hiphop_100_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-264": {
   "source": "groove",
@@ -1965,7 +2128,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/18_hiphop_100_beat_4-4.mid",
   "start_bar": 6,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-265": {
   "source": "groove",
@@ -1977,7 +2141,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/22_hiphop_100_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-266": {
   "source": "groove",
@@ -1989,7 +2154,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/22_hiphop_100_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-267": {
   "source": "groove",
@@ -2001,7 +2167,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/22_hiphop_100_beat_4-4.mid",
   "start_bar": 6,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-268": {
   "source": "groove",
@@ -2013,7 +2180,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/38_hiphop_100_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-269": {
   "source": "groove",
@@ -2025,7 +2193,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/38_hiphop_100_beat_4-4.mid",
   "start_bar": 6,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-270": {
   "source": "groove",
@@ -2037,7 +2206,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/38_hiphop_100_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-271": {
   "source": "groove",
@@ -2049,7 +2219,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/39_hiphop_100_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-272": {
   "source": "groove",
@@ -2061,7 +2232,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/39_hiphop_100_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-273": {
   "source": "groove",
@@ -2073,7 +2245,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/40_hiphop_100_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-274": {
   "source": "groove",
@@ -2085,7 +2258,8 @@
   "subgenre": null,
   "midi_path": "drummer3/session2/40_hiphop_110_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-275": {
   "source": "groove",
@@ -2097,7 +2271,8 @@
   "subgenre": null,
   "midi_path": "drummer3/session2/40_hiphop_110_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-276": {
   "source": "groove",
@@ -2109,7 +2284,8 @@
   "subgenre": null,
   "midi_path": "drummer3/session2/40_hiphop_110_beat_4-4.mid",
   "start_bar": 6,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-277": {
   "source": "groove",
@@ -2121,7 +2297,8 @@
   "subgenre": "march",
   "midi_path": "drummer1/session2/7_jazz-march_88_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-278": {
   "source": "groove",
@@ -2133,7 +2310,8 @@
   "subgenre": "march",
   "midi_path": "drummer1/session2/7_jazz-march_88_beat_4-4.mid",
   "start_bar": 24,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-279": {
   "source": "groove",
@@ -2145,7 +2323,8 @@
   "subgenre": "march",
   "midi_path": "drummer1/session2/7_jazz-march_88_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-280": {
   "source": "groove",
@@ -2157,7 +2336,8 @@
   "subgenre": null,
   "midi_path": "drummer3/session2/27_jazz_92_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-281": {
   "source": "groove",
@@ -2169,7 +2349,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/48_jazz_93_beat_4-4.mid",
   "start_bar": 18,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-282": {
   "source": "groove",
@@ -2181,7 +2362,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/48_jazz_93_beat_4-4.mid",
   "start_bar": 28,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-283": {
   "source": "groove",
@@ -2193,7 +2375,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/48_jazz_93_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-284": {
   "source": "groove",
@@ -2205,7 +2388,8 @@
   "subgenre": "fusion",
   "midi_path": "drummer7/session2/112_jazz-fusion_96_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-285": {
   "source": "groove",
@@ -2217,7 +2401,8 @@
   "subgenre": "fusion",
   "midi_path": "drummer7/session2/112_jazz-fusion_96_beat_4-4.mid",
   "start_bar": 10,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-286": {
   "source": "groove",
@@ -2229,7 +2414,8 @@
   "subgenre": "fusion",
   "midi_path": "drummer7/session2/112_jazz-fusion_96_beat_4-4.mid",
   "start_bar": 14,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-287": {
   "source": "groove",
@@ -2241,7 +2427,8 @@
   "subgenre": "fusion",
   "midi_path": "drummer7/session2/113_jazz-fusion_96_beat_4-4.mid",
   "start_bar": 14,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-288": {
   "source": "groove",
@@ -2253,7 +2440,8 @@
   "subgenre": "fusion",
   "midi_path": "drummer7/session2/113_jazz-fusion_96_beat_4-4.mid",
   "start_bar": 6,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-289": {
   "source": "groove",
@@ -2265,7 +2453,8 @@
   "subgenre": "fusion",
   "midi_path": "drummer7/session2/113_jazz-fusion_96_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-290": {
   "source": "groove",
@@ -2277,7 +2466,8 @@
   "subgenre": "fusion",
   "midi_path": "drummer7/session2/114_jazz-fusion_96_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-291": {
   "source": "groove",
@@ -2289,7 +2479,8 @@
   "subgenre": "fusion",
   "midi_path": "drummer7/session2/114_jazz-fusion_96_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-292": {
   "source": "groove",
@@ -2301,7 +2492,8 @@
   "subgenre": "fusion",
   "midi_path": "drummer7/session2/115_jazz-fusion_96_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-293": {
   "source": "groove",
@@ -2313,7 +2505,8 @@
   "subgenre": "fusion",
   "midi_path": "drummer7/session2/115_jazz-fusion_96_beat_4-4.mid",
   "start_bar": 20,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-294": {
   "source": "groove",
@@ -2325,7 +2518,8 @@
   "subgenre": "fusion",
   "midi_path": "drummer7/session2/115_jazz-fusion_96_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-295": {
   "source": "groove",
@@ -2337,7 +2531,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/14_jazz_100_beat_4-4.mid",
   "start_bar": 14,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-296": {
   "source": "groove",
@@ -2349,7 +2544,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/14_jazz_100_beat_4-4.mid",
   "start_bar": 22,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-297": {
   "source": "groove",
@@ -2361,7 +2557,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session1/14_jazz_100_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-298": {
   "source": "groove",
@@ -2373,7 +2570,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/47_jazz_102_beat_4-4.mid",
   "start_bar": 24,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-299": {
   "source": "groove",
@@ -2385,7 +2583,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/47_jazz_102_beat_4-4.mid",
   "start_bar": 26,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-300": {
   "source": "groove",
@@ -2397,7 +2596,8 @@
   "subgenre": null,
   "midi_path": "drummer1/session1/47_jazz_102_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-301": {
   "source": "groove",
@@ -2409,7 +2609,8 @@
   "subgenre": null,
   "midi_path": "drummer3/session1/8_jazz_105_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-302": {
   "source": "groove",
@@ -2421,7 +2622,8 @@
   "subgenre": "swing",
   "midi_path": "drummer10/session1/10_jazz-swing_110_beat_4-4.mid",
   "start_bar": 26,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-303": {
   "source": "groove",
@@ -2433,7 +2635,8 @@
   "subgenre": "swing",
   "midi_path": "drummer10/session1/10_jazz-swing_110_beat_4-4.mid",
   "start_bar": 48,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-304": {
   "source": "groove",
@@ -2445,7 +2648,8 @@
   "subgenre": "swing",
   "midi_path": "drummer10/session1/10_jazz-swing_110_beat_4-4.mid",
   "start_bar": 76,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-305": {
   "source": "groove",
@@ -2457,7 +2661,8 @@
   "subgenre": "swing",
   "midi_path": "drummer10/session1/9_jazz-swing_110_beat_4-4.mid",
   "start_bar": 22,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-306": {
   "source": "groove",
@@ -2469,7 +2674,8 @@
   "subgenre": "swing",
   "midi_path": "drummer10/session1/9_jazz-swing_110_beat_4-4.mid",
   "start_bar": 26,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-307": {
   "source": "groove",
@@ -2481,7 +2687,8 @@
   "subgenre": "swing",
   "midi_path": "drummer10/session1/9_jazz-swing_110_beat_4-4.mid",
   "start_bar": 28,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-308": {
   "source": "groove",
@@ -2493,7 +2700,8 @@
   "subgenre": "funk",
   "midi_path": "drummer8/session1/10_neworleans-funk_82_beat_4-4.mid",
   "start_bar": 14,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-309": {
   "source": "groove",
@@ -2505,7 +2713,8 @@
   "subgenre": "funk",
   "midi_path": "drummer8/session1/10_neworleans-funk_82_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-310": {
   "source": "groove",
@@ -2517,7 +2726,8 @@
   "subgenre": "funk",
   "midi_path": "drummer8/session1/11_neworleans-funk_82_beat_4-4.mid",
   "start_bar": 18,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-311": {
   "source": "groove",
@@ -2529,7 +2739,8 @@
   "subgenre": "funk",
   "midi_path": "drummer8/session1/11_neworleans-funk_82_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-312": {
   "source": "groove",
@@ -2541,7 +2752,8 @@
   "subgenre": "funk",
   "midi_path": "drummer8/session1/11_neworleans-funk_82_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-313": {
   "source": "groove",
@@ -2553,7 +2765,8 @@
   "subgenre": "funk",
   "midi_path": "drummer1/session1/82_neworleans-funk_84_beat_4-4.mid",
   "start_bar": 10,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-314": {
   "source": "groove",
@@ -2565,7 +2778,8 @@
   "subgenre": "funk",
   "midi_path": "drummer1/session1/82_neworleans-funk_84_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-315": {
   "source": "groove",
@@ -2577,7 +2791,8 @@
   "subgenre": "funk",
   "midi_path": "drummer1/session1/82_neworleans-funk_84_beat_4-4.mid",
   "start_bar": 16,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-316": {
   "source": "groove",
@@ -2589,7 +2804,8 @@
   "subgenre": "funk",
   "midi_path": "drummer8/session2/19_neworleans-funk_90_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-317": {
   "source": "groove",
@@ -2601,7 +2817,8 @@
   "subgenre": "funk",
   "midi_path": "drummer8/session2/19_neworleans-funk_90_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-318": {
   "source": "groove",
@@ -2613,7 +2830,8 @@
   "subgenre": "funk",
   "midi_path": "drummer8/session2/19_neworleans-funk_90_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-319": {
   "source": "groove",
@@ -2625,7 +2843,8 @@
   "subgenre": "funk",
   "midi_path": "drummer8/session2/20_neworleans-funk_90_beat_4-4.mid",
   "start_bar": 20,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-320": {
   "source": "groove",
@@ -2637,7 +2856,8 @@
   "subgenre": "funk",
   "midi_path": "drummer8/session2/20_neworleans-funk_90_beat_4-4.mid",
   "start_bar": 34,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-321": {
   "source": "groove",
@@ -2649,7 +2869,8 @@
   "subgenre": "funk",
   "midi_path": "drummer8/session2/20_neworleans-funk_90_beat_4-4.mid",
   "start_bar": 48,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-322": {
   "source": "groove",
@@ -2661,7 +2882,8 @@
   "subgenre": "funk",
   "midi_path": "drummer7/session3/67_neworleans-funk_93_beat_4-4.mid",
   "start_bar": 10,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-323": {
   "source": "groove",
@@ -2673,7 +2895,8 @@
   "subgenre": "funk",
   "midi_path": "drummer7/session3/67_neworleans-funk_93_beat_4-4.mid",
   "start_bar": 28,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-324": {
   "source": "groove",
@@ -2685,7 +2908,8 @@
   "subgenre": "funk",
   "midi_path": "drummer7/session3/67_neworleans-funk_93_beat_4-4.mid",
   "start_bar": 2,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-325": {
   "source": "groove",
@@ -2697,7 +2921,8 @@
   "subgenre": "funk",
   "midi_path": "drummer7/session3/91_neworleans-funk_93_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-326": {
   "source": "groove",
@@ -2709,7 +2934,8 @@
   "subgenre": "funk",
   "midi_path": "drummer7/session3/91_neworleans-funk_93_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-327": {
   "source": "groove",
@@ -2721,7 +2947,8 @@
   "subgenre": "funk",
   "midi_path": "drummer7/session3/91_neworleans-funk_93_beat_4-4.mid",
   "start_bar": 6,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-328": {
   "source": "groove",
@@ -2733,7 +2960,8 @@
   "subgenre": "secondline",
   "midi_path": "drummer1/session1/100_neworleans-secondline_94_beat_4-4.mid",
   "start_bar": 14,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-329": {
   "source": "groove",
@@ -2745,7 +2973,8 @@
   "subgenre": "secondline",
   "midi_path": "drummer1/session1/100_neworleans-secondline_94_beat_4-4.mid",
   "start_bar": 16,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-330": {
   "source": "groove",
@@ -2757,7 +2986,8 @@
   "subgenre": "secondline",
   "midi_path": "drummer1/session1/100_neworleans-secondline_94_beat_4-4.mid",
   "start_bar": 28,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-331": {
   "source": "groove",
@@ -2769,7 +2999,8 @@
   "subgenre": "secondline",
   "midi_path": "drummer5/session2/6_neworleans-secondline_99_beat_4-4.mid",
   "start_bar": 32,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-332": {
   "source": "groove",
@@ -2781,7 +3012,8 @@
   "subgenre": "secondline",
   "midi_path": "drummer5/session2/6_neworleans-secondline_99_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-333": {
   "source": "groove",
@@ -2793,7 +3025,8 @@
   "subgenre": "funk",
   "midi_path": "drummer5/session2/10_neworleans-funk_102_beat_4-4.mid",
   "start_bar": 32,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-334": {
   "source": "groove",
@@ -2805,7 +3038,8 @@
   "subgenre": "funk",
   "midi_path": "drummer5/session2/10_neworleans-funk_102_beat_4-4.mid",
   "start_bar": 6,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-335": {
   "source": "groove",
@@ -2817,7 +3051,8 @@
   "subgenre": "funk",
   "midi_path": "drummer5/session2/10_neworleans-funk_102_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-336": {
   "source": "groove",
@@ -2829,7 +3064,8 @@
   "subgenre": "shuffle",
   "midi_path": "drummer5/session2/9_neworleans-shuffle_104_beat_4-4.mid",
   "start_bar": 14,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-337": {
   "source": "groove",
@@ -2841,7 +3077,8 @@
   "subgenre": "shuffle",
   "midi_path": "drummer5/session2/9_neworleans-shuffle_104_beat_4-4.mid",
   "start_bar": 24,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-338": {
   "source": "groove",
@@ -2853,7 +3090,8 @@
   "subgenre": "groove4",
   "midi_path": "drummer1/eval_session/4_soul-groove4_80_beat_4-4.mid",
   "start_bar": 2,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-339": {
   "source": "groove",
@@ -2865,7 +3103,8 @@
   "subgenre": "groove4",
   "midi_path": "drummer1/eval_session/4_soul-groove4_80_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-340": {
   "source": "groove",
@@ -2877,7 +3116,8 @@
   "subgenre": "groove4",
   "midi_path": "drummer5/eval_session/4_soul-groove4_80_beat_4-4.mid",
   "start_bar": 2,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-341": {
   "source": "groove",
@@ -2889,7 +3129,8 @@
   "subgenre": "groove4",
   "midi_path": "drummer5/eval_session/4_soul-groove4_80_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-342": {
   "source": "groove",
@@ -2901,7 +3142,8 @@
   "subgenre": "groove4",
   "midi_path": "drummer5/eval_session/4_soul-groove4_80_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-343": {
   "source": "groove",
@@ -2913,7 +3155,8 @@
   "subgenre": "groove4",
   "midi_path": "drummer7/eval_session/4_soul-groove4_80_beat_4-4.mid",
   "start_bar": 2,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-344": {
   "source": "groove",
@@ -2925,7 +3168,8 @@
   "subgenre": "groove4",
   "midi_path": "drummer7/eval_session/4_soul-groove4_80_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-345": {
   "source": "groove",
@@ -2937,7 +3181,8 @@
   "subgenre": "groove4",
   "midi_path": "drummer8/eval_session/4_soul-groove4_80_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-346": {
   "source": "groove",
@@ -2949,7 +3194,8 @@
   "subgenre": "groove4",
   "midi_path": "drummer8/eval_session/4_soul-groove4_80_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-347": {
   "source": "groove",
@@ -2961,7 +3207,8 @@
   "subgenre": "groove3",
   "midi_path": "drummer1/eval_session/3_soul-groove3_86_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-348": {
   "source": "groove",
@@ -2973,7 +3220,8 @@
   "subgenre": "groove3",
   "midi_path": "drummer1/eval_session/3_soul-groove3_86_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-349": {
   "source": "groove",
@@ -2985,7 +3233,8 @@
   "subgenre": "groove3",
   "midi_path": "drummer5/eval_session/3_soul-groove3_86_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-350": {
   "source": "groove",
@@ -2997,7 +3246,8 @@
   "subgenre": "groove3",
   "midi_path": "drummer5/eval_session/3_soul-groove3_86_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-351": {
   "source": "groove",
@@ -3009,7 +3259,8 @@
   "subgenre": "groove3",
   "midi_path": "drummer7/eval_session/3_soul-groove3_86_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-352": {
   "source": "groove",
@@ -3021,7 +3272,8 @@
   "subgenre": "groove3",
   "midi_path": "drummer7/eval_session/3_soul-groove3_86_beat_4-4.mid",
   "start_bar": 10,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-353": {
   "source": "groove",
@@ -3033,7 +3285,8 @@
   "subgenre": "groove3",
   "midi_path": "drummer8/eval_session/3_soul-groove3_86_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-354": {
   "source": "groove",
@@ -3045,7 +3298,8 @@
   "subgenre": "groove3",
   "midi_path": "drummer8/eval_session/3_soul-groove3_86_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-355": {
   "source": "groove",
@@ -3057,7 +3311,8 @@
   "subgenre": null,
   "midi_path": "drummer5/session2/11_soul_96_beat_4-4.mid",
   "start_bar": 14,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-356": {
   "source": "groove",
@@ -3069,7 +3324,8 @@
   "subgenre": null,
   "midi_path": "drummer5/session2/11_soul_96_beat_4-4.mid",
   "start_bar": 16,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-357": {
   "source": "groove",
@@ -3081,7 +3337,8 @@
   "subgenre": null,
   "midi_path": "drummer5/session2/11_soul_96_beat_4-4.mid",
   "start_bar": 40,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-358": {
   "source": "groove",
@@ -3093,7 +3350,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/151_soul_98_beat_4-4.mid",
   "start_bar": 14,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-359": {
   "source": "groove",
@@ -3105,7 +3363,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/151_soul_98_beat_4-4.mid",
   "start_bar": 20,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-360": {
   "source": "groove",
@@ -3117,7 +3376,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/151_soul_98_beat_4-4.mid",
   "start_bar": 28,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-361": {
   "source": "groove",
@@ -3129,7 +3389,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/159_soul_98_beat_4-4.mid",
   "start_bar": 2,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-362": {
   "source": "groove",
@@ -3141,7 +3402,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/159_soul_98_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-363": {
   "source": "groove",
@@ -3153,7 +3415,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/159_soul_98_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-364": {
   "source": "groove",
@@ -3165,7 +3428,8 @@
   "subgenre": "groove10",
   "midi_path": "drummer1/eval_session/10_soul-groove10_102_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-365": {
   "source": "groove",
@@ -3177,7 +3441,8 @@
   "subgenre": "groove10",
   "midi_path": "drummer1/eval_session/10_soul-groove10_102_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-366": {
   "source": "groove",
@@ -3189,7 +3454,8 @@
   "subgenre": "groove10",
   "midi_path": "drummer5/eval_session/10_soul-groove10_102_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-367": {
   "source": "groove",
@@ -3201,7 +3467,8 @@
   "subgenre": "groove10",
   "midi_path": "drummer5/eval_session/10_soul-groove10_102_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-368": {
   "source": "groove",
@@ -3213,7 +3480,8 @@
   "subgenre": "groove10",
   "midi_path": "drummer5/eval_session/10_soul-groove10_102_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-369": {
   "source": "groove",
@@ -3225,7 +3493,8 @@
   "subgenre": "groove10",
   "midi_path": "drummer7/eval_session/10_soul-groove10_102_beat_4-4.mid",
   "start_bar": 2,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-370": {
   "source": "groove",
@@ -3237,7 +3506,8 @@
   "subgenre": "groove10",
   "midi_path": "drummer7/eval_session/10_soul-groove10_102_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-371": {
   "source": "groove",
@@ -3249,7 +3519,8 @@
   "subgenre": "groove10",
   "midi_path": "drummer7/eval_session/10_soul-groove10_102_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-372": {
   "source": "groove",
@@ -3261,7 +3532,8 @@
   "subgenre": "groove10",
   "midi_path": "drummer8/eval_session/10_soul-groove10_102_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-373": {
   "source": "groove",
@@ -3273,7 +3545,8 @@
   "subgenre": "groove10",
   "midi_path": "drummer8/eval_session/10_soul-groove10_102_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-374": {
   "source": "groove",
@@ -3285,7 +3558,8 @@
   "subgenre": "motown",
   "midi_path": "drummer7/session2/106_soul-motown_104_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-375": {
   "source": "groove",
@@ -3297,7 +3571,8 @@
   "subgenre": "motown",
   "midi_path": "drummer7/session2/106_soul-motown_104_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-376": {
   "source": "groove",
@@ -3309,7 +3584,8 @@
   "subgenre": "motown",
   "midi_path": "drummer7/session2/106_soul-motown_104_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-377": {
   "source": "groove",
@@ -3321,7 +3597,8 @@
   "subgenre": "motown",
   "midi_path": "drummer7/session2/108_soul-motown_104_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-378": {
   "source": "groove",
@@ -3333,7 +3610,8 @@
   "subgenre": "motown",
   "midi_path": "drummer7/session2/108_soul-motown_104_beat_4-4.mid",
   "start_bar": 2,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-379": {
   "source": "groove",
@@ -3345,7 +3623,8 @@
   "subgenre": "motown",
   "midi_path": "drummer7/session2/108_soul-motown_104_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-380": {
   "source": "groove",
@@ -3357,7 +3636,8 @@
   "subgenre": "groove9",
   "midi_path": "drummer1/eval_session/9_soul-groove9_105_beat_4-4.mid",
   "start_bar": 2,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-381": {
   "source": "groove",
@@ -3369,7 +3649,8 @@
   "subgenre": "groove9",
   "midi_path": "drummer1/eval_session/9_soul-groove9_105_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-382": {
   "source": "groove",
@@ -3381,7 +3662,8 @@
   "subgenre": "groove9",
   "midi_path": "drummer5/eval_session/9_soul-groove9_105_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-383": {
   "source": "groove",
@@ -3393,7 +3675,8 @@
   "subgenre": "groove9",
   "midi_path": "drummer5/eval_session/9_soul-groove9_105_beat_4-4.mid",
   "start_bar": 10,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-384": {
   "source": "groove",
@@ -3405,7 +3688,8 @@
   "subgenre": "groove9",
   "midi_path": "drummer7/eval_session/9_soul-groove9_105_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-385": {
   "source": "groove",
@@ -3417,7 +3701,8 @@
   "subgenre": "groove9",
   "midi_path": "drummer7/eval_session/9_soul-groove9_105_beat_4-4.mid",
   "start_bar": 10,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-386": {
   "source": "groove",
@@ -3429,7 +3714,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/130_soul_105_beat_4-4.mid",
   "start_bar": 2,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-387": {
   "source": "groove",
@@ -3441,7 +3727,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/130_soul_105_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-388": {
   "source": "groove",
@@ -3453,7 +3740,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/130_soul_105_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-389": {
   "source": "groove",
@@ -3465,7 +3753,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/131_soul_105_beat_4-4.mid",
   "start_bar": 2,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-390": {
   "source": "groove",
@@ -3477,7 +3766,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/131_soul_105_beat_4-4.mid",
   "start_bar": 6,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-391": {
   "source": "groove",
@@ -3489,7 +3779,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/131_soul_105_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-392": {
   "source": "groove",
@@ -3501,7 +3792,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/132_soul_105_beat_4-4.mid",
   "start_bar": 16,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-393": {
   "source": "groove",
@@ -3513,7 +3805,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/132_soul_105_beat_4-4.mid",
   "start_bar": 24,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-394": {
   "source": "groove",
@@ -3525,7 +3818,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/132_soul_105_beat_4-4.mid",
   "start_bar": 38,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-395": {
   "source": "groove",
@@ -3537,7 +3831,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/133_soul_105_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-396": {
   "source": "groove",
@@ -3549,7 +3844,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/133_soul_105_beat_4-4.mid",
   "start_bar": 24,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-397": {
   "source": "groove",
@@ -3561,7 +3857,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/133_soul_105_beat_4-4.mid",
   "start_bar": 8,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-398": {
   "source": "groove",
@@ -3573,7 +3870,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/150_soul_105_beat_4-4.mid",
   "start_bar": 12,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-399": {
   "source": "groove",
@@ -3585,7 +3883,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/150_soul_105_beat_4-4.mid",
   "start_bar": 20,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  },
  "p-400": {
   "source": "groove",
@@ -3597,7 +3896,8 @@
   "subgenre": null,
   "midi_path": "drummer7/session3/150_soul_105_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-401": {
   "source": "groove",
@@ -3609,7 +3909,8 @@
   "subgenre": "groove9",
   "midi_path": "drummer8/eval_session/9_soul-groove9_105_beat_4-4.mid",
   "start_bar": 0,
-  "compases": 4
+  "compases": 4,
+  "tipo": "ritmo"
  },
  "p-402": {
   "source": "groove",
@@ -3621,6 +3922,7 @@
   "subgenre": "groove9",
   "midi_path": "drummer8/eval_session/9_soul-groove9_105_beat_4-4.mid",
   "start_bar": 4,
-  "compases": 2
+  "compases": 2,
+  "tipo": "ritmo"
  }
 }
