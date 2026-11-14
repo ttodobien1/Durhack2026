@@ -1,0 +1,9 @@
+# Raw downloaded datasets (re-created by data/scripts/00_download.py)
+data/raw/
+
+# Environment / secrets
+.env
+node_modules/
+__pycache__/
+.venv/
+.DS_Store
