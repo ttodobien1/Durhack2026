@@ -11,6 +11,17 @@ Seed data loaded into the database with `npm run db:seed` (or `npm run db:reset`
 > **The current pieces (`p-001` to `p-015`) and `c-001` are placeholders** so the API and the frontend can work
 > before the real seed pieces exist. Their `fuente` says so. Replace or overwrite them (same ids is fine).
 
+## Generated loops (made by the team)
+
+`piezas/stemma-generated.json` (`p-2001` to `p-2180`): 100 melodies, 40 chord loops and 40 bass lines for rap beats,
+written by `scripts/generate_loops.py` (rule-based, deterministic: `python data/scripts/generate_loops.py`). They are
+"created during the event" (CLAUDE.md section 6), author `Stemma generator`, CC BY 4.0, and `fuente` names the script.
+Why: the imported collections were one-sided (the 431 free-midi-chords loops share one rhythm; there were few
+melodies), so search, similarity and the copilot had little to work with. Melodies use 8 scales, all 12 keys and 9
+rhythm feels; chords and bass use common rap / lo-fi progressions with varied rhythms. The seed (2027) was picked so
+no generated melody nearly copies an existing piece (2026 produced a near-copy of "Mary Had a Little Lamb"), checked
+with `backend/src/lib/fingerprint.js`. They have not been reviewed by ear yet: listen before relying on them in a demo.
+
 ## Rules for pieces
 
 - `id` is required in seed files (`p-001`, `p-002`, ...). Forks need `parent_id` pointing to a piece that exists.
