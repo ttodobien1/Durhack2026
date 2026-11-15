@@ -5,6 +5,10 @@ import { db } from '../db/client.js';
 import { features } from '../db/features.js';
 import { huellaVector, similitud } from '../lib/fingerprint.js';
 
+/** The near-copy test pieces (data/scripts/make_near_copy_tests.py) carry the style tag "near-copy-demo", stored
+ * normalized ("nearcopydemo"), so compare letters only. */
+export const isNearCopyTest = (pieza) => (pieza.estilo ?? []).some((t) => String(t).toLowerCase().replace(/[^a-z]/g, '') === 'nearcopydemo');
+
 const MAX_AGE = 30_000; // also refresh on a timer: pieces can change through routes that do not call forget()
 let cache = null; // { at, byTipo: { tipo: [{ pieza, f }] }, scale: { tipo: typical distance } }
 
@@ -69,7 +73,9 @@ export async function similarTo(pieza, { n = 8 } = {}) {
 export async function nearCopyOf(pieza, autor) {
   if (pieza.tipo !== 'melodia') return null;
   const { byTipo, scale } = await library();
-  return tooClose(pieza, byTipo[pieza.tipo] ?? [], { autor, id: pieza.id ?? null, parentId: pieza.parent_id ?? null, scale: scale[pieza.tipo] });
+  // The near-copy test pieces (data/piezas/near-copy-tests.json) are copies on purpose: never name them as an original.
+  const originals = (byTipo[pieza.tipo] ?? []).filter((e) => !isNearCopyTest(e.pieza));
+  return tooClose(pieza, originals, { autor, id: pieza.id ?? null, parentId: pieza.parent_id ?? null, scale: scale[pieza.tipo] });
 }
 
 const round = (x, digits = 3) => Math.round(x * 10 ** digits) / 10 ** digits;

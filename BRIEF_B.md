@@ -85,7 +85,11 @@ it needs the production database, the keys and one backfill.
    SELECT id, nombre, huella <-> (SELECT huella FROM piezas WHERE id = 'p-001') AS d
      FROM piezas WHERE tipo = 'ritmo' AND publica ORDER BY d LIMIT 5;
    ```
-8. **Integration:** merge `a/frontend` into `main` when the deploy checks out. `main` must keep working.
+8. **Load the near-copy test pieces** (`data/piezas/near-copy-tests.json`, `p-9001`–`p-9006`). Point
+   `backend/.env` at Tiger and run `cd backend && npm run db:seed`. It inserts or updates by id, so it is safe to
+   re-run. Then add "Joyful theme in F (test: transposed copy)" to a song: a yellow bar must say it sounds like Ode to
+   Joy by Beethoven.
+9. **Integration:** merge `a/frontend` into `main` when the deploy checks out. `main` must keep working.
 
 ## Tell the team
 

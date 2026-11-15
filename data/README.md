@@ -22,6 +22,26 @@ rhythm feels; chords and bass use common rap / lo-fi progressions with varied rh
 no generated melody nearly copies an existing piece (2026 produced a near-copy of "Mary Had a Little Lamb"), checked
 with `backend/src/lib/fingerprint.js`. They have not been reviewed by ear yet: listen before relying on them in a demo.
 
+## Near-copy test pieces
+
+`piezas/near-copy-tests.json` (`p-9001` to `p-9006`), written by `scripts/make_near_copy_tests.py` (deterministic).
+They show the near-copy warning. Five are disguised copies of melodies in `famous-melodies.json`:
+- `p-9001`: Ode to Joy, moved to F.
+- `p-9002`: Twinkle Twinkle, starting two beats late.
+- `p-9003`: Für Elise, upside down.
+- `p-9004`: Happy Birthday, with three notes changed.
+- `p-9005`: the first two bars of Mountain King, in another key.
+
+`p-9006` is an original control tune that must not warn.
+
+They are not contributions:
+- Author `Stemma test pieces`, style tag `near-copy-demo`.
+- `fuente` names the original piece and the script.
+- The copies stay Public Domain (derived from public-domain works); the control is CC BY 4.0.
+- The backend never names them as the original of anything.
+
+`backend/test/nearCopyTests.test.js` keeps each one behaving as described.
+
 ## Rules for pieces
 
 - `id` is required in seed files (`p-001`, `p-002`, ...). Forks need `parent_id` pointing to a piece that exists.

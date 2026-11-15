@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronsUpDown, FolderOpen, Globe, GitBranch, GitPullRequestArrow, Lock, Mail, MessageSquare, Pause, Play, Save, Square, Users, Volume2, VolumeX } from 'lucide-react'
+import { ChevronsUpDown, FolderOpen, Globe, GitBranch, GitPullRequestArrow, Lock, Mail, MessageSquare, Pause, Play, Save, Square, TriangleAlert, Users, Volume2, VolumeX } from 'lucide-react'
 import { api, isMock, ME } from './api.js'
 import * as audio from './audio.js'
 import { Browser } from './components/Browser.jsx'
@@ -343,8 +343,20 @@ export default function App({ projectId = 'new' }) {
   }
 
   // Song editing -----------------------------------------------------------
+  // A melody block added to the song is checked against the library: if it nearly copies someone else's melody
+  // (even in another key, upside down or starting later), a warning names the original. Never blocks the add.
+  const [copyWarn, setCopyWarn] = useState(null) // { piece, aviso }
+  const checkCopy = (piece) => {
+    if (piece.tipo !== 'melodia' || !piece.notas?.length) return
+    api.checkSimilar({ id: piece.id, parent_id: piece.parent_id, tipo: piece.tipo, notas: piece.notas }).then((r) => {
+      if (!r?.aviso) return
+      setCopyWarn({ piece, aviso: r.aviso })
+      setAviso({ pieceId: piece.id, ...r.aviso }) // also shown in the piano roll when the block is opened
+    })
+  }
   const addToSong = (piece) => {
     remember([piece])
+    checkCopy(piece)
     const instrumento = audio.instrumentFor(piece.tipo)
     setSong((s) => {
       if (s.pistas.some((t) => t.bloques.some((b) => b.pieza_id === piece.id))) return s
@@ -737,6 +749,17 @@ export default function App({ projectId = 'new' }) {
         <div className="error" role="alert">
           {error}
           <button onClick={() => setError(null)}>Dismiss</button>
+        </div>
+      )}
+      {copyWarn && !error && (
+        <div className="error copy-warn" role="status">
+          <TriangleAlert size={14} aria-hidden="true" />
+          <span>
+            <b>{copyWarn.piece.nombre}</b> sounds a lot like <b>{copyWarn.aviso.nombre}</b> by {copyWarn.aviso.autor} ({copyWarn.aviso.similitud}% alike,
+            even in another key, upside down or starting later). If it is built on theirs, use or fork the original so they are credited.
+          </span>
+          <button onClick={() => (select(copyWarn.aviso.id), setCopyWarn(null))}>Open the original</button>
+          <button onClick={() => setCopyWarn(null)}>OK</button>
         </div>
       )}
       {notice && !error && (

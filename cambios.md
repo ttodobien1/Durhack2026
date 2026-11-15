@@ -485,3 +485,20 @@ el contrato no cambia.
   - En el encabezado del piano roll, un gráfico chico con las reproducciones por hora de las últimas 24 h.
   - En History > Credits: "Your notes were played N times today".
 - **Pendiente para B (Chino):** activar las extensiones en Tiger, poner `GEMINI_API_KEY` en Vercel y correr `npm run embed`. Todo está en `BRIEF_B.md`.
+
+## 19. Piezas de prueba para el aviso de copia
+
+- **`data/piezas/near-copy-tests.json`** (`p-9001` a `p-9006`, hechas por `data/scripts/make_near_copy_tests.py`).
+  Cinco son copias disfrazadas de melodías de dominio público:
+  - Oda a la alegría en otra tonalidad.
+  - Twinkle, empezando dos tiempos tarde.
+  - Für Elise al revés.
+  - Cumpleaños feliz con tres notas cambiadas.
+  - Dos compases de Mountain King en otra tonalidad.
+
+  La huella (la magnitud de la DFT) no cambia con nada de eso, así que Stemma las reconoce: entre 88 % y 100 % de parecido. `p-9006` es una melodía original de control y no avisa.
+- **Aviso al agregar un bloque** (`App.jsx` `checkCopy`): al poner una melodía en la canción, si casi copia la melodía de otro autor, aparece una barra amarilla con el original, "Open the original" y "OK". Nunca impide agregarla. Antes solo se avisaba al guardar una pieza propia.
+- **Backend:**
+  - `POST /piezas/parecidas` con el `id` de una pieza guardada excluye las piezas del autor de esa pieza, no las de quien pregunta.
+  - Las piezas de prueba nunca se nombran como "el original" (`isNearCopyTest` en `repo/similares.js`). Así, agregar la Oda a la alegría original no avisa.
+- **Producción:** hay que cargarlas en Tiger con `npm run db:seed` (está en `BRIEF_B.md`).

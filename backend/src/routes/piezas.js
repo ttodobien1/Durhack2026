@@ -89,12 +89,16 @@ router.get('/mapa', async (req, res) => {
 });
 
 // POST /piezas/parecidas   { tipo, notas, id?, parent_id?, autor? } -> { parecidas, aviso }
+// (with the id of a saved piece, its own author's pieces are skipped, whoever asks)
 // Checks notes before (or after) they are published: the public pieces that sound most like them, and `aviso` when
 // one by someone else, outside this piece's fork family, is a near-copy (transposed, inverted or shifted counts too).
 router.post('/parecidas', async (req, res) => {
   const body = req.body ?? {};
   const pieza = { tipo: validateTipo(body.tipo), notas: validateNotas(body.notas ?? []), id: body.id ?? null, parent_id: body.parent_id ?? null };
-  const autor = req.usuario?.nombre ?? (typeof body.autor === 'string' ? body.autor : null);
+  // A saved piece is checked against everyone but its own author (e.g. a library block added to a song);
+  // unsaved notes against everyone but the person checking them.
+  const saved = typeof pieza.id === 'string' ? await getVisiblePieza(pieza.id, req.usuario?.id ?? null) : null;
+  const autor = saved?.autor ?? req.usuario?.nombre ?? (typeof body.autor === 'string' ? body.autor : null);
   res.json({ parecidas: await similarTo(pieza, { n: 5 }), aviso: await nearCopyOf(pieza, autor) });
 });
 
