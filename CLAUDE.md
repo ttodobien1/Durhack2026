@@ -181,10 +181,12 @@ Meta: **30–50 piezas**, foco en beats de rap (boom bap, lo-fi, trap).
 | Groove MIDI Dataset (Google Magenta) | Piezas de ritmo: cortar 2–4 compases por estilo | CC BY 4.0 |
 | Creadas durante el evento | Progresiones, bajos y melodías para beats | Propias |
 | PDMX (MuseScore, dominio público) | Melodías si hiciera falta | CC BY |
+| Melodías famosas de dominio público (transcritas por el equipo) | Demo de "tararéale a DJ Stemy" (`data/piezas/famous-melodies.json`) | Public Domain |
 | Lakh MIDI Dataset | **No usar** (contiene muchas obras con copyright) | — |
 
 - CC BY exige atribución: cada pieza importada lleva `autor`, `licencia` y `fuente`. Esto aparece en el árbol y es parte de la demo.
-- **No incluir melodías ni letras de canciones conocidas.** Progresiones de acordes y ritmos básicos sí se pueden usar.
+- **No incluir melodías ni letras de canciones con copyright.** Progresiones de acordes y ritmos básicos sí se pueden usar.
+- **Excepción: melodías famosas de dominio público**, para que la demo de tararear tenga canciones que todos conocen: obras de compositores fallecidos hace más de 70 años y canciones tradicionales (Beethoven, Mozart, Bach, Cumpleaños feliz...). Las transcribe el equipo, con `licencia: "Public Domain"`, el compositor como `autor` y la obra y el año en `fuente`. Nunca canciones con derechos vigentes (ej.: Queen, Bohemian Rhapsody), aunque sean famosas. Las letras siguen fuera.
 
 ---
 
