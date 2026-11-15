@@ -16,7 +16,11 @@ export function Profile({ name }) {
   const [user, setUser] = useUser()
   const own = (user?.name ?? ME) === name
   const profile = loadProfile(name)
-  const [tab, setTab] = useState('overview')
+  // "#/u/<name>?tab=projects" opens a tab directly (the My projects button in the project page uses it).
+  const [tab, setTab] = useState(() => {
+    const wanted = new URLSearchParams(location.hash.split('?')[1] ?? '').get('tab')
+    return ['overview', 'projects', 'pieces'].includes(wanted) ? wanted : 'overview'
+  })
   const [data, setData] = useState(null) // { pieces, projects, byId, forksOf, usedBy } | { error }
   const [playing, setPlaying] = useState(null)
 

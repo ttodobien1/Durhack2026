@@ -82,3 +82,13 @@
 .your-projects li > .dim { margin-left: auto; flex: none; font-size: 12px; }
 .your-projects .public { flex: none; }
 .your-projects .empty a { color: var(--orange); }
+
+/* Save as window (project page): name + visibility, then Keep working / My projects */
+.save-vis { display: grid; gap: 6px; margin: 0; padding: 0; border: 0; }
+.save-vis legend { margin-bottom: 4px; padding: 0; color: var(--dim); }
+.save-vis .seg button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 7px 0; font-size: 12px; }
+.save-done { display: flex; gap: 8px; align-items: flex-start; margin: 0; line-height: 1.5; }
+.save-done svg { flex: none; margin-top: 2px; color: var(--note); }
+.save-next { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.save-next .tbtn { justify-content: center; }
+@media (max-width: 480px) { .save-next { grid-template-columns: 1fr; } }
