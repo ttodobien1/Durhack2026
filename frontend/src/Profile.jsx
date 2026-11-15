@@ -7,6 +7,7 @@ import { Avatar, SiteBar } from './Site.jsx'
 import { ACCENTS, authorsFor, contributions, fetchProfile, loadProfile, useUser } from './profile.js'
 import { renderMarkdown } from './markdown.js'
 import { typeLabel } from './components/Browser.jsx'
+import { ProjectMenu } from './components/ProjectMenu.jsx'
 import './profile.css'
 
 /** Website as typed in settings, made safe to link: only http(s). */
@@ -17,7 +18,11 @@ export function Profile({ name }) {
   const own = (user?.name ?? ME) === name
   // Shown at once from this browser's copy, then replaced by the backend's version (the source of truth).
   const [profile, setProfile] = useState(() => loadProfile(name))
-  const [tab, setTab] = useState('overview')
+  // "#/u/<name>?tab=projects" opens a tab directly (the My projects button in the project page uses it).
+  const [tab, setTab] = useState(() => {
+    const wanted = new URLSearchParams(location.hash.split('?')[1] ?? '').get('tab')
+    return ['overview', 'projects', 'pieces'].includes(wanted) ? wanted : 'overview'
+  })
   const [data, setData] = useState(null) // { pieces, projects, byId, usedBy } | { error }
   const [playing, setPlaying] = useState(null)
 
@@ -186,7 +191,15 @@ export function Profile({ name }) {
             </>
           )}
 
-          {data && !data.error && tab === 'projects' && <ProjectList projects={projects} byId={data.byId} name={name} own={own} />}
+          {data && !data.error && tab === 'projects' && (
+            <ProjectList
+              projects={projects}
+              byId={data.byId}
+              name={name}
+              own={own}
+              onUpdate={(id, patch) => setData((d) => ({ ...d, projects: d.projects.map((p) => (p.id === id ? { ...p, ...patch } : p)) }))}
+            />
+          )}
           {data && !data.error && tab === 'pieces' && <PieceList pieces={pieces} playing={playing} onPreview={preview} name={name} own={own} />}
         </section>
       </main>
@@ -317,7 +330,7 @@ export function Heatmap({ counts }) {
   )
 }
 
-function ProjectList({ projects, byId, name, own }) {
+function ProjectList({ projects, byId, name, own, onUpdate }) {
   const [q, setQ] = useState('')
   const text = q.trim().toLowerCase()
   const shown = projects.filter((p) => !text || `${p.nombre} ${p.descripcion} ${p.etiquetas.join(' ')}`.toLowerCase().includes(text))
@@ -354,6 +367,8 @@ function ProjectList({ projects, byId, name, own }) {
                 <a className="tbtn" href={`#/project/${p.id}`}>
                   Open <ArrowRight size={13} />
                 </a>
+                {/* Options (Privacy / Tree / History) only for your own projects */}
+                {own && <ProjectMenu project={p} onChange={(patch) => onUpdate(p.id, patch)} />}
               </div>
             </div>
           </li>

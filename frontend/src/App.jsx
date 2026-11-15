@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Globe, GitBranch, Lock, Pause, Play, Save, Square, Volume2, VolumeX } from 'lucide-react'
+import { FolderOpen, Globe, GitBranch, Lock, Pause, Play, Save, Square, Volume2, VolumeX } from 'lucide-react'
 import { api, isMock, ME } from './api.js'
 import * as audio from './audio.js'
 import { Browser } from './components/Browser.jsx'
@@ -7,6 +7,7 @@ import { Playlist } from './components/Playlist.jsx'
 import { PianoRoll } from './components/PianoRoll.jsx'
 import { Copilot } from './components/Copilot.jsx'
 import { OriginTree } from './components/OriginTree.jsx'
+import { SaveDialog } from './components/SaveDialog.jsx'
 import { usePlayhead } from './usePlayhead.js'
 import { isMine, loadUser, recordContribution, useUser } from './profile.js'
 import { AuthDialog, Avatar, StemmaMark } from './Site.jsx'
@@ -165,7 +166,9 @@ export default function App({ projectId = 'new' }) {
       const k = e.key.toLowerCase()
       if (mod && k === 's') {
         e.preventDefault()
-        return saveProject()
+        if (saveAs) return // the Save as window is already open
+        // Your own saved project: quick save, same name and visibility. Otherwise the Save as flow.
+        return songMine && song.id !== 'c-new' && loadUser() ? quickSave() : saveProject()
       }
       if (mod && (k === 'z' || k === 'y')) {
         if (e.target.closest('input, textarea, select')) return // native text undo
@@ -182,29 +185,45 @@ export default function App({ projectId = 'new' }) {
   })
 
   // Project saving (POST /canciones for a new project, PUT /canciones/:id after that).
+  // Save → logged in? (else log in first) → "Save as" window: name + public/private → Keep working or My projects.
   const songDirty = JSON.stringify(song) !== savedJson
   const [savingSong, setSavingSong] = useState(false)
+  const [saveAs, setSaveAs] = useState(null) // null | { saved: null | Cancion } while the Save as window is open
   const songMine = isMine(song.autor)
-  const saveProject = async () => {
-    if (savingSong || !song.pistas.length) return
-    if (!signedIn('Log in to save this project.', saveProject)) return
+
+  /** Saves with optional name/visibility changes. Throws on failure; returns the saved project. */
+  const writeProject = async (changes = {}) => {
     const me = loadUser().name
     setSavingSong(true)
     try {
-      if ((draft || draftBars) && !(await save())) return
+      if ((draft || draftBars) && !(await save())) throw new Error('Could not save your edits to the selected piece.')
+      const next = { ...song, ...changes }
       // Someone else's project is saved as your copy, never over theirs.
-      const toSave = songMine ? { ...song, autor: song.id === 'c-new' ? me : song.autor } : { ...song, id: 'c-new', autor: me }
+      const toSave = songMine ? { ...next, autor: song.id === 'c-new' ? me : song.autor } : { ...next, id: 'c-new', autor: me }
       const saved = await api.saveProject(toSave)
       recordContribution()
       undoLog.current.skip = true // saving is not an undo step
       setSong(saved)
       setSavedJson(JSON.stringify(saved))
       if (!location.hash.endsWith(saved.id)) history.replaceState(null, '', `#/project/${saved.id}`) // new id, same page
-    } catch (e) {
-      fail(e)
+      return saved
     } finally {
       setSavingSong(false)
     }
+  }
+  const saveProject = () => {
+    if (savingSong || !song.pistas.length) return
+    if (!signedIn('Log in to save this project.', () => setSaveAs({ saved: null }))) return
+    setSaveAs({ saved: null })
+  }
+  const quickSave = () => {
+    if (savingSong || !song.pistas.length || !songDirty) return
+    writeProject().catch(fail)
+  }
+  const goMyProjects = () => {
+    if (!signedIn('Log in to see your projects.', goMyProjects)) return
+    if (songDirty && song.pistas.length && !window.confirm('This project has unsaved changes. Leave without saving?')) return
+    location.hash = `#/u/${encodeURIComponent(loadUser().name)}?tab=projects`
   }
 
   // Song editing -----------------------------------------------------------
@@ -392,6 +411,9 @@ export default function App({ projectId = 'new' }) {
         <button className="tbtn" onClick={saveProject} disabled={!songDirty || savingSong || !song.pistas.length} title="Save project (Ctrl+S)">
           <Save size={14} /> {savingSong ? 'Saving…' : !songDirty ? 'Saved' : songMine ? 'Save project' : 'Save a copy'}
         </button>
+        <button className="tbtn" onClick={goMyProjects} title="All your projects, public and private">
+          <FolderOpen size={14} /> My projects
+        </button>
         <div className="spacer" />
         {isMock() && <span className="badge" title="Backend unreachable, using local mock data">Mock data</span>}
         <button className="tbtn" onClick={() => setTreeOpen(true)} disabled={!song.pistas.length}>
@@ -466,6 +488,20 @@ export default function App({ projectId = 'new' }) {
             setUser(u)
             setAuth(null)
             auth.then?.()
+          }}
+        />
+      )}
+
+      {saveAs && (
+        <SaveDialog
+          song={song}
+          copy={!songMine}
+          saved={saveAs.saved}
+          onSave={async (changes) => setSaveAs({ saved: await writeProject(changes) })}
+          onClose={() => setSaveAs(null)}
+          onMyProjects={() => {
+            setSaveAs(null)
+            goMyProjects()
           }}
         />
       )}
