@@ -9,6 +9,7 @@ import { HeroNetwork } from './components/HeroNetwork.jsx'
 import { FlowDemo } from './components/FlowDemos.jsx'
 import { PieceLibrary } from './components/PieceLibrary.jsx'
 import { exampleEdit } from './exampleEdit.js'
+import { exploreClick, settleOnExplore } from './explore.js'
 import './landing.css'
 
 const ago = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
@@ -39,6 +40,16 @@ export function Landing() {
   const [demo, setDemo] = useState(null) // the "How it works" step whose popup is open
   const closeDemo = useCallback(() => setDemo(null), [])
 
+  // A reload always starts at the top: no browser scroll restoration while on the landing (back to normal when
+  // leaving it), so the page never jumps down to the projects once they load.
+  useEffect(() => {
+    history.scrollRestoration = 'manual'
+    if (location.hash !== '#explore') window.scrollTo(0, 0)
+    return () => {
+      history.scrollRestoration = 'auto' // the browser default, for every other page
+    }
+  }, [])
+
   useEffect(() => {
     setMine(null)
     if (user) api.projects(user.name).then(setMine, () => setMine([]))
@@ -51,7 +62,12 @@ export function Landing() {
       (list) => {
         const shown = list.filter((p) => !OWNERLESS.has(p.autor))
         setProjects(shown)
-        if (location.hash === '#explore') requestAnimationFrame(() => document.getElementById('explore')?.scrollIntoView()) // arrived from another page
+        // Arrived from another page's Explore link: scroll there once, then drop #explore from the URL so a reload
+        // starts at the top instead of jumping down again.
+        if (location.hash === '#explore') {
+          settleOnExplore()
+          history.replaceState(null, '', '#/')
+        }
         const ids = [...new Set(shown.flatMap((p) => p.pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id))))]
         const loaded = ids.map((id) => api.getPiece(id).then((p) => (live && setPieces((s) => ({ ...s, [p.id]: p })), p), () => null))
         Promise.all(loaded).then((list) => live && showFork(list.filter(Boolean)))
@@ -123,7 +139,7 @@ export function Landing() {
               <a className="tbtn accent big" href="#/project/new">
                 <Plus size={16} /> Start a project
               </a>
-              <a className="tbtn big" href="#explore">
+              <a className="tbtn big" href="#explore" onClick={exploreClick}>
                 Explore public projects <ArrowRight size={15} />
               </a>
             </div>

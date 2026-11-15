@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { LogOut, Settings, X } from 'lucide-react'
 import { api } from './api.js'
 import { cacheProfile, loadProfile } from './profile.js'
+import { exploreClick } from './explore.js'
 import './landing.css'
 
 /** Site header for the landing, profile and settings pages. `onUser(null)` signs out. */
@@ -16,7 +17,9 @@ export function SiteBar({ user, onUser }) {
         <span>Stemma</span>
       </a>
       <nav className="site-nav" aria-label="Main">
-        <a href="#explore">Explore</a>
+        <a href="#explore" onClick={exploreClick}>
+          Explore
+        </a>
         <a href="#/project/new">New project</a>
         <a href="#/upload">Upload</a>
         {user ? (
