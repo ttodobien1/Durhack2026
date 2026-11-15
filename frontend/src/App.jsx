@@ -27,7 +27,12 @@ export default function App({ projectId = 'new' }) {
   const [savedJson, setSavedJson] = useState(() => JSON.stringify(emptySong())) // song as last loaded or saved
   const [diff, setDiff] = useState(null)
   const [playing, setPlaying] = useState(null) // 'song' | piece id | null
-  const [historyTab, setHistoryTab] = useState(null) // project history window: null | 'tree' | 'changes' | 'versions' | 'merge' | 'credits'
+  // Project history window: null | 'tree' | 'changes' | 'versions' | 'merge' | 'credits'.
+  // "#/project/<id>?history=<tab>" opens it right away (the Tree / History options in My projects).
+  const [historyTab, setHistoryTab] = useState(() => {
+    const tab = location.hash.match(/[?&]history=(\w+)/)?.[1]
+    return ['tree', 'changes', 'versions', 'merge', 'credits'].includes(tab) ? tab : null
+  })
   const [notice, setNotice] = useState(null) // short confirmation shown under the toolbar
   const [ask, setAsk] = useState(null) // starter prompt sent from the empty Playlist
   const [error, setError] = useState(null)
