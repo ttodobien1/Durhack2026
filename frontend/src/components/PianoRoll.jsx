@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { GitCompare, GitFork, Magnet, Minus, Pencil, Play, Plus, Redo2, Save, Square, Undo2, ZoomIn, ZoomOut } from 'lucide-react'
+import { GitCompare, GitFork, Globe, Lock, Magnet, MessageSquare, Minus, Pencil, Play, Plus, Redo2, Save, Square, Undo2, ZoomIn, ZoomOut } from 'lucide-react'
 import { useWidth } from '../useWidth.js'
 import { instrumentFor, previewNote } from '../audio.js'
 import { typeLabel } from './Browser.jsx'
@@ -66,7 +66,8 @@ function PieceName({ piece, onRename }) {
   )
 }
 
-export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, onChange, onBars, onFork, onSave, onRename, onToggleDiff, onPreview, previewing, playhead, handle }) {
+// onVisibility(publica): the author switches who may use the piece; onComments(): opens the piece's comments.
+export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, onChange, onBars, onFork, onSave, onRename, onVisibility, onComments, onToggleDiff, onPreview, previewing, playhead, handle }) {
   const [measure, width] = useWidth()
   const [zoom, setZoom] = useState(1)
   const scroller = useRef(null)
@@ -340,6 +341,21 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
         {handle}
         <span className="roll-heading">
           Piano roll <PieceName key={`${piece.id}/${piece.nombre}`} piece={piece} onRename={onRename} />
+          {isMine(piece.autor) && onVisibility && (
+            <button
+              className={`vis small ${piece.publica === false ? 'private' : ''}`}
+              onClick={() => onVisibility(piece.publica === false)}
+              aria-label={`This piece is ${piece.publica === false ? 'private' : 'public'}. Click to make it ${piece.publica === false ? 'public' : 'private'}`}
+              title={
+                piece.publica === false
+                  ? 'Private: only you, and the people of your projects that use it, can open it. Click to make it public.'
+                  : 'Public: anyone can find it, play it and fork it. Click to make it private.'
+              }
+            >
+              {piece.publica === false ? <Lock size={10} aria-hidden="true" /> : <Globe size={10} aria-hidden="true" />}
+              {piece.publica === false ? 'Private' : 'Public'}
+            </button>
+          )}
         </span>
         <span className="credit">
           <span className="code">{piece.id}</span> {typeLabel(piece.tipo)} by <b>{piece.autor}</b> · {piece.licencia}
@@ -351,6 +367,11 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
           )}
         </span>
         <span className="title-tools">
+          {onComments && (
+            <button className="icon small" onClick={onComments} aria-label={`Comments on ${piece.nombre}`} title="Comments on this piece">
+              <MessageSquare size={13} />
+            </button>
+          )}
           <button className="icon small" onClick={() => zoomBy(1 / 1.25)} aria-label="Zoom out" title="Zoom out (Ctrl+wheel)">
             <ZoomOut size={13} />
           </button>

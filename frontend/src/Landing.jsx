@@ -3,7 +3,8 @@ import { ArrowRight, Disc3, Library, Lock, Play, Plus, Search, Square, X } from 
 import { api } from './api.js'
 import * as audio from './audio.js'
 import { SiteBar } from './Site.jsx'
-import { Arrangement, withMeta } from './projectMeta.jsx'
+import { Arrangement, Counts, withMeta } from './projectMeta.jsx'
+import { Community } from './components/Community.jsx'
 import { useUser } from './profile.js'
 import { HeroNetwork } from './components/HeroNetwork.jsx'
 import { FlowDemo } from './components/FlowDemos.jsx'
@@ -20,6 +21,9 @@ function updated(iso) {
 
 // Work saved without an account belongs to nobody: every visitor would read "you / …" as their own project.
 const OWNERLESS = new Set(['you', 'anonymous'])
+
+// Same weights as the home page's Popular projects (backend repo/canciones.js, comunidad): forks, then comments.
+const popularity = (p) => 3 * (p.forks ?? 0) + 2 * (p.comentarios ?? 0)
 
 const FLOW = [
   ['Search', 'Drum loops, chords, bass lines and melodies, filtered by type and key.'],
@@ -39,6 +43,17 @@ export function Landing() {
   const [mine, setMine] = useState(null) // your projects (private ones included), only while logged in
   const [demo, setDemo] = useState(null) // the "How it works" step whose popup is open
   const closeDemo = useCallback(() => setDemo(null), [])
+  const [community, setCommunity] = useState(null) // { populares, ayuda } (cambios.md §14)
+  useEffect(() => {
+    let live = true
+    api.community().then(
+      (d) => live && setCommunity(d),
+      () => live && setCommunity({ populares: [], ayuda: [] }),
+    )
+    return () => {
+      live = false
+    }
+  }, [])
 
   // A reload always starts at the top: no browser scroll restoration while on the landing (back to normal when
   // leaving it), so the page never jumps down to the projects once they load.
@@ -150,6 +165,8 @@ export function Landing() {
 
         {user && <YourProjects name={user.name} projects={mine} />}
 
+        <Community data={community} pieces={pieces} />
+
         <ol className="flow" aria-label="How it works">
           {FLOW.map(([t, d], i) => (
             <li key={t}>
@@ -236,7 +253,13 @@ function Explore({ projects, pieces, playing, onPreview, onPreviewPiece, onUser 
   const shown = (projects ?? [])
     .filter((p) => tags.every((t) => p.etiquetas.includes(t)))
     .filter((p) => !text || `${p.nombre} ${p.descripcion} ${p.autor} ${p.etiquetas.join(' ')}`.toLowerCase().includes(text))
-    .sort((a, b) => (sort === 'pieces' ? stats(b).count - stats(a).count : (b.actualizado ?? b.id).localeCompare(a.actualizado ?? a.id)))
+    .sort((a, b) =>
+      sort === 'pieces'
+        ? stats(b).count - stats(a).count
+        : sort === 'popular'
+          ? popularity(b) - popularity(a)
+          : (b.actualizado ?? b.id).localeCompare(a.actualizado ?? a.id),
+    )
   const toggle = (t) => setTags((s) => (s.includes(t) ? s.filter((x) => x !== t) : [...s, t]))
 
   return (
@@ -265,6 +288,7 @@ function Explore({ projects, pieces, playing, onPreview, onPreviewPiece, onUser 
               Sort
               <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort projects">
                 <option value="updated">Recently updated</option>
+                <option value="popular">Most popular</option>
                 <option value="pieces">Most pieces</option>
               </select>
             </label>
@@ -311,6 +335,7 @@ function Explore({ projects, pieces, playing, onPreview, onPreviewPiece, onUser 
                     <div className="proj-meta">
                       {p.tempo} BPM · {s.count} pieces · {s.authors} {s.authors === 1 ? 'author' : 'authors'} · {s.forked} forked
                       {p.actualizado && ` · Updated ${updated(p.actualizado)}`}
+                      <Counts p={p} />
                     </div>
                   </div>
                   <div className="proj-side">

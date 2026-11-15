@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Lock, Plus, X } from 'lucide-react'
+import { Globe, Lock, Plus, X } from 'lucide-react'
 import { TYPES } from './Browser.jsx'
 
 const DEFAULT_NAMES = { ritmo: 'My beat', acordes: 'My chords', bajo: 'My bass line', melodia: 'My melody' }
@@ -12,8 +12,10 @@ const KEYS = ['', 'C', 'Cm', 'C#m', 'D', 'Dm', 'Eb', 'Ebm', 'E', 'Em', 'F', 'Fm'
  * Props: tipo (preset type, or null), lane (instrument name of the track, if any), newTrack (true: it goes on a new
  * track), onCreate({ nombre, tipo, compases, tonalidad }) -> Promise, onClose().
  */
-export function NewPieceDialog({ tipo: preset, lane, newTrack = false, onCreate, onClose }) {
+// defaultPublic: the visibility picked at first, the project's own (a public project can only use public pieces).
+export function NewPieceDialog({ tipo: preset, lane, newTrack = false, defaultPublic = true, onCreate, onClose }) {
   const [tipo, setTipo] = useState(preset ?? 'acordes')
+  const [publica, setPublica] = useState(defaultPublic)
   const [nombre, setNombre] = useState(DEFAULT_NAMES[preset ?? 'acordes'])
   const [touched, setTouched] = useState(false)
   const [compases, setCompases] = useState(4)
@@ -38,7 +40,7 @@ export function NewPieceDialog({ tipo: preset, lane, newTrack = false, onCreate,
     setBusy(true)
     setError(null)
     try {
-      await onCreate({ nombre: clean, tipo, compases, tonalidad: tipo === 'ritmo' ? null : tonalidad || null })
+      await onCreate({ nombre: clean, tipo, compases, tonalidad: tipo === 'ritmo' ? null : tonalidad || null, publica })
     } catch (err) {
       setError(err.message || String(err))
       setBusy(false)
@@ -103,10 +105,23 @@ export function NewPieceDialog({ tipo: preset, lane, newTrack = false, onCreate,
               </label>
             )}
           </div>
-          <p className="fine">
-            <Lock size={11} aria-hidden="true" /> Only you can see it until you save it in a public project. Then anyone can find it, play it and fork it
-            (CC BY 4.0, credited to you).
-          </p>
+          <fieldset className="save-vis">
+            <legend>Who can use it?</legend>
+            <div className="seg" role="radiogroup" aria-label="Piece visibility">
+              <button type="button" role="radio" aria-checked={publica} className={publica ? 'on' : ''} onClick={() => setPublica(true)}>
+                <Globe size={12} aria-hidden="true" /> Public
+              </button>
+              <button type="button" role="radio" aria-checked={!publica} className={!publica ? 'on' : ''} onClick={() => setPublica(false)}>
+                <Lock size={12} aria-hidden="true" /> Private
+              </button>
+            </div>
+            <p className="fine">
+              {publica
+                ? 'Anyone can find it, play it and fork it (CC BY 4.0, credited to you).'
+                : 'Only you, and the people of your projects that use it, can open it. A public project can only use public pieces.'}{' '}
+              You can change it later with the lock next to its name in the piano roll, or in your profile.
+            </p>
+          </fieldset>
           {error && (
             <p className="auth-error" role="alert">
               {error}

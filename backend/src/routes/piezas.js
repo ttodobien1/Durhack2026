@@ -1,16 +1,19 @@
 import { Router } from 'express';
 import { assertOwner, autorFor } from '../lib/auth.js';
 import { diffNotas } from '../lib/diff.js';
-import { badRequest, notFound } from '../lib/errors.js';
+import { HttpError, badRequest, notFound } from '../lib/errors.js';
 import { validateNewPieza, validatePiezaUpdate } from '../lib/validate.js';
 import {
   createPieza,
   forkPieza,
+  getPieza,
   getPiezaOwner,
   getVisiblePieza,
   isAncestor,
   searchPiezas,
+  setPiezaPublica,
   updatePieza,
+  visibilityBlocker,
 } from '../repo/piezas.js';
 
 const router = Router();
@@ -69,12 +72,22 @@ router.post('/:id/fork', async (req, res) => {
 
 // PUT /piezas/:id   body: { "notas": [...] } (+ optional nombre, tonalidad, tempo, estilo, compases)
 // Pieces owned by an account can only be edited by that account.
+// "publica" (true/false) is the author's choice of who may see and use the piece; switching is refused with a 409
+// and the reason when it would break someone's work (repo/piezas.js, visibilityBlocker).
 router.put('/:id', async (req, res) => {
   const owner = await getPiezaOwner(req.params.id);
   if (!owner) throw notFound(`Pieza not found: ${req.params.id}`);
   assertOwner(req, owner.usuario_id, 'piece');
-  const changes = validatePiezaUpdate(req.body);
-  res.json(await updatePieza(req.params.id, changes));
+  const { publica, ...changes } = validatePiezaUpdate(req.body);
+  if (publica !== undefined) {
+    const current = await getPieza(req.params.id);
+    if (current.publica !== publica) {
+      const blocker = await visibilityBlocker(req.params.id, publica);
+      if (blocker) throw new HttpError(409, `Cannot make this piece ${publica ? 'public' : 'private'}: ${blocker}`);
+      await setPiezaPublica(req.params.id, publica);
+    }
+  }
+  res.json(Object.keys(changes).length ? await updatePieza(req.params.id, changes) : await getPieza(req.params.id));
 });
 
 // GET /piezas/:id/diff  -> diff of a fork against its parent

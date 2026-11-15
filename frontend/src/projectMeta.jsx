@@ -1,4 +1,23 @@
 // Project helpers shared by the landing and profile pages.
+import { GitFork, MessageSquare } from 'lucide-react'
+
+/** Comments and forks of a project, when it has any (cambios.md §14). */
+export function Counts({ p }) {
+  return (
+    <>
+      {p.comentarios > 0 && (
+        <span className="count-inline" title={`${p.comentarios} ${p.comentarios === 1 ? 'comment' : 'comments'}`}>
+          <MessageSquare size={12} aria-hidden="true" /> {p.comentarios}
+        </span>
+      )}
+      {p.forks > 0 && (
+        <span className="count-inline" title={`${p.forks} ${p.forks === 1 ? 'fork' : 'forks'}`}>
+          <GitFork size={12} aria-hidden="true" /> {p.forks}
+        </span>
+      )}
+    </>
+  )
+}
 
 /** Songs from the backend carry only contract fields: derive tags and a description from their pieces. */
 export function withMeta(p, pieces) {

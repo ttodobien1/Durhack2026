@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronsUpDown, FolderOpen, Globe, GitBranch, Lock, Pause, Play, Save, Square, Volume2, VolumeX } from 'lucide-react'
+import { ChevronsUpDown, FolderOpen, Globe, GitBranch, GitPullRequestArrow, Lock, Mail, MessageSquare, Pause, Play, Save, Square, Users, Volume2, VolumeX } from 'lucide-react'
 import { api, isMock, ME } from './api.js'
 import * as audio from './audio.js'
 import { Browser } from './components/Browser.jsx'
@@ -15,9 +15,22 @@ import { usePaneSplit } from './usePaneSplit.js'
 import { isMine, loadUser, recordContribution, useUser } from './profile.js'
 import { AuthDialog, Avatar, StemmaMark } from './Site.jsx'
 import { confirmLeave, leaveLink, useLeaveGuard } from './leave.js'
-
+import { CommentsWindow } from './components/Comments.jsx'
+import { ShareWindow } from './components/ShareWindow.jsx'
+import { ProposeDialog } from './components/ProposeDialog.jsx'
+import { useUnread } from './unread.js'
 
 const FILL_BARS = 8 // a piece added from the Browser repeats across the first 8 bars
+
+// Settings and counters of a saved project (cambios.md §14). Kept apart from `song`, so that changing them (a
+// comment, a setting in the Share window) never counts as an unsaved change of the music.
+const metaOf = (c) => ({
+  comentarios: c?.comentarios ?? 0,
+  propuestas_abiertas: c?.propuestas_abiertas ?? 0,
+  permite_fork: c?.permite_fork !== false,
+  permite_propuestas: c?.permite_propuestas !== false,
+  pide_ayuda: c?.pide_ayuda ?? null,
+})
 
 // A function so `autor` is whoever is logged in when the project opens (ME changes on log in / out).
 const emptySong = () => ({ id: 'c-new', nombre: 'Untitled project', autor: ME, tempo: 96, publica: true, pistas: [] })
@@ -35,8 +48,14 @@ export default function App({ projectId = 'new' }) {
   // "#/project/<id>?history=<tab>" opens it right away (the Tree / History options in My projects).
   const [historyTab, setHistoryTab] = useState(() => {
     const tab = location.hash.match(/[?&]history=(\w+)/)?.[1]
-    return ['tree', 'changes', 'versions', 'merge', 'credits'].includes(tab) ? tab : null
+    return ['tree', 'changes', 'versions', 'merge', 'proposals', 'credits'].includes(tab) ? tab : null
   })
+  const [role, setRole] = useState(null) // yours in a saved project: 'autor' | 'colaborador' | null (GET /canciones/:id)
+  const [meta, setMeta] = useState(metaOf(null))
+  // Comments window: null | { objetivo, id, title, owner, ask }. "#/project/<id>?comments=1" opens the project's.
+  const [commentsFor, setCommentsFor] = useState(null)
+  const [share, setShare] = useState(false) // Share window open
+  const [propose, setPropose] = useState(null) // null | { fromFork, target: { id, nombre, autor } }
   const [notice, setNotice] = useState(null) // short confirmation shown under the toolbar
   const [ask, setAsk] = useState(null) // starter prompt sent from the empty Playlist
   const [error, setError] = useState(null)
@@ -79,12 +98,15 @@ export default function App({ projectId = 'new' }) {
   // Load the project from the landing page ("new" starts empty); stop audio when leaving the page.
   useEffect(() => {
     if (projectId !== 'new')
-      api.project(projectId).then(async (p) => {
+      api.project(projectId).then(async ({ rol, ...p }) => {
         const ids = [...new Set(p.pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id)))]
         remember(await Promise.all(ids.map(api.getPiece)))
         undoLog.current.skip = true // loading is not an undo step
         setSong(p)
         setSavedJson(JSON.stringify(p))
+        setRole(rol ?? null)
+        setMeta(metaOf(p))
+        if (/[?&]comments=1/.test(location.hash)) setCommentsFor({ objetivo: 'cancion', id: p.id, title: p.nombre, owner: p.autor, ask: p.pide_ayuda })
       }, fail)
     return () => audio.stop()
   }, [projectId, remember])
@@ -199,9 +221,13 @@ export default function App({ projectId = 'new' }) {
   const songDirty = JSON.stringify(song) !== savedJson
   const [savingSong, setSavingSong] = useState(false)
   const [saveAs, setSaveAs] = useState(null) // null | { saved: null | Cancion } while the Save as window is open
-  const songMine = song.id === 'c-new' || isMine(song.autor) // a new project is yours even if you logged in after starting it
+  // A new project is yours even if you logged in after starting it; collaborators save over the project too.
+  const songAuthor = song.id === 'c-new' || isMine(song.autor) || role === 'autor'
+  const songMine = songAuthor || role === 'colaborador'
+  const saved = song.id !== 'c-new'
   // Unsaved project changes or piano roll edits: leaving the page (tab, Back, links, My projects) asks first.
   useLeaveGuard((songDirty && song.pistas.length > 0) || Boolean(draft || draftBars))
+  const unread = useUnread(user)
 
   /** Saves with optional name/visibility changes (and `mensaje`, what changed). Throws on failure; returns the saved project. */
   const writeProject = async ({ mensaje, ...changes } = {}) => {
@@ -214,21 +240,63 @@ export default function App({ projectId = 'new' }) {
       const toSave = songMine
         ? { ...next, autor: song.id === 'c-new' ? me : song.autor }
         : { ...next, id: 'c-new', autor: me, parent_id: song.id !== 'c-new' ? song.id : null, parent_version: song.version || null }
-      const saved = await api.saveProject({ ...toSave, mensaje })
+      const { rol, ...stored } = await api.saveProject({ ...toSave, mensaje })
       recordContribution()
       undoLog.current.skip = true // saving is not an undo step
-      setSong(saved)
-      setSavedJson(JSON.stringify(saved))
-      if (!location.hash.endsWith(saved.id)) history.replaceState(null, '', `#/project/${saved.id}`) // new id, same page
-      return saved
+      setSong(stored)
+      setSavedJson(JSON.stringify(stored))
+      setMeta(metaOf(stored))
+      if (!songMine) setRole('autor') // your new copy
+      else if (rol !== undefined) setRole(rol)
+      if (!location.hash.endsWith(stored.id)) history.replaceState(null, '', `#/project/${stored.id}`) // new id, same page
+      return stored
     } finally {
       setSavingSong(false)
     }
   }
   const saveProject = () => {
     if (savingSong || !song.pistas.length) return
+    // Someone else's project whose author allows no copies: the only way to keep your edits is to propose them.
+    if (!songMine && !meta.permite_fork) return meta.permite_propuestas ? startPropose(false) : fail(`${song.autor} does not allow copies of this project.`)
     if (!signedIn('Log in to save this project.', () => setSaveAs({ saved: null }))) return
     setSaveAs({ saved: null })
+  }
+
+  // Proposed changes, like pull requests (cambios.md §14): your unsaved edits of someone else's project (kept in a
+  // new private copy), or your saved fork offered back to the project it came from.
+  const startPropose = async (fromFork) => {
+    if (!signedIn('Log in to propose changes.', () => startPropose(fromFork))) return
+    try {
+      const target = fromFork ? await api.project(song.parent_id) : song
+      if (!target.permite_propuestas) throw new Error(`${target.autor} does not take proposed changes on ${target.nombre}.`)
+      setPropose({ fromFork, target: { id: target.id, nombre: target.nombre, autor: target.autor } })
+    } catch (e) {
+      fail(e)
+    }
+  }
+  const sendProposal = async ({ titulo, mensaje }) => {
+    const { fromFork, target } = propose
+    if ((draft || draftBars) && !(await save())) throw new Error('Could not save your edits to the selected piece.')
+    const body = fromFork
+      ? { titulo, mensaje, desde_id: song.id }
+      : { titulo, mensaje, cancion: { nombre: song.nombre, tempo: song.tempo, pistas: song.pistas, parent_version: song.version || null } }
+    const { copia } = await api.propose(target.id, body)
+    recordContribution()
+    setPropose(null)
+    if (!fromFork) {
+      // Keep working in your private copy: same page, its own address (like the first save of a project).
+      undoLog.current.skip = true
+      setSong(copia)
+      setSavedJson(JSON.stringify(copia))
+      setRole('autor')
+      setMeta(metaOf(copia))
+      history.replaceState(null, '', `#/project/${copia.id}`)
+    }
+    setNotice(
+      fromFork
+        ? `Proposal sent to ${target.autor}. When you save this copy again, they see the new version.`
+        : `Proposal sent to ${target.autor}. You are now in your private copy (${copia.id}): keep editing and saving it, they always see its latest version.`,
+    )
   }
   const quickSave = () => {
     if (savingSong || !song.pistas.length || !songDirty) return
@@ -254,6 +322,7 @@ export default function App({ projectId = 'new' }) {
     undoLog.current.skip = true // a merge is saved on the server already, not an undo step
     setSong(cancion)
     setSavedJson(JSON.stringify(cancion))
+    setMeta(metaOf(cancion))
     recordContribution()
     setHistoryTab('versions')
     setNotice(`Merged: saved as v${version.numero}.`)
@@ -380,6 +449,21 @@ export default function App({ projectId = 'new' }) {
     }
   }
 
+  // Who may see and use the selected piece (its author only; the server refuses when that would break a project).
+  const setPieceVisibility = async (publica) => {
+    try {
+      const stored = await api.setPieceVisibility(selected.id, publica)
+      setPieces((p) => ({ ...p, [selected.id]: { ...p[selected.id], publica: stored.publica ?? publica } }))
+      setNotice(
+        publica
+          ? `${selected.nombre} is public: anyone can find it, play it and fork it (credited to you).`
+          : `${selected.nombre} is private: only you, and the people of your projects that use it, can open it.`,
+      )
+    } catch (e) {
+      fail(e)
+    }
+  }
+
   const toggleDiff = async () => {
     if (diff) return setDiff(null)
     try {
@@ -405,7 +489,7 @@ export default function App({ projectId = 'new' }) {
     const shown = track?.instrumento ?? instrumento
     setNewPiece({ lane, instrumento: track ? null : instrumento, tipo, name: shown ? (LANE_NAMES[shown] ?? shown) : null })
   }
-  const createPiece = async ({ nombre, tipo, compases, tonalidad }) => {
+  const createPiece = async ({ nombre, tipo, compases, tonalidad, publica }) => {
     const piece = await api.createPiece({
       nombre,
       tipo,
@@ -416,7 +500,7 @@ export default function App({ projectId = 'new' }) {
       licencia: 'CC BY 4.0',
       fuente: 'Created in Stemma',
       notas: [],
-      publica: false, // private until it is saved in a public project
+      publica, // chosen in the New piece window (cambios.md §14)
     })
     remember([piece])
     recordContribution()
@@ -435,7 +519,11 @@ export default function App({ projectId = 'new' }) {
     setDraftBars(null)
     setDiff(null)
     setNewPiece(null)
-    setNotice(`Created ${piece.nombre} (${piece.id}). Draw its notes in the piano roll and press Save. Only you see it until you save it in a public project.`)
+    setNotice(
+      `Created ${piece.nombre} (${piece.id}). Draw its notes in the piano roll and press Save. ${
+        piece.publica === false ? 'It is private: only you see it (switch it with the lock next to its name).' : 'It is public: anyone can find it and fork it.'
+      }`,
+    )
   }
 
   // Version tree: bring a piece back as it was in an older version, or keep working from that point ---------
@@ -510,11 +598,14 @@ export default function App({ projectId = 'new' }) {
         <button
           className={`vis ${song.publica === false ? 'private' : ''}`}
           onClick={() => setSong({ ...song, publica: song.publica === false })}
+          disabled={!songAuthor} // collaborators change the music, never the visibility
           aria-label={`Visibility: ${song.publica === false ? 'private' : 'public'}. Click to make it ${song.publica === false ? 'public' : 'private'}`}
           title={
-            song.publica === false
-              ? 'Private: hidden from Explore and from other people’s view of your profile. Anyone with the link can still open it (Stemma has no accounts yet). Click to make public, then save.'
-              : 'Public: listed in Explore and on your profile. Click to make private, then save.'
+            !songAuthor
+              ? `Only ${song.autor} changes who can see this project.`
+              : song.publica === false
+                ? 'Private: only you and your collaborators (Share) can open it. Click to make public, then save.'
+                : 'Public: listed in Explore and on your profile. Click to make private, then save.'
           }
         >
           {song.publica === false ? <Lock size={12} aria-hidden="true" /> : <Globe size={12} aria-hidden="true" />}
@@ -561,14 +652,55 @@ export default function App({ projectId = 'new' }) {
             {songPos == null ? '–' : `${Math.floor(songPos / 4) + 1}:${Math.floor(songPos % 4) + 1}`}
           </div>
         </div>
-        <button className="tbtn" onClick={saveProject} disabled={!songDirty || savingSong || !song.pistas.length} title="Save project (Ctrl+S)">
-          <Save size={14} /> {savingSong ? 'Saving…' : !songDirty ? 'Saved' : songMine ? 'Save project' : 'Save a copy'}
+        <button
+          className="tbtn"
+          onClick={saveProject}
+          disabled={!songDirty || savingSong || !song.pistas.length || (!songMine && !meta.permite_fork && !meta.permite_propuestas)}
+          title={!songMine && !meta.permite_fork && !meta.permite_propuestas ? `${song.autor} allows no copies or proposals on this project` : 'Save project (Ctrl+S)'}
+        >
+          {!songMine && !meta.permite_fork && meta.permite_propuestas ? <GitPullRequestArrow size={14} /> : <Save size={14} />}{' '}
+          {savingSong
+            ? 'Saving…'
+            : !songDirty
+              ? 'Saved'
+              : songMine
+                ? 'Save project'
+                : meta.permite_fork
+                  ? 'Save a copy'
+                  : meta.permite_propuestas
+                    ? 'Propose changes'
+                    : 'Copies are off'}
         </button>
+        {!songMine && meta.permite_fork && meta.permite_propuestas && songDirty && (
+          <button className="tbtn" onClick={() => startPropose(false)} title={`Offer your changes to ${song.autor}, like a pull request`}>
+            <GitPullRequestArrow size={14} /> Propose changes
+          </button>
+        )}
+        {songAuthor && saved && song.parent_id && !songDirty && (
+          <button className="tbtn" onClick={() => startPropose(true)} title="Offer this copy’s changes to the project it was forked from, like a pull request">
+            <GitPullRequestArrow size={14} /> Propose to original
+          </button>
+        )}
         <button className="tbtn" onClick={goMyProjects} title="All your projects, public and private">
           <FolderOpen size={14} /> My projects
         </button>
         <div className="spacer" />
         {isMock() && <span className="badge" title="Backend unreachable, using local mock data">Mock data</span>}
+        {saved && (
+          <button
+            className="tbtn"
+            onClick={() => setCommentsFor({ objetivo: 'cancion', id: song.id, title: song.nombre, owner: song.autor, ask: meta.pide_ayuda })}
+            title={meta.pide_ayuda ? `${song.autor} is asking for ideas: answer in the comments` : 'Comments on this project'}
+          >
+            <MessageSquare size={14} /> {meta.pide_ayuda ? 'Ideas' : 'Comments'}
+            {meta.comentarios > 0 && <span className="ver-chip">{meta.comentarios}</span>}
+          </button>
+        )}
+        {saved && songMine && user && (
+          <button className="tbtn" onClick={() => setShare(true)} title="Collaborators, invitation link, what others can do, ask for ideas">
+            <Users size={14} /> Share
+          </button>
+        )}
         <button
           className="tbtn"
           onClick={() => setHistoryTab('tree')}
@@ -578,10 +710,16 @@ export default function App({ projectId = 'new' }) {
           <GitBranch size={14} /> History{song.version > 0 && <span className="ver-chip">v{song.version}</span>}
         </button>
         {user ? (
-          <a className="user-link" href={`#/u/${encodeURIComponent(user.name)}`} onClick={leaveLink} title="Your profile">
-            <Avatar name={user.name} size={22} />
-            <span>{user.name}</span>
-          </a>
+          <>
+            <a className="icon mail-link" href="#/messages" onClick={leaveLink} aria-label={`Messages${unread ? `, ${unread} unread` : ''}`} title="Messages">
+              <Mail size={15} />
+              {unread > 0 && <span className="nav-badge">{unread}</span>}
+            </a>
+            <a className="user-link" href={`#/u/${encodeURIComponent(user.name)}`} onClick={leaveLink} title="Your profile">
+              <Avatar name={user.name} size={22} />
+              <span>{user.name}</span>
+            </a>
+          </>
         ) : (
           <button className="tbtn" onClick={() => setAuth({ mode: 'login' })} title="Log in to save, fork and publish">
             Log in
@@ -647,6 +785,8 @@ export default function App({ projectId = 'new' }) {
           onFork={fork}
           onSave={save}
           onRename={renamePiece}
+          onVisibility={setPieceVisibility}
+          onComments={() => setCommentsFor({ objetivo: 'pieza', id: selected.id, title: selected.nombre, owner: selected.autor })}
           onToggleDiff={toggleDiff}
           onPreview={() => previewPiece(selected, notes, bars)}
           previewing={playing === selected?.id}
@@ -656,28 +796,22 @@ export default function App({ projectId = 'new' }) {
 
       <Copilot song={song} pieces={pieces} onAddMany={addMany} onSelect={select} onTree={() => setHistoryTab('tree')} remember={remember} fail={fail} ask={ask} />
 
-      {auth && (
-        <AuthDialog
-          mode={auth.mode}
-          reason={auth.reason}
-          onMode={(mode) => setAuth({ ...auth, mode })}
-          onClose={() => setAuth(null)}
-          onDone={(u) => {
-            setUser(u)
-            setAuth(null)
-            auth.then?.()
-          }}
-        />
-      )}
-
       {newPiece && (
-        <NewPieceDialog tipo={newPiece.tipo} lane={newPiece.name} newTrack={newPiece.lane == null} onCreate={createPiece} onClose={() => setNewPiece(null)} />
+        <NewPieceDialog
+          tipo={newPiece.tipo}
+          lane={newPiece.name}
+          newTrack={newPiece.lane == null}
+          defaultPublic={song.publica !== false}
+          onCreate={createPiece}
+          onClose={() => setNewPiece(null)}
+        />
       )}
 
       {saveAs && (
         <SaveDialog
           song={song}
           copy={!songMine}
+          collaborator={role === 'colaborador'}
           saved={saveAs.saved}
           onSave={async (changes) => setSaveAs({ saved: await writeProject(changes) })}
           onClose={() => setSaveAs(null)}
@@ -704,6 +838,48 @@ export default function App({ projectId = 'new' }) {
           playing={playing}
           onPreview={(p) => previewPiece(p, p.notas, p.compases)}
           onRestorePiece={restorePiece}
+          openProposals={meta.propuestas_abiertas}
+          onProposalClosed={() => setMeta((m) => ({ ...m, propuestas_abiertas: Math.max(0, m.propuestas_abiertas - 1) }))}
+        />
+      )}
+
+      {commentsFor && (
+        <CommentsWindow
+          {...commentsFor}
+          onNeedLogin={(then) => signedIn('Log in to comment.', then)}
+          onCount={(n) => commentsFor.objetivo === 'cancion' && setMeta((m) => ({ ...m, comentarios: n }))}
+          onClose={() => setCommentsFor(null)}
+        />
+      )}
+
+      {share && (
+        <ShareWindow
+          song={song}
+          meta={meta}
+          role={songAuthor ? 'autor' : 'colaborador'}
+          onMeta={(c) => setMeta(metaOf(c))}
+          onLeft={() => {
+            setShare(false)
+            location.hash = '#/'
+          }}
+          onClose={() => setShare(false)}
+        />
+      )}
+
+      {propose && <ProposeDialog target={propose.target} fromFork={propose.fromFork} onPropose={sendProposal} onClose={() => setPropose(null)} />}
+
+      {/* Last, so it stays on top of any window that asked for a login (comments, share...). */}
+      {auth && (
+        <AuthDialog
+          mode={auth.mode}
+          reason={auth.reason}
+          onMode={(mode) => setAuth({ ...auth, mode })}
+          onClose={() => setAuth(null)}
+          onDone={(u) => {
+            setUser(u)
+            setAuth(null)
+            auth.then?.()
+          }}
         />
       )}
     </div>

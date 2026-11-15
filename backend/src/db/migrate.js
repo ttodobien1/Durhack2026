@@ -7,6 +7,16 @@ const CHECK_SQL = `
   SELECT to_regclass('public.sesiones') IS NOT NULL
      AND to_regclass('public.versiones') IS NOT NULL
      AND to_regclass('public.favoritos') IS NOT NULL
+     AND to_regclass('public.comentarios') IS NOT NULL
+     AND to_regclass('public.colaboradores') IS NOT NULL
+     AND to_regclass('public.invitaciones') IS NOT NULL
+     AND to_regclass('public.propuestas') IS NOT NULL
+     AND to_regclass('public.mensajes') IS NOT NULL
+     AND to_regclass('public.bloqueos') IS NOT NULL
+     AND EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_schema = 'public' AND table_name = 'canciones' AND column_name = 'pide_ayuda_at')
+     AND EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_schema = 'public' AND table_name = 'usuarios' AND column_name = 'mensajes_de')
      AND EXISTS (SELECT 1 FROM information_schema.columns
                  WHERE table_schema = 'public' AND table_name = 'piezas' AND column_name = 'usuario_id')
      AND EXISTS (SELECT 1 FROM information_schema.columns

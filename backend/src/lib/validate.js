@@ -93,11 +93,64 @@ export function validatePiezaUpdate(body) {
   if (body.tempo !== undefined) changes.tempo = validateTempo(body.tempo);
   if (body.estilo !== undefined) changes.estilo = validateEstilo(body.estilo);
   if (body.compases !== undefined) changes.compases = validateCompases(body.compases);
+  if (body.publica !== undefined) {
+    if (typeof body.publica !== 'boolean') throw badRequest('"publica" must be true or false');
+    changes.publica = body.publica; // who may see and use the piece (the author's choice, cambios.md §14)
+  }
   if (Object.keys(changes).length === 0) {
-    throw badRequest('Nothing to update: send "notas" (and optionally nombre, tonalidad, tempo, estilo, compases)');
+    throw badRequest('Nothing to update: send "notas" (and optionally nombre, tonalidad, tempo, estilo, compases, publica)');
   }
   return changes;
 }
+
+// --- Connections (cambios.md §14) ---------------------------------------------------------------------------
+
+function boundedText(value, field, max, { required = true } = {}) {
+  if (value === undefined || value === null) {
+    if (required) throw badRequest(`"${field}" is required`);
+    return '';
+  }
+  if (typeof value !== 'string') throw badRequest(`"${field}" must be text`);
+  const text = value.trim();
+  if (required && !text) throw badRequest(`"${field}" cannot be empty`);
+  if (text.length > max) throw badRequest(`"${field}" must be at most ${max} characters`);
+  return text;
+}
+
+// PATCH /canciones/:id/ajustes: { permite_fork?, permite_propuestas?, pide_ayuda? (text, or null / "" to remove) }
+export function validateAjustes(body) {
+  if (!body || typeof body !== 'object') throw badRequest('Body must be a JSON object');
+  const out = {};
+  for (const key of ['permite_fork', 'permite_propuestas']) {
+    if (body[key] === undefined) continue;
+    if (typeof body[key] !== 'boolean') throw badRequest(`"${key}" must be true or false`);
+    out[key] = body[key];
+  }
+  if (body.pide_ayuda !== undefined) out.pide_ayuda = body.pide_ayuda === null ? '' : boundedText(body.pide_ayuda, 'pide_ayuda', 500, { required: false });
+  if (!Object.keys(out).length) throw badRequest('Nothing to change: send permite_fork, permite_propuestas or pide_ayuda');
+  return out;
+}
+
+export const validateComentario = (body) => boundedText(body?.texto, 'texto', 2000);
+
+// A proposal (pull request): { titulo, mensaje? }.
+export function validatePropuesta(body) {
+  if (!body || typeof body !== 'object') throw badRequest('Body must be a JSON object');
+  return { titulo: boundedText(body.titulo, 'titulo', 120), mensaje: boundedText(body.mensaje, 'mensaje', 2000, { required: false }) };
+}
+
+// A message: { para (username), asunto?, texto, cancion_id? }.
+export function validateMensajeNuevo(body) {
+  if (!body || typeof body !== 'object') throw badRequest('Body must be a JSON object');
+  return {
+    para: boundedText(body.para, 'para', 40),
+    asunto: boundedText(body.asunto, 'asunto', 150, { required: false }),
+    texto: boundedText(body.texto, 'texto', 5000),
+    cancion_id: body.cancion_id === undefined || body.cancion_id === null || body.cancion_id === '' ? null : boundedText(body.cancion_id, 'cancion_id', 40),
+  };
+}
+
+export const MENSAJES_DE = ['todos', 'contactos', 'nadie'];
 
 // Optional song description. null = not sent (a PUT keeps the stored one); "" clears it.
 const MAX_DESCRIPCION = 300;

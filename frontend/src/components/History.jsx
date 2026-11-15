@@ -3,10 +3,11 @@
 //   Changes   what a version changed: tracks, and note by note for every piece (green new, red deleted, yellow moved)
 //   Versions  v1, v2... one per save, like commits; any of them can be compared or opened in the editor
 //   Merge     bring in the changes of a fork (or of the original), resolving conflicts
+//   Proposals changes people offered to this project, like pull requests: review, merge or decline (cambios.md §14)
 //   Credits   who wrote each note of the song, forks included
 // Backend routes: cambios.md §9. The Tree tab also works offline; the others need the server.
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, ArrowRight, Check, GitBranch, GitCommitHorizontal, GitCompare, GitFork, GitMerge, History as HistoryIcon, RotateCcw, TriangleAlert, Users, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, CircleCheck, CircleX, GitBranch, GitCommitHorizontal, GitCompare, GitFork, GitMerge, GitPullRequestArrow, History as HistoryIcon, RotateCcw, TriangleAlert, Users, X } from 'lucide-react'
 import { api } from '../api.js'
 import { isMine } from '../profile.js'
 import { Avatar } from '../Site.jsx'
@@ -70,8 +71,9 @@ const Failed = ({ error }) => (
  * this project), onOpenVersion(numero), onMerged({ cancion, version }).
  * For the Tree tab: loadPiece, pieces (editor cache), drafts ({ id: { notas, compases } } unsaved piano roll edits),
  * playing + onPreview(piece) to listen, onRestorePiece(info, { edit }) to bring a piece back or keep working on it.
+ * For the Proposals tab: openProposals (count shown on the tab), onProposalClosed() after one is declined or withdrawn.
  */
-export function History({ song, tab, onTab, onClose, loadPiece, dirty, canEdit, onOpenVersion, onMerged, pieces, drafts, playing, onPreview, onRestorePiece }) {
+export function History({ song, tab, onTab, onClose, loadPiece, dirty, canEdit, onOpenVersion, onMerged, pieces, drafts, playing, onPreview, onRestorePiece, openProposals = 0, onProposalClosed }) {
   const saved = Boolean(song.id) && song.id !== 'c-new'
   const hist = useLoad(() => (saved ? api.versions(song.id) : Promise.resolve(null)), `${song.id}:${song.version ?? 0}`)
   const [compare, setCompare] = useState(null) // { hasta, contra } chosen in the Changes tab
@@ -95,6 +97,7 @@ export function History({ song, tab, onTab, onClose, loadPiece, dirty, canEdit, 
     ['changes', 'Changes', GitCompare, null, 'What a version changed, track by track and note by note'],
     ['versions', 'Versions', HistoryIcon, versions.length || null, 'Every saved version, like commits'],
     ['merge', 'Merge', GitMerge, null, 'Bring in the changes of a fork or of the original'],
+    ['proposals', 'Proposals', GitPullRequestArrow, openProposals || null, 'Changes people offered to this project, like pull requests'],
     ['credits', 'Credits', Users, null, 'Who wrote each note of the song'],
   ]
 
@@ -128,6 +131,7 @@ export function History({ song, tab, onTab, onClose, loadPiece, dirty, canEdit, 
   else if (tab === 'versions')
     body = <VersionsTab versions={versions} origen={data.origen} onShowChanges={showChanges} onOpen={onOpenVersion} />
   else if (tab === 'merge') body = <MergeTab song={song} canEdit={canEdit} dirty={dirty} onMerged={onMerged} />
+  else if (tab === 'proposals') body = <ProposalsTab song={song} canEdit={canEdit} dirty={dirty} onMerged={onMerged} onClosed={onProposalClosed} />
   else body = <CreditsTab song={song} />
 
   return (
@@ -495,7 +499,93 @@ function RelatedRow({ item, isParent, onPick }) {
   )
 }
 
-function MergePreview({ song, other, canEdit, dirty, onBack, onMerged }) {
+// --- Proposals (pull requests) -------------------------------------------------------------------------
+
+const PROPOSAL_STATE = { abierta: ['Open', GitPullRequestArrow], aceptada: ['Merged', CircleCheck], rechazada: ['Declined', CircleX], retirada: ['Withdrawn', CircleX] }
+
+function ProposalsTab({ song, canEdit, dirty, onMerged, onClosed }) {
+  const [reload, setReload] = useState(0)
+  const list = useLoad(() => api.proposals(song.id), `${song.id}:${song.version}:${reload}`)
+  const [review, setReview] = useState(null)
+  const [error, setError] = useState(null)
+  const close = async (p, estado) => {
+    setError(null)
+    try {
+      await api.closeProposal(song.id, p.id, estado)
+      onClosed?.()
+      setReview(null)
+      setReload((n) => n + 1)
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+  if (review)
+    return (
+      <MergePreview
+        song={song}
+        other={{ id: review.desde.id, nombre: review.desde.nombre, autor: review.autor, version: review.desde.version }}
+        canEdit={canEdit}
+        dirty={dirty}
+        onBack={() => setReview(null)}
+        onMerged={onMerged}
+        backLabel="All proposals"
+        heading={review.titulo}
+        note={review.mensaje}
+        extra={
+          canEdit && (
+            <button className="tbtn big" onClick={() => close(review, 'rechazada')}>
+              <CircleX size={14} aria-hidden="true" /> Decline
+            </button>
+          )
+        }
+      />
+    )
+  if (list.error) return <Failed error={list.error} />
+  if (list.data === null && !list.loading) return <p className="hist-empty">Proposals need the Stemma server, and the app is running on local demo data right now.</p>
+  if (!list.data) return <Loading />
+  return (
+    <div className="hist-pane">
+      <p className="hist-intro">
+        Changes other artists offered to this project, like pull requests on GitHub. {canEdit ? 'Review each one note by note, then merge it or decline it.' : `${song.autor} reviews them and decides what goes in.`}
+      </p>
+      {error && <Failed error={error} />}
+      {list.data.length === 0 ? (
+        <p className="hist-empty">No proposals yet. When someone edits this project and proposes their changes, they show up here.</p>
+      ) : (
+        list.data.map((p) => {
+          const [label, Icon] = PROPOSAL_STATE[p.estado]
+          return (
+            <div className={`related proposal st-${p.estado}`} key={p.id}>
+              <Icon size={16} aria-hidden="true" />
+              <div className="related-main">
+                <b>{p.titulo}</b>
+                <span className="dim">
+                  #{p.id} by {who(p.autor)} · {timeAgo(p.fecha)} · from <a href={`#/project/${p.desde.id}`}>{p.desde.nombre}</a> v{p.desde.version}
+                </span>
+                {p.mensaje && <p className="proposal-msg">{p.mensaje}</p>}
+              </div>
+              <span className={`vis-tag prop-${p.estado}`}>{label}</span>
+              {p.estado === 'abierta' && (
+                <>
+                  {isMine(p.autor) && (
+                    <button className="tbtn" onClick={() => close(p, 'retirada')}>
+                      Withdraw
+                    </button>
+                  )}
+                  <button className={`tbtn ${canEdit ? 'accent' : ''}`} onClick={() => setReview(p)}>
+                    <GitMerge size={13} aria-hidden="true" /> {canEdit ? 'Review and merge' : 'See the changes'}
+                  </button>
+                </>
+              )}
+            </div>
+          )
+        })
+      )}
+    </div>
+  )
+}
+
+function MergePreview({ song, other, canEdit, dirty, onBack, onMerged, backLabel = 'All related projects', heading, note, extra = null }) {
   const [res, setRes] = useState({})
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
@@ -518,8 +608,14 @@ function MergePreview({ song, other, canEdit, dirty, onBack, onMerged }) {
   return (
     <div className={`hist-pane ${prev.loading ? 'stale' : ''}`}>
       <button className="link-back" onClick={onBack}>
-        <ArrowLeft size={13} aria-hidden="true" /> All related projects
+        <ArrowLeft size={13} aria-hidden="true" /> {backLabel}
       </button>
+      {heading && (
+        <h3 className="merge-title">
+          <GitPullRequestArrow size={16} aria-hidden="true" /> {heading}
+        </h3>
+      )}
+      {note && <p className="proposal-msg">{note}</p>}
       <h3 className="merge-title">
         <GitMerge size={16} aria-hidden="true" /> Merge{' '}
         <b>
@@ -590,6 +686,7 @@ function MergePreview({ song, other, canEdit, dirty, onBack, onMerged }) {
             ) : dirty ? (
               <p className="dim">Save your changes first, so the merge starts from your latest version.</p>
             ) : null}
+            {extra}
             <button className="tbtn accent big" disabled={!canEdit || dirty || busy || nothing || prev.loading} onClick={merge}>
               <GitMerge size={14} aria-hidden="true" />{' '}
               {busy ? 'Merging…' : conflicts.length ? `Merge with ${plural(conflicts.length, 'resolved conflict')}` : 'Merge into this project'}

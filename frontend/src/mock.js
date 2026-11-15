@@ -200,12 +200,15 @@ export const mock = {
     db.set(copy.id, copy)
     return structuredClone(copy)
   },
-  update(id, { notas, compases, nombre }) {
+  // Home page offline: the public demo projects as "popular", no help requests.
+  community: () => ({ populares: structuredClone(PROJECTS.filter((p) => !p.borrada && p.publica !== false).slice(0, 6)), ayuda: [] }),
+  update(id, { notas, compases, nombre, publica }) {
     const p = db.get(id)
     if (!p) throw notFound(id)
     if (notas) p.notas = structuredClone(notas)
     if (compases) p.compases = compases
     if (nombre) p.nombre = nombre
+    if (typeof publica === 'boolean') p.publica = publica
     return structuredClone(p)
   },
   diff(id, otherId) {

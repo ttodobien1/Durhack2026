@@ -13,7 +13,9 @@ import { Check, FolderOpen, Globe, Lock, X } from 'lucide-react'
  */
 const MAX_DESCRIPTION = 300 // same limit as the backend
 
-export function SaveDialog({ song, copy, saved, onSave, onClose, onMyProjects }) {
+// collaborator: saving someone else's project you collaborate on (cambios.md §14): only the name and the music
+// change, so the description and the visibility are not shown.
+export function SaveDialog({ song, copy, collaborator = false, saved, onSave, onClose, onMyProjects }) {
   const [nombre, setNombre] = useState(copy ? `${song.nombre} (copy)` : song.nombre)
   const [publica, setPublica] = useState(song.publica !== false)
   const [descripcion, setDescripcion] = useState(song.descripcion ?? '')
@@ -64,7 +66,7 @@ export function SaveDialog({ song, copy, saved, onSave, onClose, onMyProjects })
                   </>
                 ) : (
                   <>
-                    <b>private</b>: only you see it in your projects.
+                    <b>private</b>: only you and your collaborators can open it.
                   </>
                 )}
               </span>
@@ -94,6 +96,9 @@ export function SaveDialog({ song, copy, saved, onSave, onClose, onMyProjects })
         </h2>
         <div className="auth-body">
           {copy && <p className="auth-reason">This project belongs to {song.autor}. Saving creates your own copy; theirs stays as it is.</p>}
+          {collaborator && (
+            <p className="auth-reason">You collaborate on {song.autor}’s project: your save becomes its next version, credited to you.</p>
+          )}
           <label>
             Project name
             <input autoFocus value={nombre} onChange={(e) => (setNombre(e.target.value), setError(null))} maxLength={80} />
@@ -109,6 +114,7 @@ export function SaveDialog({ song, copy, saved, onSave, onClose, onMyProjects })
               placeholder={copy ? 'e.g. Forked the chords and added a bass line' : 'e.g. Added a bass line'}
             />
           </label>
+          {!collaborator && (
           <label>
             <span>
               Description <span className="dim">(optional)</span>
@@ -124,6 +130,8 @@ export function SaveDialog({ song, copy, saved, onSave, onClose, onMyProjects })
               Shown on the project card in Explore and on your profile. {MAX_DESCRIPTION - descripcion.length} characters left.
             </small>
           </label>
+          )}
+          {!collaborator && (
           <fieldset className="save-vis">
             <legend>Who can see it?</legend>
             <div className="seg" role="radiogroup" aria-label="Visibility">
@@ -137,16 +145,17 @@ export function SaveDialog({ song, copy, saved, onSave, onClose, onMyProjects })
             <p className="fine">
               {publica
                 ? 'Listed in Explore and on your profile, so others can play it and fork its pieces.'
-                : 'Hidden from Explore and from other people’s view of your profile. Only you see it in My projects.'}
+                : 'Hidden from Explore and from other people’s view of your profile. Only you and your collaborators can open it.'}
             </p>
           </fieldset>
+          )}
           {error && (
             <p className="auth-error" role="alert">
               {error}
             </p>
           )}
           <button className="tbtn accent big" type="submit" disabled={busy}>
-            {busy ? 'Saving…' : publica ? 'Save as public' : 'Save as private'}
+            {busy ? 'Saving…' : collaborator ? 'Save' : publica ? 'Save as public' : 'Save as private'}
           </button>
         </div>
       </form>

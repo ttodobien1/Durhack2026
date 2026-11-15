@@ -36,6 +36,14 @@
     {
       "key": "trashId",
       "value": ""
+    },
+    {
+      "key": "comentarioId",
+      "value": ""
+    },
+    {
+      "key": "inviteToken",
+      "value": ""
     }
   ],
   "item": [
@@ -740,6 +748,313 @@
           "request": {
             "method": "DELETE",
             "url": "{{baseUrl}}/canciones/c-001"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Conexiones (comentarios, colaboradores, propuestas, mensajes)",
+      "description": "cambios.md §14. Run Cuentas (auth) > Sign up first so {{token}} is set, then Canciones > Create song with the fork so {{cancionId}} is yours.",
+      "item": [
+        {
+          "name": "Community: popular projects and help requests",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/canciones/comunidad"
+          }
+        },
+        {
+          "name": "Ask for ideas on my song (token)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/canciones/{{cancionId}}/ajustes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pide_ayuda\": \"I have the drums but no hook. How would you continue?\",\n  \"permite_fork\": true,\n  \"permite_propuestas\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Comment on my song (token, saves comentarioId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK', () => pm.expect(pm.response.code).to.be.below(300));",
+                  "pm.collectionVariables.set('comentarioId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/comentarios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"objetivo\": \"cancion\",\n  \"id\": \"{{cancionId}}\",\n  \"texto\": \"Try a half-time groove under the chorus.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Comments of my song",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/comentarios?objetivo=cancion&id={{cancionId}}"
+          }
+        },
+        {
+          "name": "Delete the comment (token)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/comentarios/{{comentarioId}}"
+          }
+        },
+        {
+          "name": "Make my fork piece private (token, 409 if a public song uses it)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/piezas/{{forkId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"publica\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create an invitation link (token, saves inviteToken)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OK', () => pm.expect(pm.response.code).to.be.below(300));",
+                  "pm.collectionVariables.set('inviteToken', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/canciones/{{cancionId}}/invitacion"
+          }
+        },
+        {
+          "name": "See the invitation",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/invitaciones/{{inviteToken}}"
+          }
+        },
+        {
+          "name": "Accept the invitation (token of another account)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/invitaciones/{{inviteToken}}/aceptar",
+            "description": "Log in as another account first (Cuentas > Log in) so {{token}} belongs to the person joining."
+          }
+        },
+        {
+          "name": "Collaborators of my song (token)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/canciones/{{cancionId}}/colaboradores"
+          }
+        },
+        {
+          "name": "Projects shared with me (token)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/canciones/compartidas"
+          }
+        },
+        {
+          "name": "Propose changes to c-001 (token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/canciones/c-001/propuestas",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Faster version\",\n  \"mensaje\": \"Tried it at 100 BPM.\",\n  \"cancion\": {\n    \"nombre\": \"c-001 at 100 BPM\",\n    \"tempo\": 100,\n    \"pistas\": [\n      {\n        \"instrumento\": \"bateria\",\n        \"bloques\": [\n          {\n            \"pieza_id\": \"p-001\",\n            \"compas\": 0\n          }\n        ]\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Proposals to c-001",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/canciones/c-001/propuestas"
+          }
+        },
+        {
+          "name": "Write a message (token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/mensajes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"para\": \"ana\",\n  \"asunto\": \"Collab?\",\n  \"texto\": \"Want to make a beat together?\",\n  \"cancion_id\": \"{{cancionId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "description": "\"para\" must be an existing username."
+        },
+        {
+          "name": "My conversations (token)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/mensajes"
+          }
+        },
+        {
+          "name": "Unread count (token)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/mensajes/sin-leer"
+          }
+        },
+        {
+          "name": "Only contacts can write to me (token)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/mensajes/ajustes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensajes_de\": \"contactos\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           }
         }
       ]

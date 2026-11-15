@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
-import { LogOut, Settings, X } from 'lucide-react'
+import { LogOut, Mail, Settings, X } from 'lucide-react'
 import { api } from './api.js'
 import { cacheProfile, loadProfile } from './profile.js'
 import { exploreClick } from './explore.js'
+import { useUnread } from './unread.js'
 import './landing.css'
 
 /** Site header for the landing, profile and settings pages. `onUser(null)` signs out. */
 export function SiteBar({ user, onUser }) {
   const [auth, setAuth] = useState(null) // 'login' | 'signup' | null
+  const unread = useUnread(user)
   const [thenProjects, setThenProjects] = useState(false) // My projects asked for a login first
   const myProjects = (name) => (location.hash = `#/u/${encodeURIComponent(name)}?tab=projects`)
   return (
@@ -23,7 +25,12 @@ export function SiteBar({ user, onUser }) {
         <a href="#/project/new">New project</a>
         <a href="#/upload">Upload</a>
         {user ? (
-          <a href={`#/u/${encodeURIComponent(user.name)}?tab=projects`}>My projects</a>
+          <>
+            <a href={`#/u/${encodeURIComponent(user.name)}?tab=projects`}>My projects</a>
+            <a href="#/messages" aria-label={`Messages${unread ? `, ${unread} unread` : ''}`}>
+              Messages{unread > 0 && <span className="nav-badge">{unread}</span>}
+            </a>
+          </>
         ) : (
           <button
             className="site-link"
@@ -39,6 +46,11 @@ export function SiteBar({ user, onUser }) {
       <div className="spacer" />
       {user ? (
         <div className="user">
+          {/* the nav hides on narrow screens: the envelope keeps Messages reachable */}
+          <a className="icon mail-link narrow-only" href="#/messages" aria-label={`Messages${unread ? `, ${unread} unread` : ''}`} title="Messages">
+            <Mail size={14} />
+            {unread > 0 && <span className="nav-badge">{unread}</span>}
+          </a>
           <a className="user-link" href={`#/u/${encodeURIComponent(user.name)}`} title="Your profile">
             <Avatar name={user.name} size={24} />
             <span>{user.name}</span>

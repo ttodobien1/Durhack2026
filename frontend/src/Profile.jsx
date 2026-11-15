@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, BookOpen, Disc3, GitFork, Link, Lock, MapPin, Music2, Pencil, Play, RotateCcw, Search, Square, Trash2, Upload } from 'lucide-react'
+import { ArrowRight, BookOpen, Disc3, GitFork, Globe, Link, Lock, Mail, MapPin, Music2, Pencil, Play, RotateCcw, Search, Square, Trash2, Upload, Users } from 'lucide-react'
 import { api, ME } from './api.js'
 import * as audio from './audio.js'
-import { Arrangement, withMeta } from './projectMeta.jsx'
+import { Arrangement, Counts, withMeta } from './projectMeta.jsx'
 import { Avatar, SiteBar } from './Site.jsx'
-import { ACCENTS, authorsFor, contributions, fetchProfile, loadProfile, useUser } from './profile.js'
+import { ACCENTS, authorsFor, contributions, fetchProfile, isMine, loadProfile, useUser } from './profile.js'
 import { renderMarkdown } from './markdown.js'
 import { typeLabel } from './components/Browser.jsx'
 import { ProjectMenu } from './components/ProjectMenu.jsx'
 import './profile.css'
+import './social.css'
 
 /** Website as typed in settings, made safe to link: only http(s). */
 export const safeUrl = (url) => (/^https?:\/\//i.test(url) ? url : `https://${url}`)
@@ -82,6 +83,32 @@ export function Profile({ name }) {
     }
   }, [name, own, user])
 
+  // Projects you collaborate on (own profile only), shown under your projects.
+  const [shared, setShared] = useState([])
+  useEffect(() => {
+    if (!own || !user) return
+    let live = true
+    api.shared().then(
+      (list) => live && setShared(list),
+      () => {},
+    )
+    return () => {
+      live = false
+    }
+  }, [own, user])
+
+  // Your pieces: switch who may use one (the server says why when it cannot, e.g. a public project uses it).
+  const [pieceError, setPieceError] = useState(null)
+  const setPieceVisibility = async (piece, publica) => {
+    setPieceError(null)
+    try {
+      const stored = await api.setPieceVisibility(piece.id, publica)
+      setData((d) => ({ ...d, pieces: d.pieces.map((x) => (x.id === piece.id ? { ...x, publica: stored.publica ?? publica } : x)) }))
+    } catch (e) {
+      setPieceError(`${piece.nombre}: ${e.message}`)
+    }
+  }
+
   const removeProject = (p) => {
     setData((d) => ({ ...d, projects: d.projects.filter((x) => x.id !== p.id) }))
     setTrash((t) => [{ ...p, borrada: new Date().toISOString(), se_borra: new Date(Date.now() + 20 * 86400e3).toISOString() }, ...t])
@@ -130,9 +157,13 @@ export function Profile({ name }) {
             <span className="p-user">{name}</span>
           </h1>
           {profile.bio && <p className="p-bio">{profile.bio}</p>}
-          {own && (
+          {own ? (
             <a className="tbtn p-edit" href="#/settings">
               Edit profile
+            </a>
+          ) : (
+            <a className="tbtn accent p-edit" href={`#/messages?to=${encodeURIComponent(name)}`} title={`Write to ${name} to collaborate`}>
+              <Mail size={14} aria-hidden="true" /> Message
             </a>
           )}
           {data && !data.error && (
@@ -236,8 +267,11 @@ export function Profile({ name }) {
               onDelete={removeProject}
             />
           )}
+          {data && !data.error && tab === 'projects' && own && user && shared.length > 0 && <SharedList projects={shared} />}
           {data && !data.error && tab === 'projects' && own && user && trash.length > 0 && <Trash items={trash} onRestore={restoreProject} onPurge={purgeProject} />}
-          {data && !data.error && tab === 'pieces' && <PieceList pieces={pieces} playing={playing} onPreview={preview} name={name} own={own} />}
+          {data && !data.error && tab === 'pieces' && (
+            <PieceList pieces={pieces} playing={playing} onPreview={preview} name={name} own={own} onVisibility={setPieceVisibility} error={pieceError} />
+          )}
         </section>
       </main>
     </div>
@@ -396,6 +430,7 @@ function ProjectList({ projects, byId, name, own, onUpdate, onDelete }) {
               </div>
               <div className={`proj-meta pin-meta t-${dominantType(p, byId)}`}>
                 <i className="dot" aria-hidden="true" /> {p.tempo} BPM · {pieceCount(p)} pieces
+                <Counts p={p} />
               </div>
             </div>
             <div className="proj-side">
@@ -420,6 +455,38 @@ function ProjectList({ projects, byId, name, own, onUpdate, onDelete }) {
         ))}
       </ul>
     </>
+  )
+}
+
+/** Projects you collaborate on (you joined with an invitation link). */
+function SharedList({ projects }) {
+  return (
+    <section className="trash">
+      <h2>
+        <Users size={15} aria-hidden="true" /> Shared with you <span className="count">{projects.length}</span>
+      </h2>
+      <p className="trash-note">Projects you joined as a collaborator: you open and edit them with their author.</p>
+      <ul className="p-list">
+        {projects.map((p) => (
+          <li key={p.id} className="trash-row">
+            <div className="trash-main">
+              <a className="shared-name" href={`#/project/${p.id}`}>
+                <span className="dim">{p.autor} /</span> {p.nombre}
+              </a>{' '}
+              <Visibility song={p} />
+              <div className="trash-meta">
+                {p.tempo} BPM · {pieceCount(p)} pieces · v{p.version}
+              </div>
+            </div>
+            <div className="trash-actions">
+              <a className="tbtn" href={`#/project/${p.id}`}>
+                Open <ArrowRight size={13} />
+              </a>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 
@@ -495,11 +562,20 @@ function Trash({ items, onRestore, onPurge }) {
   )
 }
 
-function PieceList({ pieces, playing, onPreview, name, own }) {
+// own: your profile, where each piece of yours has its Public / Private switch (onVisibility(piece, publica)).
+function PieceList({ pieces, playing, onPreview, name, own, onVisibility, error }) {
   const upload = own && (
-    <a className="tbtn p-upload" href="#/upload">
-      <Upload size={13} aria-hidden="true" /> Publish pieces from a MIDI song
-    </a>
+    <>
+      <a className="tbtn p-upload" href="#/upload">
+        <Upload size={13} aria-hidden="true" /> Publish pieces from a MIDI song
+      </a>
+      <p className="fine p-pieces-note">Public pieces can be found, played and forked by anyone (credited to you). Private ones only open for you and the people of your projects that use them.</p>
+      {error && (
+        <p className="auth-error" role="alert">
+          {error}
+        </p>
+      )}
+    </>
   )
   if (!pieces.length)
     return (
@@ -531,6 +607,17 @@ function PieceList({ pieces, playing, onPreview, name, own }) {
               )}
             </div>
           </div>
+          {own && isMine(p.autor) && (
+            <button
+              className={`vis pc-vis ${p.publica === false ? 'private' : ''}`}
+              onClick={() => onVisibility(p, p.publica === false)}
+              aria-label={`${p.nombre} is ${p.publica === false ? 'private' : 'public'}. Click to make it ${p.publica === false ? 'public' : 'private'}`}
+              title={p.publica === false ? 'Private. Click to make it public.' : 'Public. Click to make it private.'}
+            >
+              {p.publica === false ? <Lock size={11} aria-hidden="true" /> : <Globe size={11} aria-hidden="true" />}
+              {p.publica === false ? 'Private' : 'Public'}
+            </button>
+          )}
         </li>
       ))}
     </ul>

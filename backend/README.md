@@ -71,6 +71,9 @@ Errors always come back as `{ "error": "message" }` with the matching HTTP statu
 | GET | `/canciones/papelera` | The logged-in account's songs in the trash, newest first, each with `borrada` and `se_borra` (ISO dates; 20 days apart). *Extra* |
 | POST | `/canciones/:id/restaurar` | Take a song out of the trash; returns it. *Extra* |
 | DELETE | `/canciones/papelera/:id` | Delete a song in the trash for good (`204`): its tracks and versions go with it; projects forked from it stay, as originals. *Extra* |
+| GET | `/canciones/comunidad` | Home page: `{ populares, ayuda }`, the 6 most popular public projects (3 × forks + 2 × comments + proposals) and the open help requests. *Extra* |
+| GET | `/canciones/compartidas` | Projects the logged-in account collaborates on. *Extra* |
+| PATCH | `/canciones/:id/ajustes` | Author only: `{ permite_fork?, permite_propuestas?, pide_ayuda? }` (`pide_ayuda: null` removes the help request). Returns the song. *Extra* |
 | GET | `/canciones/:id/arbol` | `{ nodos, aristas }` plus `cancion` and `resumen` (see below) |
 | POST | `/copiloto` | `{ "mensaje", "cancion": Cancion \| null }` → `{ "texto", "piezas_sugeridas" }` |
 
@@ -131,6 +134,43 @@ someone else's project as a copy (`POST /canciones` with `parent_id`) records wh
 - Songs saved before versions existed get their current state as v1 the first time their history is read or they are
   saved. `npm run db:seed` records a version for the seed songs.
 
+## Connections (comments, collaborators, proposals, messages)
+
+All extras (cambios.md §14). Everything that writes needs an account.
+
+| Method | Route | What it does |
+| --- | --- | --- |
+| GET | `/canciones/:id/colaboradores` | `{ autor, rol, colaboradores: [{ nombre, desde }], invitacion }` (`invitacion` `{ token, expira }` only for the author) |
+| POST | `/canciones/:id/invitacion` | Author: a new invitation link (7 days); the previous one stops working → `{ token, expira }` |
+| DELETE | `/canciones/:id/invitacion` | Author: turn the link off |
+| DELETE | `/canciones/:id/colaboradores/:nombre` | The author removes a collaborator, or a collaborator leaves |
+| GET | `/invitaciones/:token` | `{ cancion: { id, nombre, autor, publica }, expira, rol }` |
+| POST | `/invitaciones/:token/aceptar` | Join as a collaborator → `{ cancion_id, rol }` |
+| GET | `/canciones/:id/propuestas` | Proposals (pull requests) to a project, open ones first |
+| POST | `/canciones/:id/propuestas` | `{ titulo, mensaje?, desde_id }` (your fork of it) or `{ titulo, mensaje?, cancion }` (the edited project, saved as a new private copy) → `201 { propuesta, copia }`. Needs `permite_propuestas`; the copy's pieces must be public; the author gets a message |
+| PATCH | `/canciones/:id/propuestas/:pid` | `{ estado: "rechazada" }` (author / collaborators) or `"retirada"` (its author). Merging the copy closes it as `"aceptada"` |
+| GET | `/comentarios?objetivo=cancion\|pieza&id=` | Comments of something you can see, oldest first |
+| POST | `/comentarios` | `{ objetivo, id, texto }` → `201` |
+| DELETE | `/comentarios/:id` | The comment's author, or the author of the project / piece |
+| GET | `/mensajes` | Conversations, one per person: `[{ con, ultimo, sin_leer, bloqueado }]` |
+| GET | `/mensajes/con/:nombre` | `{ con, bloqueado, puedes_escribir, motivo, mensajes }` (marks them as read) |
+| GET | `/mensajes/sin-leer` | `{ sin_leer }` |
+| POST | `/mensajes` | `{ para, asunto?, texto, cancion_id? }` → `201 { id }`; `403` with the reason when blocked or not accepted |
+| GET / PUT | `/mensajes/ajustes` | `{ mensajes_de: "todos" \| "contactos" \| "nadie", bloqueados }` |
+| PUT / DELETE | `/mensajes/bloqueos/:nombre` | Block / unblock (`204`) |
+
+- **Who sees a project:** public ones, everyone; private ones, their author, their collaborators and the reviewers of
+  a proposal made from them. `GET /canciones/:id` adds `rol` (`"autor"`, `"colaborador"` or `null`).
+- **Who edits it:** the owner account and its collaborators (`PUT`, merge). Collaborators never change `publica`,
+  `descripcion` nor the settings, and cannot delete the project.
+- **Forks:** `POST /canciones` with `parent_id` is a `403` when the author turned copies off (`permite_fork: false`).
+- **Piece visibility:** `PUT /piezas/:id { publica }`. A public project can only use public pieces (saving no longer
+  publishes them). A piece cannot go private while a public project uses it, other people's projects use it or their
+  forks come from it (`409` with the reason). Private pieces open for their author and for the owner and
+  collaborators of a project that uses them.
+- **Messages:** `mensajes_de` = who may write to you: `todos`, `contactos` (people you wrote to or share a project
+  with) or `nadie`. A blocked account cannot write to you nor propose changes to your projects.
+
 ## Accounts
 
 Email + password accounts stored in the database (no third-party auth service).
@@ -156,9 +196,10 @@ Email + password accounts stored in the database (no third-party auth service).
   username (`401`: log in to publish as them). Seed data and anonymous work have no owner and stay editable by anyone.
 - `PUT /canciones/:id` never changes a song's `autor`.
 - **Private pieces**: pieces created with `"publica": false` (the editor's "+") are only seen, searched, forked and
-  used in songs by their author (`404` / "Unknown pieza_id" for everyone else). Saving them in a public song makes
-  them public, with their ancestors. Seed data, uploads and forks of public pieces are public, as before. Pieces
-  carry `publica`.
+  used in songs by their author, and by the owner and collaborators of a project that uses them (`404` / "Unknown
+  pieza_id" for everyone else). A public song cannot use them: their author makes them public first
+  (`PUT /piezas/:id { publica: true }`, see Connections). Seed data, uploads and forks of public pieces are public.
+  Pieces carry `publica`.
 - No email verification or password reset (they would need an email-sending service).
 
 ## Database schema
@@ -175,6 +216,11 @@ request if tables or columns are missing, so deploys never need a manual migrati
 - `sesiones`: login sessions (`token_hash`, `usuario_id`, `expires_at`).
 - `favoritos`: favorite pieces of each account (`usuario_id`, `pieza_id`, `created_at`); removed with the account or the piece.
 - `versiones`: song versions (`cancion_id`, `numero`, `autor`, `mensaje`, `snapshot` JSONB, `merge_de`/`merge_version`).
+- `comentarios` (`objetivo` cancion/pieza, `objetivo_id`, `usuario_id`, `texto`), `colaboradores` (`cancion_id`,
+  `usuario_id`), `invitaciones` (one link per song: `token`, `expires_at`), `propuestas` (`cancion_id` ← `desde_id`,
+  `titulo`, `mensaje`, `estado`), `mensajes` (`de_id`, `para_id`, `asunto`, `texto`, `cancion_id`, `leido_at`),
+  `bloqueos` (`usuario_id`, `bloqueado_id`). `canciones.permite_fork` / `permite_propuestas` / `pide_ayuda` /
+  `pide_ayuda_at` and `usuarios.mensajes_de`.
   `canciones.parent_id` / `parent_version`: the project and version a song was forked from.
 
 The lineage tree is a recursive query that walks `parent_id` up from every piece used in the song.

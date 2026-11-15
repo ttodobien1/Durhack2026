@@ -76,6 +76,12 @@ async function call(path, options, fallback) {
 
 const toUser = (u) => ({ name: u.nombre, email: u.email })
 
+// Offline fallback for what only the server can do (comments, collaborators, proposals, messages).
+const needsServer = () => {
+  throw new Error('This needs the Stemma server, and the app is running on local demo data right now.')
+}
+const enc = encodeURIComponent
+
 /** Stores the session returned by /auth/login or /auth/registro and returns { user, perfil }. */
 function startSession({ usuario, token }) {
   setSession({ user: toUser(usuario), token })
@@ -163,6 +169,48 @@ export const api = {
     pieceCache.delete(id)
     return call(`/piezas/${id}`, { method: 'PUT', body: { nombre } }, () => mock.update(id, { nombre }))
   },
+  // Who may see and use one of your pieces (cambios.md §14). The server answers 409 with the reason when it cannot
+  // change (e.g. a public project uses it).
+  setPieceVisibility: (id, publica) => {
+    pieceCache.delete(id)
+    return call(`/piezas/${id}`, { method: 'PUT', body: { publica } }, () => mock.update(id, { publica }))
+  },
+
+  // Connections (cambios.md §14) -----------------------------------------------------------------------------
+  // Home page: { populares, ayuda } (most popular public projects, open help requests).
+  community: () => call('/canciones/comunidad', undefined, () => mock.community()),
+  // Projects you collaborate on.
+  shared: () => (session?.token ? call('/canciones/compartidas', undefined, () => []) : Promise.resolve([])),
+  // Author only: { permite_fork?, permite_propuestas?, pide_ayuda? (text, or null to remove) } -> the project.
+  setProjectSettings: (id, ajustes) => call(`/canciones/${id}/ajustes`, { method: 'PATCH', body: ajustes }, needsServer),
+  collaborators: (id) => call(`/canciones/${id}/colaboradores`, undefined, needsServer),
+  createInvite: (id) => call(`/canciones/${id}/invitacion`, { method: 'POST' }, needsServer),
+  deleteInvite: (id) => call(`/canciones/${id}/invitacion`, { method: 'DELETE' }, needsServer),
+  removeCollaborator: (id, nombre) => call(`/canciones/${id}/colaboradores/${enc(nombre)}`, { method: 'DELETE' }, needsServer),
+  invite: (token) => call(`/invitaciones/${enc(token)}`, undefined, needsServer),
+  acceptInvite: (token) => call(`/invitaciones/${enc(token)}/aceptar`, { method: 'POST' }, needsServer),
+  proposals: (id) => call(`/canciones/${id}/propuestas`, undefined, () => null),
+  // { titulo, mensaje, desde_id } (your fork) or { titulo, mensaje, cancion } (the edited project) -> { propuesta, copia }
+  propose: (id, body) => call(`/canciones/${id}/propuestas`, { method: 'POST', body }, needsServer),
+  closeProposal: (id, pid, estado) => call(`/canciones/${id}/propuestas/${pid}`, { method: 'PATCH', body: { estado } }, needsServer),
+  // objetivo: 'cancion' | 'pieza'
+  comments: (objetivo, id) => call(`/comentarios?objetivo=${objetivo}&id=${enc(id)}`, undefined, needsServer),
+  addComment: (objetivo, id, texto) => call('/comentarios', { method: 'POST', body: { objetivo, id, texto } }, needsServer),
+  deleteComment: (cid) => call(`/comentarios/${cid}`, { method: 'DELETE' }, needsServer),
+  // Messages, like email.
+  conversations: () => call('/mensajes', undefined, needsServer),
+  unread: () =>
+    session?.token
+      ? call('/mensajes/sin-leer', undefined, () => ({ sin_leer: 0 }))
+          .then((r) => r.sin_leer ?? 0)
+          .catch(() => 0)
+      : Promise.resolve(0),
+  thread: (nombre) => call(`/mensajes/con/${enc(nombre)}`, undefined, needsServer),
+  sendMessage: ({ para, asunto, texto, cancion_id }) => call('/mensajes', { method: 'POST', body: { para, asunto, texto, cancion_id } }, needsServer),
+  messageSettings: () => call('/mensajes/ajustes', undefined, needsServer),
+  setMessageSettings: (mensajes_de) => call('/mensajes/ajustes', { method: 'PUT', body: { mensajes_de } }, needsServer),
+  block: (nombre, on) => call(`/mensajes/bloqueos/${enc(nombre)}`, { method: on ? 'PUT' : 'DELETE' }, needsServer),
+
   // Changed piece first, original second: `nuevas` are notes only in `id`.
   diff: (id, original) => call(`/piezas/${id}/diff/${original}`, undefined, () => mock.diff(id, original)),
   copilot: (mensaje, cancion) =>

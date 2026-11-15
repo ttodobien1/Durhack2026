@@ -5,7 +5,10 @@ import { ensureSchema } from './db/migrate.js';
 import { authenticate } from './lib/auth.js';
 import auth from './routes/auth.js';
 import canciones from './routes/canciones.js';
+import comentarios from './routes/comentarios.js';
 import copiloto from './routes/copiloto.js';
+import invitaciones from './routes/invitaciones.js';
+import mensajes from './routes/mensajes.js';
 import piezas from './routes/piezas.js';
 import usuarios from './routes/usuarios.js';
 
@@ -48,6 +51,9 @@ app.use('/usuarios', usuarios);
 app.use('/piezas', piezas);
 app.use('/canciones', canciones);
 app.use('/copiloto', copiloto);
+app.use('/comentarios', comentarios);
+app.use('/invitaciones', invitaciones);
+app.use('/mensajes', mensajes);
 
 app.use((req, res) => {
   res.status(404).json({ error: `Route not found: ${req.method} ${req.path}` });

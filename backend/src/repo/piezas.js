@@ -27,8 +27,16 @@ function toPieza(row) {
   };
 }
 
-// SQL condition: pieces `viewer` may see (public ones, plus their own private ones). `param` adds a value.
+// SQL condition for searches: pieces `viewer` may find (public ones, plus their own private ones). `param` adds a value.
 const visibleTo = (param, viewerId) => (viewerId ? `(publica OR usuario_id = ${param(viewerId)})` : 'publica');
+
+// SQL condition: pieces the account in placeholder `p` may open. Besides public pieces and its own private ones,
+// the private pieces used in a project it owns or collaborates on (cambios.md §14), so a shared private project opens
+// for everyone in it.
+const openableBy = (p) => `(piezas.publica OR piezas.usuario_id = ${p} OR EXISTS (
+  SELECT 1 FROM bloques b JOIN canciones c ON c.id = b.cancion_id
+  WHERE b.pieza_id = piezas.id AND c.borrada_at IS NULL
+    AND (c.usuario_id = ${p} OR EXISTS (SELECT 1 FROM colaboradores k WHERE k.cancion_id = c.id AND k.usuario_id = ${p}))))`;
 
 // Values for the 12 data columns, in the order used by INSERT_SQL / UPDATE.
 function rowValues(pieza) {
@@ -53,25 +61,60 @@ export async function getPieza(id) {
   return result.rows.length ? toPieza(result.rows[0]) : null;
 }
 
-// The piece if `viewerId` may see it (public, or their own private piece), else null.
+// The piece if `viewerId` may open it (see openableBy), else null.
 export async function getVisiblePieza(id, viewerId = null) {
-  const result = await db.query(`SELECT ${COLUMNS} FROM piezas WHERE id = $1 AND (publica OR usuario_id = $2)`, [id, viewerId]);
+  const result = await db.query(`SELECT ${COLUMNS} FROM piezas WHERE id = $1 AND ${openableBy('$2')}`, [id, viewerId]);
   return result.rows.length ? toPieza(result.rows[0]) : null;
 }
 
-// Makes pieces public, with every ancestor (a public song never shows a private piece, nor its origins).
-export async function publishPiezas(ids) {
+// The private pieces among `ids`: [{ id, nombre, autor }] (a public project cannot use them).
+export async function privatePiezasAmong(ids) {
   const unique = [...new Set(ids)];
-  if (unique.length === 0) return;
-  await db.query(
-    `WITH RECURSIVE linaje(id) AS (
-       SELECT id FROM piezas WHERE id IN (${placeholders(unique)})
-       UNION
-       SELECT p.parent_id FROM piezas p JOIN linaje l ON p.id = l.id WHERE p.parent_id IS NOT NULL
-     )
-     UPDATE piezas SET publica = true WHERE id IN (SELECT id FROM linaje) AND NOT publica`,
-    unique,
-  );
+  if (unique.length === 0) return [];
+  const result = await db.query(`SELECT id, nombre, autor FROM piezas WHERE id IN (${placeholders(unique)}) AND NOT publica ORDER BY id`, unique);
+  return result.rows;
+}
+
+// Why the author of a piece cannot switch it to `publica` right now (a message), or null if they can.
+//   private: not while a public project uses it, nor while other people's projects use it or their forks come from it
+//            (that would break their work); and pieces with no owner account stay public.
+//   public:  not while the piece it was forked from is private (the origin tree would show it).
+export async function visibilityBlocker(id, publica) {
+  if (publica) {
+    const parent = await db.query(
+      'SELECT p.id, p.nombre FROM piezas c JOIN piezas p ON p.id = c.parent_id WHERE c.id = $1 AND NOT p.publica',
+      [id],
+    );
+    const row = parent.rows[0];
+    return row ? `It comes from your private piece ${row.nombre} (${row.id}): make that one public first.` : null;
+  }
+  const owner = (await db.query('SELECT usuario_id FROM piezas WHERE id = $1', [id])).rows[0];
+  if (!owner?.usuario_id) return 'Only pieces owned by an account can be private.';
+  const [publicUse, othersUse, othersForks] = await Promise.all([
+    db.query(
+      `SELECT DISTINCT c.id, c.nombre FROM bloques b JOIN canciones c ON c.id = b.cancion_id
+       WHERE b.pieza_id = $1 AND c.publica AND c.borrada_at IS NULL ORDER BY c.id LIMIT 3`,
+      [id],
+    ),
+    db.query(
+      `SELECT DISTINCT c.id FROM bloques b JOIN canciones c ON c.id = b.cancion_id
+       WHERE b.pieza_id = $1 AND c.borrada_at IS NULL AND c.usuario_id IS DISTINCT FROM $2 LIMIT 1`,
+      [id, owner.usuario_id],
+    ),
+    db.query('SELECT id FROM piezas WHERE parent_id = $1 AND usuario_id IS DISTINCT FROM $2 LIMIT 1', [id, owner.usuario_id]),
+  ]);
+  if (publicUse.rows.length) {
+    const names = publicUse.rows.map((c) => `${c.nombre} (${c.id})`).join(', ');
+    return `It is used in public projects: ${names}. Make them private or take the piece out first.`;
+  }
+  if (othersUse.rows.length || othersForks.rows.length) return 'Other people already use it or forked it, so it has to stay public.';
+  return null;
+}
+
+// Sets who may see a piece (checked first with visibilityBlocker). Returns the piece.
+export async function setPiezaPublica(id, publica) {
+  await db.query('UPDATE piezas SET publica = $2, updated_at = now() WHERE id = $1', [id, publica]);
+  return getPieza(id);
 }
 
 export async function getPiezasByIds(ids) {
@@ -209,12 +252,12 @@ export async function getPiezasWithAncestors(ids) {
   return result.rows.map(toPieza);
 }
 
-// Returns the subset of ids that exist in the database and `viewerId` may see.
+// Returns the subset of ids that exist in the database and `viewerId` may open (see openableBy).
 export async function existingPiezaIds(ids, viewerId = null) {
   const unique = [...new Set(ids)];
   if (unique.length === 0) return new Set();
   const result = await db.query(
-    `SELECT id FROM piezas WHERE id IN (${placeholders(unique)}) AND (publica OR usuario_id = $${unique.length + 1})`,
+    `SELECT id FROM piezas WHERE id IN (${placeholders(unique)}) AND ${openableBy(`$${unique.length + 1}`)}`,
     [...unique, viewerId],
   );
   return new Set(result.rows.map((row) => row.id));

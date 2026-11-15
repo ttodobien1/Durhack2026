@@ -273,3 +273,76 @@ repositorio:
   salir pregunta "Your project has not been saved. Are you sure you want to leave?": el logo, el perfil, My projects
   y los botones Atrás/Adelante del navegador. Cerrar o recargar la pestaña muestra el aviso propio del navegador (el
   texto de ese aviso no se puede cambiar). `frontend/src/leave.js`.
+
+## 14. Conexiones: comunidad, propuestas, colaboradores, mensajes y piezas públicas/privadas
+
+Stemma deja de ser solo un editor: los artistas comparten, comentan, piden ideas, proponen cambios y colaboran.
+
+### Qué ve el usuario
+- **Comentarios** en proyectos y piezas: botón **Comments** en la barra del proyecto y ícono de comentario en el título
+  del piano roll. Leer es abierto (lo que puedas ver); escribir pide cuenta. El autor del comentario y el autor del
+  proyecto/pieza pueden borrarlo.
+- **Portada (comunidad):** "Popular projects" (los más forkeados y comentados) y "Help wanted": artistas trabados con
+  una canción que preguntan "¿cómo sigo con esto?". "Give an idea" abre los comentarios del proyecto. Explore tiene el
+  orden "Most popular" y muestra comentarios y forks de cada proyecto.
+- **Ventana Share** del proyecto (autor y colaboradores):
+  - *Collaborators*: lista, link de invitación (crear, copiar, renovar, apagar), quitar colaborador o salir.
+  - *What others can do* (autor): "Anyone can save their own copy" (fork) y "Anyone can propose changes".
+  - *Ask the community for ideas* (autor, proyecto público): el pedido de ayuda que sale en la portada. Mientras
+    está abierto, el botón Comments se llama **Ideas**.
+- **Propuestas de cambio (como pull requests):** quien edita un proyecto ajeno puede **Propose changes**. Sus cambios
+  quedan en una copia privada suya (solo él y la gente del proyecto la abren) y el autor recibe un mensaje. Desde un
+  fork propio guardado, el botón es **Propose to original**. El autor y los colaboradores las revisan en
+  **History → Proposals** (diff nota por nota y merge, o Decline); quien propuso puede retirarla. Hacer merge la cierra
+  como aceptada. Si el autor apagó los forks, "Save a copy" se convierte en "Propose changes".
+- **Colaboradores en proyectos privados:** el link `#/invite/<token>` (vale 7 días; uno por proyecto, uno nuevo
+  reemplaza al anterior). Quien lo abre con sesión iniciada entra como colaborador: abre y edita el proyecto aunque sea
+  privado, cada guardado queda a su nombre y puede hacer merge de propuestas. No cambia la visibilidad, la descripción
+  ni los ajustes, y no puede borrar el proyecto. En My projects aparece "Shared with you".
+- **Mensajes internos (tipo correo):** `#/messages`. Una conversación por persona, cada mensaje con asunto y,
+  opcionalmente, un proyecto adjunto. Botón **Message** en los perfiles ajenos, contador de no leídos en la barra.
+  **Block** en cada conversación (el bloqueado no puede escribirte ni proponerte cambios) y ajustes de "Who can write
+  to you": cualquiera, solo gente con la que trabajas o a la que escribiste, o nadie.
+- **Piezas públicas o privadas (lo decide su autor).** Se elige en tres lugares:
+  1. la ventana **New piece** (por defecto, la visibilidad del proyecto);
+  2. el botón **Public / Private** al lado del nombre de tu pieza en el piano roll;
+  3. la pestaña **Pieces** de tu perfil.
+
+### Reglas nuevas
+- **Un proyecto público solo puede usar piezas públicas.** Guardar ya no publica piezas solo (reemplaza la regla de
+  la sección 10): si hay piezas privadas, el servidor responde 400 con la lista y cómo arreglarlo.
+- Una pieza **no puede pasar a privada** si la usa un proyecto público, si la usan proyectos de otras personas o si
+  otros la forkearon (romperían su trabajo); tampoco las piezas sin cuenta dueña. No puede pasar a pública si viene
+  de una pieza privada. El servidor responde 409 con el motivo y la interfaz lo muestra.
+- Una pieza privada la abren su autor y quienes son dueños o colaboradores de un proyecto que la usa.
+- Un proyecto lo ven: si es público, todos; si es privado, su autor, sus colaboradores y quienes revisan una propuesta
+  hecha desde él.
+
+### Rutas nuevas (backend)
+
+| Método | Ruta | Qué hace |
+| --- | --- | --- |
+| GET | `/canciones/comunidad` | `{ populares, ayuda }` para la portada |
+| GET | `/canciones/compartidas` | Proyectos donde colaboras |
+| PATCH | `/canciones/:id/ajustes` | Autor: `{ permite_fork?, permite_propuestas?, pide_ayuda? }` (`null` quita el pedido) |
+| GET | `/canciones/:id/colaboradores` | `{ autor, rol, colaboradores, invitacion }` (`invitacion` solo para el autor) |
+| POST / DELETE | `/canciones/:id/invitacion` | Autor: crea (o renueva) / apaga el link de invitación |
+| DELETE | `/canciones/:id/colaboradores/:nombre` | El autor quita a alguien, o un colaborador sale |
+| GET | `/canciones/:id/propuestas` | Propuestas del proyecto (abiertas primero) |
+| POST | `/canciones/:id/propuestas` | `{ titulo, mensaje?, desde_id? \| cancion? }` → `{ propuesta, copia }` |
+| PATCH | `/canciones/:id/propuestas/:pid` | `{ estado: "rechazada" \| "retirada" }` |
+| GET / POST | `/invitaciones/:token` · `/invitaciones/:token/aceptar` | Ver / aceptar una invitación |
+| GET / POST / DELETE | `/comentarios?objetivo=cancion\|pieza&id=` · `/comentarios` · `/comentarios/:id` | Comentarios |
+| GET | `/mensajes` · `/mensajes/con/:nombre` · `/mensajes/sin-leer` | Conversaciones, un hilo (lo marca leído), no leídos |
+| POST | `/mensajes` | `{ para, asunto?, texto, cancion_id? }` |
+| GET / PUT | `/mensajes/ajustes` | `{ mensajes_de: "todos" \| "contactos" \| "nadie", bloqueados }` |
+| PUT / DELETE | `/mensajes/bloqueos/:nombre` | Bloquear / desbloquear |
+
+- `PUT /piezas/:id` acepta `publica` (true/false). `GET /canciones/:id` trae `rol` (`"autor"`, `"colaborador"` o
+  `null`). Toda canción trae además `permite_fork`, `permite_propuestas`, `pide_ayuda`, `pide_ayuda_at`,
+  `comentarios`, `forks`, `propuestas_abiertas` y `actualizado`. `POST /canciones` con `parent_id` responde 403 si el
+  autor apagó los forks. El merge lo pueden hacer también los colaboradores, y cierra como aceptadas las propuestas
+  abiertas de esa copia.
+- Tablas nuevas: `comentarios`, `colaboradores`, `invitaciones`, `propuestas`, `mensajes`, `bloqueos`; columnas nuevas
+  `canciones.permite_fork / permite_propuestas / pide_ayuda / pide_ayuda_at` y `usuarios.mensajes_de`. `migrate.js`
+  las crea solo al primer request después del deploy.

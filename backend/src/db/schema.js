@@ -121,6 +121,83 @@ CREATE TABLE IF NOT EXISTS versiones (
   PRIMARY KEY (cancion_id, numero)
 );
 
+-- Connections (cambios.md §14) ------------------------------------------------------------------------
+
+-- What the author of a public project lets others do with it: save their own copy (fork) and propose changes
+-- (like a pull request). And a help request: "how can I move forward with this song?", shown on the home page.
+ALTER TABLE canciones ADD COLUMN IF NOT EXISTS permite_fork BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE canciones ADD COLUMN IF NOT EXISTS permite_propuestas BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE canciones ADD COLUMN IF NOT EXISTS pide_ayuda TEXT;
+ALTER TABLE canciones ADD COLUMN IF NOT EXISTS pide_ayuda_at TIMESTAMPTZ;
+
+-- Comments on projects and pieces. objetivo_id is a canciones.id or a piezas.id (no foreign key: two tables).
+CREATE TABLE IF NOT EXISTS comentarios (
+  id           INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  objetivo     TEXT NOT NULL CHECK (objetivo IN ('cancion', 'pieza')),
+  objetivo_id  TEXT NOT NULL,
+  usuario_id   TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  texto        TEXT NOT NULL,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_comentarios_objetivo ON comentarios (objetivo, objetivo_id, created_at);
+
+-- Collaborators of a project, like on GitHub: they open and edit it even when it is private.
+CREATE TABLE IF NOT EXISTS colaboradores (
+  cancion_id  TEXT NOT NULL REFERENCES canciones(id) ON DELETE CASCADE,
+  usuario_id  TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (cancion_id, usuario_id)
+);
+CREATE INDEX IF NOT EXISTS idx_colaboradores_usuario ON colaboradores (usuario_id);
+
+-- The invitation link of a project (one at a time; making a new one replaces it). Whoever opens it while logged in
+-- becomes a collaborator. Like a share link, the owner can copy it again, so the token is kept as it is.
+CREATE TABLE IF NOT EXISTS invitaciones (
+  cancion_id  TEXT PRIMARY KEY REFERENCES canciones(id) ON DELETE CASCADE,
+  token       TEXT NOT NULL UNIQUE,
+  creada_por  TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  expires_at  TIMESTAMPTZ NOT NULL
+);
+
+-- Proposed changes (pull requests): the copy desde_id, with someone's changes, offered to project cancion_id.
+CREATE TABLE IF NOT EXISTS propuestas (
+  id           INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  cancion_id   TEXT NOT NULL REFERENCES canciones(id) ON DELETE CASCADE,
+  desde_id     TEXT NOT NULL REFERENCES canciones(id) ON DELETE CASCADE,
+  usuario_id   TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  titulo       TEXT NOT NULL,
+  mensaje      TEXT NOT NULL DEFAULT '',
+  estado       TEXT NOT NULL DEFAULT 'abierta' CHECK (estado IN ('abierta', 'aceptada', 'rechazada', 'retirada')),
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  resuelta_at  TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_propuestas_cancion ON propuestas (cancion_id);
+CREATE INDEX IF NOT EXISTS idx_propuestas_desde ON propuestas (desde_id);
+
+-- Messages between artists, like email (not a live chat). cancion_id: the project a message is about, if any.
+CREATE TABLE IF NOT EXISTS mensajes (
+  id          INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  de_id       TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  para_id     TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  asunto      TEXT NOT NULL DEFAULT '',
+  texto       TEXT NOT NULL,
+  cancion_id  TEXT REFERENCES canciones(id) ON DELETE SET NULL,
+  leido_at    TIMESTAMPTZ,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_mensajes_para ON mensajes (para_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_mensajes_de ON mensajes (de_id, created_at);
+
+-- Blocked accounts: a blocked account cannot write to (nor propose changes to) the one who blocked it.
+CREATE TABLE IF NOT EXISTS bloqueos (
+  usuario_id    TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  bloqueado_id  TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (usuario_id, bloqueado_id)
+);
+-- Who may write to an account: 'todos' (anyone), 'contactos' (people it wrote to or works with) or 'nadie'.
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS mensajes_de TEXT NOT NULL DEFAULT 'todos';
+
 -- Favourite pieces of each account (the star in the project Browser).
 CREATE TABLE IF NOT EXISTS favoritos (
   usuario_id  TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
