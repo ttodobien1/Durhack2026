@@ -123,7 +123,25 @@ const PROJECTS = [
   },
 ]
 
+// Favorite pieces while offline: kept in this browser, per username (the backend keeps them per account).
+const favKey = (user) => `stemma-favorites:${user}`
+function readFavorites(user) {
+  try {
+    const ids = JSON.parse(localStorage.getItem(favKey(user)))
+    return Array.isArray(ids) ? ids : []
+  } catch {
+    return []
+  }
+}
+
 export const mock = {
+  favorites: (user) => readFavorites(user).filter((id) => db.has(id)),
+  setFavorite(user, id, on) {
+    if (on && !db.has(id)) throw notFound(id)
+    const ids = readFavorites(user).filter((x) => x !== id)
+    localStorage.setItem(favKey(user), JSON.stringify(on ? [id, ...ids] : ids))
+    return {}
+  },
   // Same rule as the backend: public songs, or every song by `autor` (private ones included).
   projects: (autor) => structuredClone(PROJECTS.filter((p) => (autor ? p.autor === autor : p.publica !== false))),
   saveProject(song) {

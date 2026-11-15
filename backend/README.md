@@ -139,6 +139,9 @@ Email + password accounts stored in the database (no third-party auth service).
 | GET | `/auth/yo` | The logged-in account `{ usuario: { id, nombre, email, perfil, creado } }` |
 | PUT | `/auth/yo` | `{ "perfil": { displayName, bio, location, website, readme, accent, avatar, pinned } }` saves the public profile (`avatar` is an image `data:` URL up to 300 KB) |
 | GET | `/usuarios/:nombre` | Public profile `{ nombre, perfil, creado }` (never the email) |
+| GET | `/auth/yo/favoritos` | Ids of the account's favorite pieces `["p-017", ...]`, most recently starred first. Only pieces it can still see (public or its own) |
+| PUT | `/auth/yo/favoritos/:piezaId` | Stars a piece → `204` (idempotent); `404` if the piece does not exist or is someone else's private piece |
+| DELETE | `/auth/yo/favoritos/:piezaId` | Un-stars a piece → `204` (idempotent) |
 
 - Send the token as `Authorization: Bearer <token>`. Sessions last 30 days; only a SHA-256 hash of the token is
   stored. A wrong or expired token gets `401` on any route, so the client knows to log in again.
@@ -166,6 +169,7 @@ request if tables or columns are missing, so deploys never need a manual migrati
 - `bloques`: a piece placed on a track at bar `compas`.
 - `usuarios`: accounts (`nombre`, `email`, `password_hash`, `perfil` JSONB).
 - `sesiones`: login sessions (`token_hash`, `usuario_id`, `expires_at`).
+- `favoritos`: favorite pieces of each account (`usuario_id`, `pieza_id`, `created_at`); removed with the account or the piece.
 - `versiones`: song versions (`cancion_id`, `numero`, `autor`, `mensaje`, `snapshot` JSONB, `merge_de`/`merge_version`).
   `canciones.parent_id` / `parent_version`: the project and version a song was forked from.
 

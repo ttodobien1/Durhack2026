@@ -46,12 +46,12 @@
 .fd-typed { color: var(--text); }
 .fd-caret { flex: none; width: 1px; height: 12px; margin-left: -4px; background: var(--text); animation: fd-blink 1s steps(1) infinite; }
 @keyframes fd-blink { 50% { opacity: 0; } }
-.fd-btools .seg button { padding: 2px 0; font-size: 10px; }
+.fd-btools .seg button { display: inline-flex; align-items: center; justify-content: center; gap: 2px; flex: 1 1 auto; min-width: 0; padding: 2px 1px; font-size: 9px; }
 .fd-browser .pieces { flex: 1; overflow: hidden; }
 .fd-browser .piece-main { padding: 4px 2px 4px 6px; }
 .fd-browser .piece-name { font-size: 11px; }
 .fd-browser .piece-meta { font-size: 10px; }
-.fd-browser .icon { width: 18px; height: 18px; }
+.fd-browser .icon { width: 16px; height: 18px; }
 
 /* 2-4 Piano roll */
 .fd-roll { display: flex; flex-direction: column; height: 100%; background: var(--panel); }

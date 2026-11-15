@@ -586,7 +586,16 @@ export default function App({ projectId = 'new' }) {
         </div>
       )}
 
-      <Browser onResults={remember} onSelect={select} onAdd={addToSong} onPreview={previewPiece} playing={playing} selectedId={selectedId} fail={fail} />
+      <Browser
+        onResults={remember}
+        onSelect={select}
+        onAdd={addToSong}
+        onPreview={previewPiece}
+        onNeedLogin={(then) => signedIn('Log in to keep your favorite pieces.', then)}
+        playing={playing}
+        selectedId={selectedId}
+        fail={fail}
+      />
 
       <main className={`center ${pane.className}`} ref={pane.ref} style={pane.style}>
         <Playlist

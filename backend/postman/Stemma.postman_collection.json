@@ -259,6 +259,45 @@
             ],
             "url": "{{baseUrl}}/auth/logout"
           }
+        },
+        {
+          "name": "My favorite pieces (token)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/yo/favoritos"
+          }
+        },
+        {
+          "name": "Star a piece (token)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/yo/favoritos/p-101"
+          }
+        },
+        {
+          "name": "Un-star a piece (token)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/yo/favoritos/p-101"
+          }
         }
       ]
     },

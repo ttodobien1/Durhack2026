@@ -206,3 +206,25 @@ repositorio:
     vuelve a su lugar.
   - `GET /canciones/:id/versiones?snapshots=1` trae la foto de cada versión (las 40 más nuevas) y la del punto del fork.
 - **"My projects" en el menú del sitio**, al lado de Upload: lleva a tus proyectos (pide iniciar sesión si hace falta).
+
+## 11. Favoritos en el Browser del proyecto
+
+- El Browser tiene una pestaña **Favorites** entre **All** y **Rhythm**. Cada pieza del Browser tiene, además de ▶ y
+  **+**, una **estrella**: marcada (naranja) es favorita y se desmarca con otro clic.
+- **Sin sesión**, la estrella abre el login. Después de entrar, la pieza queda marcada.
+- **Siempre al día**: la pestaña se calcula a partir de la lista de favoritos de la cuenta, no se guarda aparte.
+  - Marcar o desmarcar una pieza cambia la estrella y la pestaña en el mismo clic.
+  - El servidor recibe un pedido por pieza, en orden, y gana el último clic. Si falla, la lista se vuelve a pedir al
+    servidor.
+  - La lista también se recarga al entrar o salir de la cuenta y al volver a la ventana, así que se ven los cambios
+    hechos en otra pestaña o en otro equipo.
+- **Tabla nueva** `favoritos` (`usuario_id`, `pieza_id`, `created_at`). Se crea sola en el próximo arranque, como en §8.
+- **Rutas nuevas** (con sesión; no cambian los contratos de §4):
+
+| Método | Ruta | Qué hace |
+| --- | --- | --- |
+| GET | `/auth/yo/favoritos` | Ids de las piezas favoritas, de la más reciente a la más antigua. Solo piezas que la cuenta puede ver |
+| PUT | `/auth/yo/favoritos/:piezaId` | Marca la pieza → `204` (repetirlo no duplica); `404` si no existe o es privada de otra persona |
+| DELETE | `/auth/yo/favoritos/:piezaId` | La desmarca → `204` (repetirlo no da error) |
+
+- Sin backend (datos de prueba), los favoritos se guardan en el navegador (`stemma-favorites:<usuario>`).

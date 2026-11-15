@@ -183,6 +183,9 @@ b, strong { font-weight: 600; }
 .piece-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .piece-meta { color: var(--dim); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .piece-row .code { border-left: 3px solid var(--tc, var(--dim)); }
+.browser-tabs button { display: inline-flex; align-items: center; justify-content: center; gap: 3px; flex: 1 1 auto; min-width: 0; padding: 4px 3px; font-size: 10.5px; }
+.icon.star.on { color: var(--orange); }
+.icon.star.on:hover:not(:disabled) { color: #ffbd66; }
 
 .t-ritmo { --tc: var(--t-ritmo); }
 .t-acordes { --tc: var(--t-acordes); }

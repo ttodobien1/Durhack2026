@@ -6,6 +6,7 @@ import { SCHEMA } from './schema.js';
 const CHECK_SQL = `
   SELECT to_regclass('public.sesiones') IS NOT NULL
      AND to_regclass('public.versiones') IS NOT NULL
+     AND to_regclass('public.favoritos') IS NOT NULL
      AND EXISTS (SELECT 1 FROM information_schema.columns
                  WHERE table_schema = 'public' AND table_name = 'piezas' AND column_name = 'usuario_id')
      AND EXISTS (SELECT 1 FROM information_schema.columns

@@ -128,6 +128,13 @@ export const api = {
       throw new Error('Merging needs the Stemma server.')
     }),
   credits: (id) => call(`/canciones/${id}/creditos`, undefined, () => null),
+  // Favorite pieces of the signed-in account (cambios.md §11): ids, most recently starred first. Offline
+  // accounts (no token) keep them in this browser.
+  favorites: () => (session?.token ? call('/auth/yo/favoritos', undefined, () => mock.favorites(ME)) : Promise.resolve(mock.favorites(ME))),
+  setFavorite: (id, on) =>
+    session?.token
+      ? call(`/auth/yo/favoritos/${encodeURIComponent(id)}`, { method: on ? 'PUT' : 'DELETE' }, () => mock.setFavorite(ME, id, on))
+      : Promise.resolve().then(() => mock.setFavorite(ME, id, on)),
   search: (filters) => {
     const qs = new URLSearchParams(Object.entries(filters).filter(([, v]) => v)).toString()
     return call(`/piezas?${qs}`, undefined, () => mock.search(filters))

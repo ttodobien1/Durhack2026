@@ -116,4 +116,12 @@ CREATE TABLE IF NOT EXISTS versiones (
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (cancion_id, numero)
 );
+
+-- Favourite pieces of each account (the star in the project Browser).
+CREATE TABLE IF NOT EXISTS favoritos (
+  usuario_id  TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  pieza_id    TEXT NOT NULL REFERENCES piezas(id) ON DELETE CASCADE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (usuario_id, pieza_id)
+);
 `;

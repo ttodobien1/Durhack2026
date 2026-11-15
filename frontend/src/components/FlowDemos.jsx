@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { GitBranch, GitCompare, GitFork, Play, Plus, Save, Search, Square, X } from 'lucide-react'
+import { GitBranch, GitCompare, GitFork, Play, Plus, Save, Search, Square, Star, X } from 'lucide-react'
 import { api } from '../api.js'
 import { diffNotes } from '../diff.js'
-import { TYPES, typeLabel } from './Browser.jsx'
+import { FAVORITES, TABS, typeLabel } from './Browser.jsx'
 import { MiniNotes } from './Playlist.jsx'
 import './flowdemo.css'
 
@@ -239,8 +239,9 @@ function SearchScene({ child }) {
                 {s.focus && <i className="fd-caret" />}
               </label>
               <div className="seg">
-                {TYPES.map(([k, label]) => (
+                {TABS.map(([k, label]) => (
                   <button key={k} tabIndex={-1} data-at={`type-${k}`} className={s.tipo === k ? 'on' : ''}>
+                    {k === FAVORITES && <Star size={9} />}
                     {label}
                   </button>
                 ))}
@@ -263,6 +264,9 @@ function SearchScene({ child }) {
                     </button>
                     <button tabIndex={-1} className="icon">
                       <Plus size={12} />
+                    </button>
+                    <button tabIndex={-1} className="icon star">
+                      <Star size={11} />
                     </button>
                   </li>
                 )

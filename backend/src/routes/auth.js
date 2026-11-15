@@ -3,6 +3,7 @@ import { requireUsuario } from '../lib/auth.js';
 import { HttpError } from '../lib/errors.js';
 import { dummyHash, hashPassword, verifyPassword } from '../lib/passwords.js';
 import { validateLogin, validatePerfil, validateRegistro } from '../lib/validate.js';
+import { addFavorito, listFavoritos, removeFavorito } from '../repo/favoritos.js';
 import {
   createSession,
   createUsuario,
@@ -58,6 +59,24 @@ router.put('/yo', async (req, res) => {
   const usuario = requireUsuario(req);
   const row = await updatePerfil(usuario.id, validatePerfil(req.body));
   res.json({ usuario: privateUsuario(row) });
+});
+
+// GET /auth/yo/favoritos  (Bearer token) -> ["p-017", ...]  most recently starred first
+router.get('/yo/favoritos', async (req, res) => {
+  res.json(await listFavoritos(requireUsuario(req).id));
+});
+
+// PUT /auth/yo/favoritos/:piezaId  (Bearer token) -> 204  stars a piece (idempotent)
+router.put('/yo/favoritos/:piezaId', async (req, res) => {
+  const usuario = requireUsuario(req);
+  if (!(await addFavorito(usuario.id, req.params.piezaId))) throw new HttpError(404, `Piece ${req.params.piezaId} not found`);
+  res.status(204).end();
+});
+
+// DELETE /auth/yo/favoritos/:piezaId  (Bearer token) -> 204  un-stars a piece (idempotent)
+router.delete('/yo/favoritos/:piezaId', async (req, res) => {
+  await removeFavorito(requireUsuario(req).id, req.params.piezaId);
+  res.status(204).end();
 });
 
 export default router;
