@@ -629,13 +629,7 @@ export default function App({ projectId = 'new' }) {
             <Square size={13} />
           </button>
           <label className="lcd" title="Tempo">
-            <input
-              type="number"
-              min="60"
-              max="200"
-              value={song.tempo}
-              onChange={(e) => setSong({ ...song, tempo: Math.min(200, Math.max(60, +e.target.value || 96)) })}
-            />
+            <TempoInput value={song.tempo} onChange={(tempo) => setSong((s) => ({ ...s, tempo }))} />
             <span>BPM</span>
           </label>
           <label className="volume" title={`Master volume ${volume}%`}>
@@ -904,3 +898,47 @@ export default function App({ projectId = 'new' }) {
     </div>
   )
 }
+
+/**
+ * BPM box. While you type it keeps your text: a valid tempo (60-200) applies at once, anything else (an empty box,
+ * "12" on the way to "120") waits until Enter or leaving the box, where it is clamped; empty goes back. Escape cancels.
+ */
+function TempoInput({ value, onChange }) {
+  const [draft, setDraft] = useState(null) // the text being typed, or null to show the song's tempo
+  const before = useRef(value) // the tempo when the box got focus, for Escape
+  const cancelled = useRef(false) // Escape: leaving the box must not save the typed text
+  const valid = (n) => Number.isInteger(n) && n >= 60 && n <= 200
+  const commit = () => {
+    if (cancelled.current) return (cancelled.current = false), setDraft(null)
+    if (draft === null) return
+    const n = Math.round(Number(draft))
+    if (draft.trim() !== '' && Number.isFinite(n)) onChange(Math.min(200, Math.max(60, n)))
+    setDraft(null)
+  }
+  return (
+    <input
+      type="number"
+      min="60"
+      max="200"
+      value={draft ?? value}
+      aria-label="Tempo in BPM"
+      onChange={(e) => {
+        setDraft(e.target.value)
+        const n = Number(e.target.value)
+        if (e.target.value !== '' && valid(n)) onChange(n)
+      }}
+      onFocus={() => (before.current = value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur()
+        else if (e.key === 'Escape') {
+          cancelled.current = true
+          setDraft(null)
+          if (value !== before.current) onChange(before.current)
+          e.currentTarget.blur()
+        }
+      }}
+    />
+  )
+}
+
