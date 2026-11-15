@@ -1,7 +1,9 @@
 // Applies the schema when the database is missing tables or columns (for example right after a deploy
 // that added accounts). Runs at most once per server instance; when everything exists it costs one query.
-import { db } from './client.js';
-import { SCHEMA } from './schema.js';
+import { databaseKind, db } from './client.js';
+import { features } from './features.js';
+import { SCHEMA, TIMESCALE_STATEMENTS, VECTOR_SCHEMA } from './schema.js';
+import { backfillHuellas } from '../repo/vectores.js';
 
 const CHECK_SQL = `
   SELECT to_regclass('public.sesiones') IS NOT NULL
@@ -29,6 +31,7 @@ const CHECK_SQL = `
                  WHERE table_schema = 'public' AND table_name = 'canciones' AND column_name = 'descripcion')
      AND EXISTS (SELECT 1 FROM information_schema.columns
                  WHERE table_schema = 'public' AND table_name = 'canciones' AND column_name = 'borrada_at')
+     AND to_regclass('public.eventos') IS NOT NULL
      AS ready`;
 
 async function isReady() {
@@ -47,10 +50,43 @@ async function migrate() {
   }
 }
 
+const hasColumn = async (table, column) =>
+  (await db.query('SELECT 1 FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 AND column_name = $3', ['public', table, column])).rows.length > 0;
+
+/**
+ * Optional parts, each on its own so a refusal never breaks the app (see features.js):
+ * pgvector columns (+ fingerprints for pieces that have none), and on TigerData the TimescaleDB hypertable.
+ * Never throws; logs what is unavailable.
+ */
+export async function applyExtras({ log = console.log } = {}) {
+  try {
+    if (!(await hasColumn('piezas', 'huella')) || !(await hasColumn('piezas', 'embedding'))) await db.exec(VECTOR_SCHEMA);
+    features.vectores = true;
+  } catch (err) {
+    features.vectores = false;
+    log(`pgvector unavailable (similarity stays in memory, search keyword-only): ${err.message}`);
+  }
+  if (databaseKind === 'postgres') {
+    try {
+      const found = await db.query(`SELECT 1 FROM timescaledb_information.hypertables WHERE hypertable_name = 'eventos'`).catch(() => ({ rows: [] }));
+      const view = await db.query(`SELECT to_regclass('public.eventos_hora') IS NOT NULL AS ok`);
+      if (!found.rows.length || !view.rows[0].ok) for (const sql of TIMESCALE_STATEMENTS) await db.query(sql);
+      features.timescale = true;
+    } catch (err) {
+      features.timescale = false;
+      log(`TimescaleDB unavailable (events stay a plain table): ${err.message}`);
+    }
+  }
+  if (features.vectores) {
+    const n = await backfillHuellas().catch((err) => log(`fingerprint backfill failed: ${err.message}`));
+    if (n) log(`Stored fingerprints for ${n} pieces`);
+  }
+}
+
 let pending = null;
 
 export function ensureSchema() {
-  pending ??= migrate().catch((err) => {
+  pending ??= migrate().then(() => applyExtras()).catch((err) => {
     pending = null; // try again on the next request
     throw err;
   });

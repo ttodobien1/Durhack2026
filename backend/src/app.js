@@ -1,3 +1,4 @@
+import { features } from './db/features.js';
 import cors from 'cors';
 import express from 'express';
 import { databaseKind, db } from './db/client.js';
@@ -12,6 +13,8 @@ import mensajes from './routes/mensajes.js';
 import piezas from './routes/piezas.js';
 import usos from './routes/usos.js';
 import usuarios from './routes/usuarios.js';
+
+import eventos from './routes/eventos.js';
 
 const app = express();
 
@@ -44,6 +47,8 @@ app.get('/health', async (req, res) => {
     canciones: Number(totalCanciones),
     usuarios: Number(totalUsuarios),
     copiloto: Boolean(process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY),
+    vectores: features.vectores, // pgvector: SQL similarity and semantic search
+    timescale: features.timescale, // TigerData hypertable + continuous aggregate for events
   });
 });
 
@@ -56,6 +61,7 @@ app.use('/copiloto', copiloto);
 app.use('/comentarios', comentarios);
 app.use('/invitaciones', invitaciones);
 app.use('/mensajes', mensajes);
+app.use('/eventos', eventos); // POST /eventos/reproduccion (plays; no IP or user agent)
 
 app.use((req, res) => {
   res.status(404).json({ error: `Route not found: ${req.method} ${req.path}` });

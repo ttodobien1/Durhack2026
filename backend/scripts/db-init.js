@@ -5,6 +5,7 @@
 import '../src/loadEnv.js';
 import { databaseKind, db, LOCAL_DATA_DIR } from '../src/db/client.js';
 import { SCHEMA } from '../src/db/schema.js';
+import { applyExtras } from '../src/db/migrate.js';
 import { seedDatabase } from './lib/seed.js';
 
 const args = new Set(process.argv.slice(2));
@@ -20,10 +21,11 @@ if (reset && databaseKind === 'postgres' && !args.has('--yes')) {
 
 try {
   if (reset) {
-    await db.exec('DROP TABLE IF EXISTS versiones, bloques, pistas, canciones, piezas, sesiones, usuarios CASCADE;');
+    await db.exec('DROP MATERIALIZED VIEW IF EXISTS eventos_hora CASCADE; DROP TABLE IF EXISTS eventos, versiones, bloques, pistas, canciones, piezas, sesiones, usuarios CASCADE;');
     console.log('Dropped existing tables');
   }
   await db.exec(SCHEMA);
+  await applyExtras(); // pgvector (+ TimescaleDB on TigerData); fingerprints are stored while seeding
   console.log('Schema ready');
   if (seed) await seedDatabase();
 } catch (err) {

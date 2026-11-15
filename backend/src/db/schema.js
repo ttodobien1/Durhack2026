@@ -205,4 +205,42 @@ CREATE TABLE IF NOT EXISTS favoritos (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (usuario_id, pieza_id)
 );
+
+-- Plays, forks and saves over time (credits ledger, trending). A TimescaleDB hypertable on TigerData
+-- (TIMESCALE_SCHEMA below); a plain table elsewhere. No IP or user agent is ever stored.
+CREATE TABLE IF NOT EXISTS eventos (
+  tiempo      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  tipo        TEXT NOT NULL,                           -- 'reproduccion' | 'fork' | 'guardado'
+  pieza_id    TEXT,
+  cancion_id  TEXT,
+  autor       TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_eventos_tiempo ON eventos (tiempo DESC);
+CREATE INDEX IF NOT EXISTS idx_eventos_pieza ON eventos (pieza_id, tiempo DESC);
+CREATE INDEX IF NOT EXISTS idx_eventos_cancion ON eventos (cancion_id, tiempo DESC);
 `;
+
+// pgvector (TigerData and PGlite both have it). Applied after SCHEMA and separately (migrate.js applyExtras): if a
+// database refuses the extension, the app keeps working with in-memory similarity and keyword-only search.
+//   huella:    musical fingerprint (lib/fingerprint.js), padded to 32 numbers for every type
+//   embedding: Gemini text embedding of describePiece() (public pieces only); embedding_src: hash of that text
+export const VECTOR_SCHEMA = /* sql */ `
+CREATE EXTENSION IF NOT EXISTS vector;
+ALTER TABLE piezas ADD COLUMN IF NOT EXISTS huella        vector(32);
+ALTER TABLE piezas ADD COLUMN IF NOT EXISTS embedding     vector(768);
+ALTER TABLE piezas ADD COLUMN IF NOT EXISTS embedding_src text;
+CREATE INDEX IF NOT EXISTS idx_piezas_huella    ON piezas USING hnsw (huella vector_l2_ops);
+CREATE INDEX IF NOT EXISTS idx_piezas_embedding ON piezas USING hnsw (embedding vector_cosine_ops);
+`;
+
+// TimescaleDB, on TigerData only: the events table becomes a hypertable with an hourly continuous aggregate
+// (real-time, so the last hour is included). Each statement runs on its own (a continuous aggregate cannot be
+// created inside a multi-statement transaction); failures leave the plain table, which every query also handles.
+export const TIMESCALE_STATEMENTS = [
+  `SELECT create_hypertable('eventos', by_range('tiempo'), if_not_exists => true)`,
+  `CREATE MATERIALIZED VIEW IF NOT EXISTS eventos_hora WITH (timescaledb.continuous, timescaledb.materialized_only = false) AS
+     SELECT time_bucket('1 hour', tiempo) AS hora, tipo, pieza_id, count(*) AS n
+     FROM eventos GROUP BY hora, tipo, pieza_id WITH NO DATA`,
+  `SELECT add_continuous_aggregate_policy('eventos_hora', start_offset => INTERVAL '3 days', end_offset => INTERVAL '1 hour',
+     schedule_interval => INTERVAL '30 minutes', if_not_exists => true)`,
+];

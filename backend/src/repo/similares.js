@@ -1,6 +1,9 @@
 // Fingerprints of the public library, kept in memory: computing them is cheap, reading every piece is not.
 import { describeAxis, featureNames, fingerprint, nearest, pca2, tooClose, typicalDistance, windowFingerprints } from '../lib/fingerprint.js';
 import { searchPiezas } from './piezas.js';
+import { db } from '../db/client.js';
+import { features } from '../db/features.js';
+import { huellaVector, similitud } from '../lib/fingerprint.js';
 
 const MAX_AGE = 30_000; // also refresh on a timer: pieces can change through routes that do not call forget()
 let cache = null; // { at, byTipo: { tipo: [{ pieza, f }] }, scale: { tipo: typical distance } }
@@ -22,10 +25,40 @@ async function library() {
   return cache;
 }
 
-/** Public pieces of the same type that sound most like `pieza` (which may be unsaved), closest first. */
+/**
+ * The n public pieces of one type nearest to fingerprint `vec` (a pgvector literal), by the HNSW index on huella.
+ * `conn` is the database (a parameter so tests can pass their own). Returns [{ id, distancia }], closest first.
+ */
+export async function nearestInSql(conn, vec, tipo, excludeId, n) {
+  const { rows } = await conn.query(
+    `SELECT id, huella <-> $1::vector AS distancia FROM piezas
+     WHERE tipo = $2 AND publica AND huella IS NOT NULL AND id <> $3
+     ORDER BY huella <-> $1::vector LIMIT $4`,
+    [vec, tipo, excludeId ?? '', n],
+  );
+  return rows.map((r) => ({ id: r.id, distancia: Number(r.distancia) }));
+}
+
+/**
+ * Public pieces of the same type that sound most like `pieza` (which may be unsaved), closest first.
+ * One indexed pgvector query when the database has it; the in-memory scan otherwise (or if the query fails).
+ * similitud keeps the per-type scale (typical distance) of the cached library either way.
+ */
 export async function similarTo(pieza, { n = 8 } = {}) {
   const { byTipo, scale } = await library();
-  return nearest(fingerprint(pieza), byTipo[pieza.tipo] ?? [], { n, skip: (e) => e.pieza.id === pieza.id, scale: scale[pieza.tipo] });
+  const entries = byTipo[pieza.tipo] ?? [];
+  if (features.vectores) {
+    try {
+      const byId = new Map(entries.map((e) => [e.pieza.id, e]));
+      const rows = await nearestInSql(db, huellaVector(pieza), pieza.tipo, pieza.id, n);
+      return rows
+        .filter((r) => byId.has(r.id))
+        .map((r) => ({ ...byId.get(r.id).pieza, similitud: similitud(r.distancia, scale[pieza.tipo]), distancia: Math.round(r.distancia * 1000) / 1000 }));
+    } catch (err) {
+      console.warn(`SQL similarity failed, using the in-memory scan: ${err.message}`);
+    }
+  }
+  return nearest(fingerprint(pieza), entries, { n, skip: (e) => e.pieza.id === pieza.id, scale: scale[pieza.tipo] });
 }
 
 /**

@@ -14,11 +14,13 @@
     "db:seed": "node scripts/db-seed.js",
     "db:reset": "node scripts/db-init.js --reset --seed",
     "import:midi": "node scripts/import-midi.js",
-    "test": "node --test"
+    "test": "node --test",
+    "embed": "node scripts/embed.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",
     "@electric-sql/pglite": "^0.5.16",
+    "@electric-sql/pglite-pgvector": "0.0.17",
     "@tonejs/midi": "^2.0.28",
     "cors": "^2.8.6",
     "dotenv": "^18.0.10",

@@ -183,3 +183,10 @@ export function describeAxis(weights, names) {
   const side = (sign) => [...new Set(ranked.filter(([w]) => Math.sign(w) === sign).map(([, name]) => name))].slice(0, 2);
   return { menos: side(-1), mas: side(1) };
 }
+
+/** The fingerprint as a pgvector literal, zero-padded to 32 numbers (zeros do not change distances within a type). */
+export const HUELLA_DIMS = 32;
+export function huellaVector(pieza) {
+  const f = fingerprint(pieza);
+  return `[${[...f, ...Array(HUELLA_DIMS - f.length).fill(0)].map((x) => +x.toFixed(6)).join(',')}]`;
+}

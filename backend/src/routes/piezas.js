@@ -8,10 +8,10 @@ import {
   forkPieza,
   getPieza,
   getPiezaOwner,
+  getPiezasByIds,
   getPiezasWithAncestors,
   getVisiblePieza,
   isAncestor,
-  searchPiezas,
   setPiezaPublica,
   updatePieza,
   visibilityBlocker,
@@ -19,6 +19,9 @@ import {
 import { blame, blameSummary } from '../lib/credits.js';
 import { diffFacts } from '../lib/diffFacts.js';
 import { explainDiff } from '../copilot/explain.js';
+import { embedLater } from '../repo/vectores.js';
+import { activity, logEvent, trending } from '../repo/eventos.js';
+import { searchHybrid } from '../repo/busqueda.js';
 import { forgetFingerprints, mapOf, nearCopyOf, similarTo } from '../repo/similares.js';
 
 const router = Router();
@@ -37,7 +40,8 @@ function firstValue(value) {
 // GET /piezas?estilo=&tipo=&tonalidad=&q=&autor=
 router.get('/', async (req, res) => {
   const { estilo, tipo, tonalidad, q, autor } = req.query;
-  const piezas = await searchPiezas({
+  // Keyword matches, plus Gemini semantic matches merged by rank when there is text (repo/busqueda.js).
+  const piezas = await searchHybrid({
     estilo: firstValue(estilo),
     tipo: firstValue(tipo),
     tonalidad: firstValue(tonalidad),
@@ -58,7 +62,24 @@ router.post('/', async (req, res) => {
     throw badRequest(`Unknown parent_id: ${data.parent_id}`);
   }
   forgetFingerprints();
-  res.status(201).json(await createPieza(data, req.usuario?.id ?? null));
+  const created = await createPieza(data, req.usuario?.id ?? null);
+  embedLater(created.id); // Gemini embedding in the background (public pieces only); never fails the save
+  res.status(201).json(created);
+});
+
+// GET /piezas/tendencia?horas=24  -> public pieces most played and forked lately: [{ ...Pieza, reproducciones, forks }]
+// From the events table (a TimescaleDB hypertable + continuous aggregate on TigerData, repo/eventos.js).
+router.get('/tendencia', async (req, res) => {
+  const hours = Math.min(168, Math.max(1, Number.parseInt(firstValue(req.query.horas), 10) || 24));
+  const top = await trending({ hours, limit: 20 });
+  const byId = new Map((await getPiezasByIds(top.map((t) => t.pieza_id))).filter((p) => p.publica !== false).map((p) => [p.id, p]));
+  res.json(top.filter((t) => byId.has(t.pieza_id)).slice(0, 10).map((t) => ({ ...byId.get(t.pieza_id), reproducciones: t.reproducciones, forks: t.forks })));
+});
+
+// GET /piezas/:id/actividad  -> { pieza_id, horas: [{ hora, reproducciones, forks }] (24, oldest first), total }
+router.get('/:id/actividad', async (req, res) => {
+  const pieza = await findPieza(req, req.params.id);
+  res.json(await activity(pieza.id));
 });
 
 // GET /piezas/mapa?tipo=ritmo  -> { tipo, total, ejes: [{ varianza, menos, mas }], puntos: [{ id, nombre, autor, x, y, ... }] }
@@ -106,7 +127,10 @@ router.post('/:id/fork', async (req, res) => {
   const autor = await autorFor(req, body.autor);
   const nombre = typeof body.nombre === 'string' && body.nombre.trim() ? body.nombre.trim() : undefined;
   forgetFingerprints();
-  res.status(201).json(await forkPieza(original, { autor, nombre, usuarioId: req.usuario?.id ?? null }));
+  const copy = await forkPieza(original, { autor, nombre, usuarioId: req.usuario?.id ?? null });
+  logEvent({ tipo: 'fork', pieza_id: original.id, autor });
+  embedLater(copy.id);
+  res.status(201).json(copy);
 });
 
 // PUT /piezas/:id   body: { "notas": [...] } (+ optional nombre, tonalidad, tempo, estilo, compases)
@@ -127,7 +151,10 @@ router.put('/:id', async (req, res) => {
     }
   }
   forgetFingerprints();
-  res.json(Object.keys(changes).length ? await updatePieza(req.params.id, changes) : await getPieza(req.params.id));
+  const saved = Object.keys(changes).length ? await updatePieza(req.params.id, changes) : await getPieza(req.params.id);
+  if (changes.notas) logEvent({ tipo: 'guardado', pieza_id: req.params.id, autor: req.usuario?.nombre ?? null });
+  embedLater(req.params.id); // re-embeds if its description changed; clears nothing (private pieces lose it in the repo)
+  res.json(saved);
 });
 
 // GET /piezas/:id/diff  -> diff of a fork against its parent

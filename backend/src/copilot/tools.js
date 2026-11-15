@@ -1,7 +1,8 @@
 // The copilot's two tools (CLAUDE.md 4.4): buscar_piezas and describir_estilo.
 import { normalizeText } from '../lib/normalize.js';
 import { TIPOS } from '../lib/validate.js';
-import { getVisiblePieza, searchPiezas } from '../repo/piezas.js';
+import { getVisiblePieza } from '../repo/piezas.js';
+import { searchHybrid } from '../repo/busqueda.js';
 import { similarTo } from '../repo/similares.js';
 import { STYLES } from './styles.js';
 
@@ -74,7 +75,7 @@ async function buscarPiezas(input) {
   if (tipo && !TIPOS.includes(normalizeText(tipo))) {
     return { error: `Unknown tipo "${tipo}". Valid values: ${TIPOS.join(', ')}` };
   }
-  const piezas = await searchPiezas({
+  const piezas = await searchHybrid({
     estilo: optionalString(input.estilo),
     tipo,
     tonalidad: optionalString(input.tonalidad),

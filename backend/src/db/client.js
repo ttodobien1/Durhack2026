@@ -52,7 +52,8 @@ async function createPostgres() {
 
 async function createPglite() {
   const { PGlite } = await import('@electric-sql/pglite');
-  const pglite = new PGlite(LOCAL_DATA_DIR);
+  const { vector } = await import('@electric-sql/pglite-pgvector'); // pgvector, same SQL as on TigerData
+  const pglite = new PGlite(LOCAL_DATA_DIR, { extensions: { vector } });
   return {
     query: (sql, params = []) => pglite.query(sql, params),
     exec: (sql) => pglite.exec(sql),

@@ -1,3 +1,4 @@
+import { forgetEmbedding, setHuella } from './vectores.js';
 import { db, placeholders } from '../db/client.js';
 import { insertWithNewId } from '../lib/ids.js';
 import { normalizeKey, normalizeText, searchableText, splitTags } from '../lib/normalize.js';
@@ -114,6 +115,7 @@ export async function visibilityBlocker(id, publica) {
 // Sets who may see a piece (checked first with visibilityBlocker). Returns the piece.
 export async function setPiezaPublica(id, publica) {
   await db.query('UPDATE piezas SET publica = $2, updated_at = now() WHERE id = $1', [id, publica]);
+  if (!publica) await forgetEmbedding(id);
   return getPieza(id);
 }
 
@@ -169,7 +171,9 @@ export async function createPieza(pieza, usuarioId = null) {
   const id = await insertWithNewId('piezas', 'p', (newId) =>
     db.query(INSERT_SQL, [newId, ...rowValues(pieza), usuarioId, publica]),
   );
-  return getPieza(id);
+  const created = await getPieza(id);
+  await setHuella(created);
+  return created;
 }
 
 // Owner account of a piece: { usuario_id } (null when unowned), or null if the piece does not exist.
@@ -190,6 +194,7 @@ export async function upsertPieza(pieza) {
        updated_at = now()`,
     [pieza.id, ...rowValues(pieza), null, true],
   );
+  await setHuella(pieza);
 }
 
 // Applies validated changes (see validatePiezaUpdate) and returns the updated Pieza, or null.
@@ -204,6 +209,7 @@ export async function updatePieza(id, changes) {
      WHERE id = $13`,
     [...rowValues(merged), id],
   );
+  if (changes.notas) await setHuella({ ...merged, id });
   return getPieza(id);
 }
 

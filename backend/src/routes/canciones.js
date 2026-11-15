@@ -57,6 +57,8 @@ import {
   versionHistory,
 } from '../repo/versiones.js';
 
+import { logEvent, songPlaysToday } from '../repo/eventos.js';
+
 const router = Router();
 
 // Validates a song body. Logged in, `autor` is always the account's username.
@@ -180,6 +182,7 @@ router.post('/', async (req, res) => {
   }
   const created = await createCancion(cancion, req.usuario?.id ?? null, fork);
   await recordVersion(created.id, { autor: cancion.autor, mensaje });
+  logEvent({ tipo: 'guardado', cancion_id: created.id, autor: cancion.autor });
   res.status(201).json(await getCancion(created.id));
 });
 
@@ -209,6 +212,7 @@ router.put('/:id', async (req, res) => {
   await ensureVersions(req.params.id); // songs from before versions existed keep their old state as v1
   await saveCancion(req.params.id, cancion, req.usuario?.id ?? null);
   await recordVersion(req.params.id, { autor: req.usuario?.nombre ?? owner.autor, mensaje });
+  logEvent({ tipo: 'guardado', cancion_id: req.params.id, autor: req.usuario?.nombre ?? owner.autor });
   res.json(await getCancion(req.params.id));
 });
 
@@ -419,7 +423,14 @@ router.post('/:id/merge/:otra', async (req, res) => {
 
 // GET /canciones/:id/creditos  -> who made what: share of the notes per author, their pieces and versions
 router.get('/:id/creditos', async (req, res) => {
-  res.json(await songCredits(await visibleCancion(req)));
+  const cancion = await visibleCancion(req);
+  const [credits, plays] = await Promise.all([songCredits(cancion), songPlaysToday(cancion.id)]);
+  // Credits ledger: each play plays every note once, so an author's notes played today = their notes × today's plays.
+  res.json({
+    ...credits,
+    reproducciones_hoy: plays,
+    autores: credits.autores.map((a) => ({ ...a, notas_reproducidas_hoy: (a.notas ?? 0) * plays })),
+  });
 });
 
 export default router;
