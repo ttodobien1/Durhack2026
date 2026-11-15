@@ -90,4 +90,23 @@ CREATE INDEX IF NOT EXISTS idx_sesiones_usuario ON sesiones (usuario_id);
 -- Owner account of pieces and songs created while logged in (NULL = seed data or anonymous).
 ALTER TABLE piezas    ADD COLUMN IF NOT EXISTS usuario_id TEXT REFERENCES usuarios(id);
 ALTER TABLE canciones ADD COLUMN IF NOT EXISTS usuario_id TEXT REFERENCES usuarios(id);
+
+-- Project lineage: a song saved as a copy of another one is a fork of it, made from its version parent_version.
+ALTER TABLE canciones ADD COLUMN IF NOT EXISTS parent_id TEXT REFERENCES canciones(id);
+ALTER TABLE canciones ADD COLUMN IF NOT EXISTS parent_version INTEGER;
+CREATE INDEX IF NOT EXISTS idx_canciones_parent ON canciones (parent_id);
+
+-- Versions of a song (v1, v2...), like commits: a full snapshot each time it is saved, with the notes of
+-- every piece it used at that moment, so any two versions can be compared later.
+CREATE TABLE IF NOT EXISTS versiones (
+  cancion_id     TEXT NOT NULL REFERENCES canciones(id) ON DELETE CASCADE,
+  numero         INTEGER NOT NULL,                   -- 1, 2, 3...
+  autor          TEXT NOT NULL,                      -- who saved it
+  mensaje        TEXT NOT NULL DEFAULT '',           -- what changed (written by the author or generated)
+  snapshot       JSONB NOT NULL,                     -- { nombre, tempo, pistas, piezas: { id: {nombre, autor, tipo, licencia, parent_id, compases, notas} } }
+  merge_de       TEXT,                               -- merge versions: the song merged in...
+  merge_version  INTEGER,                            -- ...and which of its versions
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (cancion_id, numero)
+);
 `;

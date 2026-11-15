@@ -1,5 +1,6 @@
 // Origin tree window. Role C owns this view: replace the layout and node styling freely,
 // the props (song, loadPiece, onClose) and the { nodos, aristas } shape from CLAUDE.md §4.3 stay.
+// TreeView is the same tree without the window, shown in the Tree tab of the project history (History.jsx).
 import { useEffect, useState } from 'react'
 import { ReactFlow, Background, Controls, Handle, Position } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
@@ -61,7 +62,8 @@ function PieceNode({ data }) {
 }
 const nodeTypes = { piece: PieceNode }
 
-export function OriginTree({ song, loadPiece, onClose }) {
+/** The tree with its summary line, without a window: the "Tree" tab of the project history uses it too. */
+export function TreeView({ song, loadPiece }) {
   const [tree, setTree] = useState(null)
   const [error, setError] = useState(null)
 
@@ -70,14 +72,44 @@ export function OriginTree({ song, loadPiece, onClose }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [song])
 
+  const authors = tree ? new Set(tree.nodos.filter((n) => !isMine(n.autor)).map((n) => n.autor)) : new Set()
+  const mine = tree?.nodos.filter((n) => isMine(n.autor)).length ?? 0
+
+  return (
+    <>
+      {tree && (
+        <p className="tree-summary">
+          This song has <b>{tree.used.size}</b> {tree.used.size === 1 ? 'piece' : 'pieces'} drawing on <b>{authors.size}</b>{' '}
+          {authors.size === 1 ? 'author' : 'authors'}.{' '}
+          {mine ? (
+            <>
+              <b className="mine-text">{mine}</b> {mine === 1 ? 'piece is' : 'pieces are'} yours.
+            </>
+          ) : (
+            'Fork a piece to add your own.'
+          )}
+        </p>
+      )}
+      <div className="tree-canvas">
+        {error && <p className="empty">Could not build the tree: {error}</p>}
+        {tree && !tree.used.size && <p className="empty">Add pieces to the project to see where they come from.</p>}
+        {tree && (
+          <ReactFlow {...layout(tree)} nodeTypes={nodeTypes} fitView colorMode="dark" nodesConnectable={false}>
+            <Background color="#3d454b" gap={20} />
+            <Controls showInteractive={false} />
+          </ReactFlow>
+        )}
+      </div>
+    </>
+  )
+}
+
+export function OriginTree({ song, loadPiece, onClose }) {
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
-
-  const authors = tree ? new Set(tree.nodos.filter((n) => !isMine(n.autor)).map((n) => n.autor)) : new Set()
-  const mine = tree?.nodos.filter((n) => isMine(n.autor)).length ?? 0
 
   return (
     <div className="window-backdrop" onClick={onClose}>
@@ -90,28 +122,7 @@ export function OriginTree({ song, loadPiece, onClose }) {
             <X size={13} />
           </button>
         </h2>
-        {tree && (
-          <p className="tree-summary">
-            This song has <b>{tree.used.size}</b> {tree.used.size === 1 ? 'piece' : 'pieces'} drawing on <b>{authors.size}</b>{' '}
-            {authors.size === 1 ? 'author' : 'authors'}.{' '}
-            {mine ? (
-              <>
-                <b className="mine-text">{mine}</b> {mine === 1 ? 'piece is' : 'pieces are'} yours.
-              </>
-            ) : (
-              'Fork a piece to add your own.'
-            )}
-          </p>
-        )}
-        <div className="tree-canvas">
-          {error && <p className="empty">Could not build the tree: {error}</p>}
-          {tree && (
-            <ReactFlow {...layout(tree)} nodeTypes={nodeTypes} fitView colorMode="dark" nodesConnectable={false}>
-              <Background color="#3d454b" gap={20} />
-              <Controls showInteractive={false} />
-            </ReactFlow>
-          )}
-        </div>
+        <TreeView song={song} loadPiece={loadPiece} />
       </section>
     </div>
   )

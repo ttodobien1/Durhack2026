@@ -164,6 +164,22 @@ export async function isAncestor(ancestorId, pieceId) {
   return result.rows.length > 0;
 }
 
+// The given pieces plus every ancestor up their parent_id chains (full Pieza objects).
+export async function getPiezasWithAncestors(ids) {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return [];
+  const result = await db.query(
+    `WITH RECURSIVE linaje(id) AS (
+       SELECT id FROM piezas WHERE id IN (${placeholders(unique)})
+       UNION
+       SELECT p.parent_id FROM piezas p JOIN linaje l ON p.id = l.id WHERE p.parent_id IS NOT NULL
+     )
+     SELECT ${COLUMNS.split(', ').map((c) => `p.${c}`).join(', ')} FROM piezas p JOIN linaje l ON p.id = l.id ORDER BY p.id`,
+    unique,
+  );
+  return result.rows.map(toPieza);
+}
+
 // Returns the subset of ids that exist in the database.
 export async function existingPiezaIds(ids) {
   const unique = [...new Set(ids)];

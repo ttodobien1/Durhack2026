@@ -109,10 +109,24 @@ export const api = {
   // Public projects, or every project by `autor` including private ones (no accounts: private means unlisted).
   projects: (autor) => call(autor ? `/canciones?autor=${encodeURIComponent(autor)}` : '/canciones', undefined, () => mock.projects(autor)),
   project: (id) => call(`/canciones/${id}`, undefined, () => mock.project(id)),
-  saveProject: ({ id, ...song }) =>
+  // `mensaje` (optional) describes the version this save creates; a copy sends `parent_id` / `parent_version`.
+  saveProject: ({ id, mensaje, ...song }) =>
     id && id !== 'c-new'
-      ? call(`/canciones/${id}`, { method: 'PUT', body: song }, () => mock.saveProject({ id, ...song }))
-      : call('/canciones', { method: 'POST', body: song }, () => mock.saveProject(song)),
+      ? call(`/canciones/${id}`, { method: 'PUT', body: { ...song, mensaje } }, () => mock.saveProject({ id, ...song }))
+      : call('/canciones', { method: 'POST', body: { ...song, mensaje } }, () => mock.saveProject(song)),
+
+  // Project history (cambios.md §9): versions, diff between versions, forks, merge and credits.
+  // They need the backend: offline (mock) they resolve to null and the History window says so.
+  versions: (id) => call(`/canciones/${id}/versiones`, undefined, () => null),
+  version: (id, n) => call(`/canciones/${id}/versiones/${n}`, undefined, () => null),
+  versionDiff: (id, n, contra) => call(`/canciones/${id}/versiones/${n}/diff${contra ? `?contra=${contra}` : ''}`, undefined, () => null),
+  related: (id) => call(`/canciones/${id}/forks`, undefined, () => null),
+  mergePreview: (id, otra, resoluciones) => call(`/canciones/${id}/merge/${otra}/preview`, { method: 'POST', body: { resoluciones } }, () => null),
+  merge: (id, otra, resoluciones, mensaje) =>
+    call(`/canciones/${id}/merge/${otra}`, { method: 'POST', body: { resoluciones, mensaje } }, () => {
+      throw new Error('Merging needs the Stemma server.')
+    }),
+  credits: (id) => call(`/canciones/${id}/creditos`, undefined, () => null),
   search: (filters) => {
     const qs = new URLSearchParams(Object.entries(filters).filter(([, v]) => v)).toString()
     return call(`/piezas?${qs}`, undefined, () => mock.search(filters))

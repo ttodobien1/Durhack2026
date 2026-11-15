@@ -20,7 +20,7 @@ if (reset && databaseKind === 'postgres' && !args.has('--yes')) {
 
 try {
   if (reset) {
-    await db.exec('DROP TABLE IF EXISTS bloques, pistas, canciones, piezas, sesiones, usuarios CASCADE;');
+    await db.exec('DROP TABLE IF EXISTS versiones, bloques, pistas, canciones, piezas, sesiones, usuarios CASCADE;');
     console.log('Dropped existing tables');
   }
   await db.exec(SCHEMA);

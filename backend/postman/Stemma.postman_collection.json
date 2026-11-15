@@ -28,6 +28,10 @@
     {
       "key": "usuario",
       "value": "chino"
+    },
+    {
+      "key": "forkCancionId",
+      "value": "c-002"
     }
   ],
   "item": [
@@ -503,6 +507,206 @@
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/canciones/c-001/arbol"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Historial (versiones, diff, merge, créditos)",
+      "description": "Project history (cambios.md §9). Run Cuentas (auth) > Sign up first so {{token}} is set. Order: fork c-001 as a new project, versions, diff, forks of c-001, merge preview, merge, credits.",
+      "item": [
+        {
+          "name": "Fork c-001 as your project (saves forkCancionId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 and fork of c-001', () => { pm.response.to.have.status(201); pm.expect(pm.response.json().parent_id).to.eql('c-001'); });",
+                  "pm.collectionVariables.set('forkCancionId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/canciones",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"My remix of c-001\",\n  \"tempo\": 100,\n  \"parent_id\": \"c-001\",\n  \"parent_version\": 1,\n  \"mensaje\": \"Faster, same pieces\",\n  \"pistas\": [\n    {\n      \"instrumento\": \"bateria\",\n      \"bloques\": [\n        {\n          \"pieza_id\": \"p-001\",\n          \"compas\": 0\n        },\n        {\n          \"pieza_id\": \"p-001\",\n          \"compas\": 4\n        }\n      ]\n    },\n    {\n      \"instrumento\": \"bateria\",\n      \"bloques\": [\n        {\n          \"pieza_id\": \"p-002\",\n          \"compas\": 0\n        },\n        {\n          \"pieza_id\": \"p-002\",\n          \"compas\": 4\n        }\n      ]\n    },\n    {\n      \"instrumento\": \"piano\",\n      \"bloques\": [\n        {\n          \"pieza_id\": \"p-006\",\n          \"compas\": 0\n        },\n        {\n          \"pieza_id\": \"p-006\",\n          \"compas\": 4\n        }\n      ]\n    },\n    {\n      \"instrumento\": \"bajo\",\n      \"bloques\": [\n        {\n          \"pieza_id\": \"p-007\",\n          \"compas\": 0\n        },\n        {\n          \"pieza_id\": \"p-007\",\n          \"compas\": 4\n        }\n      ]\n    },\n    {\n      \"instrumento\": \"piano\",\n      \"bloques\": [\n        {\n          \"pieza_id\": \"p-009\",\n          \"compas\": 4\n        }\n      ]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Versions of the fork",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('has versions', () => pm.expect(pm.response.json().versiones.length).to.be.above(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/canciones/{{forkCancionId}}/versiones"
+          }
+        },
+        {
+          "name": "Versions of c-001",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/canciones/c-001/versiones"
+          }
+        },
+        {
+          "name": "One version with its snapshot",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/canciones/{{forkCancionId}}/versiones/1"
+          }
+        },
+        {
+          "name": "Diff of v1 (against the fork point)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('tempo changed', () => pm.expect(pm.response.json().tempo).to.not.eql(null));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/canciones/{{forkCancionId}}/versiones/1/diff"
+          }
+        },
+        {
+          "name": "Forks of c-001",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/canciones/c-001/forks"
+          }
+        },
+        {
+          "name": "Merge preview: the fork into c-001",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/canciones/c-001/merge/{{forkCancionId}}"
+          }
+        },
+        {
+          "name": "Merge preview with choices",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/canciones/c-001/merge/{{forkCancionId}}/preview",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resoluciones\": {\n    \"tempo\": \"suyo\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Merge the fork into c-001 (seed songs have no owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('merge version', () => pm.expect(pm.response.json().version.merge.cancion_id).to.eql(pm.collectionVariables.get('forkCancionId')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/canciones/c-001/merge/{{forkCancionId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resoluciones\": {\n    \"tempo\": \"suyo\"\n  },\n  \"mensaje\": \"Take the faster tempo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Diff of c-001 v2 (the merge) against v1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/canciones/c-001/versiones/2/diff?contra=1"
+          }
+        },
+        {
+          "name": "Credits of c-001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('authors', () => pm.expect(pm.response.json().autores.length).to.be.above(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/canciones/c-001/creditos"
           }
         }
       ]

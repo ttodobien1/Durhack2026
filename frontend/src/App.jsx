@@ -6,7 +6,7 @@ import { Browser } from './components/Browser.jsx'
 import { Playlist } from './components/Playlist.jsx'
 import { PianoRoll } from './components/PianoRoll.jsx'
 import { Copilot } from './components/Copilot.jsx'
-import { OriginTree } from './components/OriginTree.jsx'
+import { History } from './components/History.jsx'
 import { SaveDialog } from './components/SaveDialog.jsx'
 import { usePlayhead } from './usePlayhead.js'
 import { isMine, loadUser, recordContribution, useUser } from './profile.js'
@@ -27,7 +27,8 @@ export default function App({ projectId = 'new' }) {
   const [savedJson, setSavedJson] = useState(() => JSON.stringify(emptySong())) // song as last loaded or saved
   const [diff, setDiff] = useState(null)
   const [playing, setPlaying] = useState(null) // 'song' | piece id | null
-  const [treeOpen, setTreeOpen] = useState(false)
+  const [historyTab, setHistoryTab] = useState(null) // project history window: null | 'tree' | 'changes' | 'versions' | 'merge' | 'credits'
+  const [notice, setNotice] = useState(null) // short confirmation shown under the toolbar
   const [ask, setAsk] = useState(null) // starter prompt sent from the empty Playlist
   const [error, setError] = useState(null)
   const beat = usePlayhead()
@@ -191,16 +192,18 @@ export default function App({ projectId = 'new' }) {
   const [saveAs, setSaveAs] = useState(null) // null | { saved: null | Cancion } while the Save as window is open
   const songMine = isMine(song.autor)
 
-  /** Saves with optional name/visibility changes. Throws on failure; returns the saved project. */
-  const writeProject = async (changes = {}) => {
+  /** Saves with optional name/visibility changes (and `mensaje`, what changed). Throws on failure; returns the saved project. */
+  const writeProject = async ({ mensaje, ...changes } = {}) => {
     const me = loadUser().name
     setSavingSong(true)
     try {
       if ((draft || draftBars) && !(await save())) throw new Error('Could not save your edits to the selected piece.')
       const next = { ...song, ...changes }
-      // Someone else's project is saved as your copy, never over theirs.
-      const toSave = songMine ? { ...next, autor: song.id === 'c-new' ? me : song.autor } : { ...next, id: 'c-new', autor: me }
-      const saved = await api.saveProject(toSave)
+      // Someone else's project is saved as your copy, never over theirs: a fork of it, made from the version you opened.
+      const toSave = songMine
+        ? { ...next, autor: song.id === 'c-new' ? me : song.autor }
+        : { ...next, id: 'c-new', autor: me, parent_id: song.id !== 'c-new' ? song.id : null, parent_version: song.version || null }
+      const saved = await api.saveProject({ ...toSave, mensaje })
       recordContribution()
       undoLog.current.skip = true // saving is not an undo step
       setSong(saved)
@@ -220,6 +223,31 @@ export default function App({ projectId = 'new' }) {
     if (savingSong || !song.pistas.length || !songDirty) return
     writeProject().catch(fail)
   }
+  // Project history: open an old version in the editor (as unsaved changes), or take the result of a merge.
+  const openVersion = async (numero) => {
+    try {
+      const version = await api.version(song.id, numero)
+      if (!version) throw new Error('Opening old versions needs the Stemma server.')
+      const { nombre, tempo, pistas } = version.snapshot
+      remember(await Promise.all([...new Set(pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id)))].map(api.getPiece)))
+      setSong((s) => ({ ...s, nombre, tempo, pistas }))
+      setHistoryTab(null)
+      setNotice(`Opened v${numero} as unsaved changes. Save it to make it v${(song.version || 0) + 1}, or undo (Ctrl+Z) to go back.`)
+    } catch (e) {
+      fail(e)
+    }
+  }
+  const takeMerge = async ({ cancion, version }) => {
+    const ids = [...new Set(cancion.pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id)))]
+    remember(await Promise.all(ids.map(api.getPiece)))
+    undoLog.current.skip = true // a merge is saved on the server already, not an undo step
+    setSong(cancion)
+    setSavedJson(JSON.stringify(cancion))
+    recordContribution()
+    setHistoryTab('versions')
+    setNotice(`Merged: saved as v${version.numero}.`)
+  }
+
   const goMyProjects = () => {
     if (!signedIn('Log in to see your projects.', goMyProjects)) return
     if (songDirty && song.pistas.length && !window.confirm('This project has unsaved changes. Leave without saving?')) return
@@ -416,8 +444,13 @@ export default function App({ projectId = 'new' }) {
         </button>
         <div className="spacer" />
         {isMock() && <span className="badge" title="Backend unreachable, using local mock data">Mock data</span>}
-        <button className="tbtn" onClick={() => setTreeOpen(true)} disabled={!song.pistas.length}>
-          <GitBranch size={14} /> Origin tree
+        <button
+          className="tbtn"
+          onClick={() => setHistoryTab('tree')}
+          disabled={!song.pistas.length && song.id === 'c-new'}
+          title="Origin tree, changes, versions, merge and credits of this project"
+        >
+          <GitBranch size={14} /> History{song.version > 0 && <span className="ver-chip">v{song.version}</span>}
         </button>
         {user ? (
           <a className="user-link" href={`#/u/${encodeURIComponent(user.name)}`} title="Your profile">
@@ -435,6 +468,12 @@ export default function App({ projectId = 'new' }) {
         <div className="error" role="alert">
           {error}
           <button onClick={() => setError(null)}>Dismiss</button>
+        </div>
+      )}
+      {notice && !error && (
+        <div className="error notice" role="status">
+          {notice}
+          <button onClick={() => setNotice(null)}>OK</button>
         </div>
       )}
 
@@ -476,7 +515,7 @@ export default function App({ projectId = 'new' }) {
         />
       </main>
 
-      <Copilot song={song} pieces={pieces} onAddMany={addMany} onSelect={select} onTree={() => setTreeOpen(true)} remember={remember} fail={fail} ask={ask} />
+      <Copilot song={song} pieces={pieces} onAddMany={addMany} onSelect={select} onTree={() => setHistoryTab('tree')} remember={remember} fail={fail} ask={ask} />
 
       {auth && (
         <AuthDialog
@@ -506,7 +545,19 @@ export default function App({ projectId = 'new' }) {
         />
       )}
 
-      {treeOpen && <OriginTree song={song} loadPiece={loadPiece} onClose={() => setTreeOpen(false)} />}
+      {historyTab && (
+        <History
+          song={song}
+          tab={historyTab}
+          onTab={setHistoryTab}
+          onClose={() => setHistoryTab(null)}
+          loadPiece={loadPiece}
+          dirty={songDirty && song.pistas.length > 0}
+          canEdit={songMine && Boolean(user)}
+          onOpenVersion={openVersion}
+          onMerged={takeMerge}
+        />
+      )}
     </div>
   )
 }

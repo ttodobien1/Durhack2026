@@ -123,3 +123,50 @@ Solo se agregan campos; los del contrato no cambian.
 - **Frontend:** el login y el registro ya llaman al backend. `ME` en `frontend/src/api.js` es el usuario conectado
   (`"you"` sin sesión) y el perfil (bio, README, foto, pins) se guarda en el servidor con copia en el navegador.
 - No hay verificación de email ni recuperación de contraseña (necesitarían un servicio de envío de correos).
+
+## 9. Historial del proyecto: versiones, diff, merge y créditos (secciones 2 y 5)
+
+Es la parte "GitHub" de Stemma. En el proyecto, el botón **History** abre una ventana con pestañas, como las de un
+repositorio:
+
+| Pestaña | Qué muestra |
+| --- | --- |
+| Tree | El árbol de origen de las piezas (el mismo de antes) |
+| Changes | Qué cambió una versión: pistas nuevas, borradas o cambiadas, y nota por nota en cada pieza (verde nueva, rojo borrada, amarillo movida). Se puede comparar contra cualquier versión anterior |
+| Versions | v1, v2, v3… una por cada guardado, como commits, con mensaje (se escribe en la ventana de guardar o se genera solo) |
+| Merge | Traer los cambios de un fork (o del original), con conflictos para resolver y aviso de choques armónicos |
+| Credits | Quién escribió cada nota de la canción, con su porcentaje, sus piezas y sus versiones |
+
+- **Versiones:** cada guardado crea una versión con una foto completa de la canción (pistas y las notas de cada pieza
+  en ese momento). Si no cambió nada, no se crea versión.
+- **Fork de proyectos:** guardar una copia del proyecto de otra persona ahora guarda de qué proyecto y versión viene
+  (`parent_id`, `parent_version` en `canciones`). La v1 del fork se compara contra ese punto.
+- **Merge (sale de "Extra"):** se trabaja a tres bandas, como `git merge`, contra el último punto en común (el fork o el
+  último merge):
+  - Lo que cambió solo un lado se aplica.
+  - Lo que cambiaron los dos en el mismo lugar es un conflicto, y el dueño elige "Keep yours" o "Take theirs". Los
+    conflictos posibles son el tempo, el instrumento de una pista, bloques nuevos en los mismos compases, o una pista
+    que un lado borró y el otro cambió.
+  - También marca los **choques armónicos**: notas a una segunda menor sonando juntas, una de cada proyecto (lo que
+    pedía la sección 5).
+  - Solo el dueño puede hacer el merge en su proyecto, y solo entre un proyecto y sus forks.
+- **Créditos:** funcionan como un `git blame` de notas. En un fork, las notas que ya estaban en la pieza original siguen
+  siendo del autor original; solo lo agregado o movido es de quien hizo el fork. Cada nota cuenta cada vez que suena en
+  la canción.
+- **Tabla nueva** `versiones` y columnas `canciones.parent_id` / `parent_version`. La migración es automática, como en
+  §8. Las canciones guardadas antes reciben su estado actual como v1.
+- **Rutas nuevas** (detalle en `backend/README.md`, carpeta "Historial" en Postman):
+
+| Método | Ruta | Qué hace |
+| --- | --- | --- |
+| GET | `/canciones/:id/versiones` | Lista de versiones con resumen de cambios |
+| GET | `/canciones/:id/versiones/:n` | Una versión con su foto completa |
+| GET | `/canciones/:id/versiones/:n/diff?contra=m` | Qué cambió la versión n (contra la anterior o contra m) |
+| GET | `/canciones/:id/forks` | El proyecto original y los forks |
+| GET / POST | `/canciones/:id/merge/:otra` (`/preview`) | Vista previa del merge (POST con `resoluciones`) |
+| POST | `/canciones/:id/merge/:otra` | Aplica el merge (solo el dueño) |
+| GET | `/canciones/:id/creditos` | Créditos por autor y autor de cada nota |
+
+- Las canciones traen además `version`, `parent_id` y `parent_version`. `POST`/`PUT /canciones` aceptan `mensaje`
+  opcional.
+- Sin backend (datos de prueba) solo funciona la pestaña Tree.
