@@ -35,6 +35,9 @@ CREATE TABLE IF NOT EXISTS canciones (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+-- Visibility, like a GitHub repo. Private songs are left out of GET /canciones unless ?autor= names their author.
+-- An ALTER so db:init also upgrades databases created before the column existed.
+ALTER TABLE canciones ADD COLUMN IF NOT EXISTS publica BOOLEAN NOT NULL DEFAULT true;
 
 -- Tracks of a song, ordered by posicion (0, 1, 2...).
 CREATE TABLE IF NOT EXISTS pistas (

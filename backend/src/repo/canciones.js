@@ -12,6 +12,7 @@ function assemble(cancionRows, pistaRows, bloqueRows) {
       nombre: row.nombre,
       autor: row.autor,
       tempo: Number(row.tempo),
+      publica: row.publica,
       pistas: [],
     });
   }
@@ -30,11 +31,13 @@ function assemble(cancionRows, pistaRows, bloqueRows) {
   return [...canciones.values()];
 }
 
-async function loadCanciones(id) {
+// One song by id, or the list: public songs, or every song by `autor` (private ones included).
+async function loadCanciones({ id, autor } = {}) {
   const filter = id ? 'WHERE cancion_id = $1' : '';
   const args = id ? [id] : [];
+  const where = id ? 'WHERE id = $1' : autor ? 'WHERE autor = $1' : 'WHERE publica';
   const [canciones, pistas, bloques] = await Promise.all([
-    db.query(`SELECT id, nombre, autor, tempo FROM canciones ${id ? 'WHERE id = $1' : ''} ORDER BY id`, args),
+    db.query(`SELECT id, nombre, autor, tempo, publica FROM canciones ${where} ORDER BY id`, id ? [id] : autor ? [autor] : []),
     db.query(`SELECT cancion_id, posicion, instrumento FROM pistas ${filter} ORDER BY cancion_id, posicion`, args),
     db.query(
       `SELECT cancion_id, pista_posicion, pieza_id, compas FROM bloques ${filter}
@@ -45,12 +48,12 @@ async function loadCanciones(id) {
   return assemble(canciones.rows, pistas.rows, bloques.rows);
 }
 
-export async function listCanciones() {
-  return loadCanciones();
+export async function listCanciones(autor) {
+  return loadCanciones({ autor });
 }
 
 export async function getCancion(id) {
-  const [cancion] = await loadCanciones(id);
+  const [cancion] = await loadCanciones({ id });
   return cancion ?? null;
 }
 
@@ -92,11 +95,12 @@ export async function createCancion(cancion) {
   await assertPiezasExist(cancion);
   const id = await insertWithNewId('canciones', 'c', (newId) =>
     db.transaction(async (tx) => {
-      await tx.query('INSERT INTO canciones (id, nombre, autor, tempo) VALUES ($1, $2, $3, $4)', [
+      await tx.query('INSERT INTO canciones (id, nombre, autor, tempo, publica) VALUES ($1, $2, $3, $4, $5)', [
         newId,
         cancion.nombre,
         cancion.autor,
         cancion.tempo,
+        cancion.publica ?? true,
       ]);
       await writeTracks(tx, newId, cancion);
     }),
@@ -109,10 +113,10 @@ export async function saveCancion(id, cancion) {
   await assertPiezasExist(cancion);
   await db.transaction(async (tx) => {
     await tx.query(
-      `INSERT INTO canciones (id, nombre, autor, tempo) VALUES ($1, $2, $3, $4)
+      `INSERT INTO canciones (id, nombre, autor, tempo, publica) VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (id) DO UPDATE SET nombre = EXCLUDED.nombre, autor = EXCLUDED.autor,
-         tempo = EXCLUDED.tempo, updated_at = now()`,
-      [id, cancion.nombre, cancion.autor, cancion.tempo],
+         tempo = EXCLUDED.tempo, publica = EXCLUDED.publica, updated_at = now()`,
+      [id, cancion.nombre, cancion.autor, cancion.tempo, cancion.publica ?? true],
     );
     await writeTracks(tx, id, cancion);
   });

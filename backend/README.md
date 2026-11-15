@@ -63,10 +63,10 @@ Errors always come back as `{ "error": "message" }` with the matching HTTP statu
 | PUT | `/piezas/:id` | `{ "notas": [...] }` replaces the notes; also accepts `nombre`, `tonalidad`, `tempo`, `estilo`, `compases`. Lineage fields (`autor`, `tipo`, `licencia`, `parent_id`) cannot change |
 | GET | `/piezas/:id/diff/:otra` | `{ original, modificada, nuevas, borradas, movidas, iguales }`. `:id` is the modified piece; if one piece is an ancestor of the other, the ancestor is always the original, whatever the order |
 | GET | `/piezas/:id/diff` | Same, against the piece's parent. *Extra* |
-| GET | `/canciones` | All songs. *Extra* |
+| GET | `/canciones?autor=` | Public songs; with `autor`, every song by that author, private ones included. *Extra* |
 | GET | `/canciones/:id` | One song. *Extra* |
-| POST | `/canciones` | Create a song (contract 4.2 without `id`). Every `pieza_id` must exist. *Extra* |
-| PUT | `/canciones/:id` | Replace name, tempo, tracks and blocks. *Extra* |
+| POST | `/canciones` | Create a song (contract 4.2 without `id`, plus optional `publica`, default `true`). Every `pieza_id` must exist. *Extra* |
+| PUT | `/canciones/:id` | Replace name, tempo, visibility (`publica`), tracks and blocks. *Extra* |
 | GET | `/canciones/:id/arbol` | `{ nodos, aristas }` plus `cancion` and `resumen` (see below) |
 | POST | `/copiloto` | `{ "mensaje", "cancion": Cancion \| null }` → `{ "texto", "piezas_sugeridas" }` |
 
@@ -91,7 +91,7 @@ the rest are `nuevas` / `borradas`. A change of only `duracion` or `velocidad` s
 
 - `piezas`: one row per piece. `estilo` and `notas` are JSONB columns (GIN index on `estilo`); `parent_id`
   references another piece (fork). `busqueda` is normalized text used by `?q=`.
-- `canciones`: name, author, tempo.
+- `canciones`: name, author, tempo, `publica` (visibility like a GitHub repo; there are no accounts, so private means unlisted: it still opens by id).
 - `pistas`: tracks of a song (`cancion_id`, `posicion`, `instrumento`).
 - `bloques`: a piece placed on a track at bar `compas`.
 

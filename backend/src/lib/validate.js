@@ -98,6 +98,13 @@ export function validatePiezaUpdate(body) {
   return changes;
 }
 
+// Optional song visibility: public unless the client sends false.
+function validatePublica(value) {
+  if (value === undefined || value === null) return true;
+  if (typeof value !== 'boolean') throw badRequest('"publica" must be true or false');
+  return value;
+}
+
 // Song (POST/PUT /canciones). Checking that pieza_id values exist is done by the repository.
 export function validateCancion(body) {
   if (!body || typeof body !== 'object') throw badRequest('Body must be a JSON object');
@@ -109,6 +116,7 @@ export function validateCancion(body) {
     nombre: requiredString(body.nombre, 'nombre'),
     autor: requiredString(body.autor, 'autor'),
     tempo: validateTempo(body.tempo),
+    publica: validatePublica(body.publica),
     pistas: pistas.map((pista, i) => {
       if (!pista || typeof pista !== 'object') throw badRequest(`pistas[${i}] must be an object`);
       const bloques = pista.bloques ?? [];

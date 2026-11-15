@@ -5,9 +5,11 @@ import { cancionExists, createCancion, getArbol, getCancion, listCanciones, save
 
 const router = Router();
 
-// GET /canciones
+// GET /canciones            public songs
+// GET /canciones?autor=ana  every song by ana, private ones included (no accounts: private means unlisted)
 router.get('/', async (req, res) => {
-  res.json(await listCanciones());
+  const autor = typeof req.query.autor === 'string' && req.query.autor.trim() ? req.query.autor.trim() : undefined;
+  res.json(await listCanciones(autor));
 });
 
 // POST /canciones   body: Cancion without id
