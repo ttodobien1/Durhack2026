@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ArrowRight, Lock, Play, Plus, Search, Square, X } from 'lucide-react'
 import { api } from './api.js'
 import * as audio from './audio.js'
@@ -7,6 +7,8 @@ import { SiteBar } from './Site.jsx'
 import { Arrangement, withMeta } from './projectMeta.jsx'
 import { useUser } from './profile.js'
 import { MiniNotes } from './components/Playlist.jsx'
+import { FlowDemo } from './components/FlowDemos.jsx'
+import { exampleEdit } from './exampleEdit.js'
 import './landing.css'
 
 const ago = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
@@ -18,6 +20,14 @@ function updated(iso) {
 // Work saved without an account belongs to nobody: every visitor would read "you / …" as their own project.
 const OWNERLESS = new Set(['you', 'anonymous'])
 
+const FLOW = [
+  ['Search', 'Drum loops, chords, bass lines and melodies, filtered by type and key.'],
+  ['Fork', 'Copy any piece to make it yours. The original author stays credited.'],
+  ['Edit', 'Change notes in the piano roll and arrange pieces in the playlist.'],
+  ['Diff', 'See what you changed: new notes in green, deleted in red, moved in yellow.'],
+  ['Trace', 'The origin tree shows every piece in your song and who made it.'],
+]
+
 export function Landing() {
   const [projects, setProjects] = useState(null)
   const [pieces, setPieces] = useState({})
@@ -26,6 +36,8 @@ export function Landing() {
 
   const [chain, setChain] = useState(null) // [parent, fork] from the library, for the hero
   const [mine, setMine] = useState(null) // your projects (private ones included), only while logged in
+  const [demo, setDemo] = useState(null) // the "How it works" step whose popup is open
+  const closeDemo = useCallback(() => setDemo(null), [])
 
   useEffect(() => {
     setMine(null)
@@ -57,12 +69,18 @@ export function Landing() {
         const f = found.find((x) => x.parent_id && found.some((y) => y.id === x.parent_id))
         if (f) return live && setChain([found.find((y) => y.id === f.parent_id), f])
       }
+      // No forks in the library yet: the "How it works" popups still show a real piece (the hero stays empty).
+      const any = (await api.search({ tipo: 'acordes' }).catch(() => [])).find((p) => p.notas?.length)
+      if (any && live) setChain([null, any])
     }
     return () => {
       live = false
       audio.stop()
     }
   }, [])
+
+  // The "How it works" popups follow one real piece: found, forked by you, edited, compared and traced.
+  const story = useMemo(() => chain?.[1] && { base: chain[0], child: chain[1], ...exampleEdit(chain[1]) }, [chain])
 
   const explore = useMemo(() => projects && projects.map((p) => withMeta(p, pieces)), [projects, pieces])
 
@@ -107,16 +125,16 @@ export function Landing() {
         {user && <YourProjects name={user.name} projects={mine} />}
 
         <ol className="flow" aria-label="How it works">
-          {[
-            ['Search', 'Drum loops, chords, bass lines and melodies, filtered by type and key.'],
-            ['Fork', 'Copy any piece to make it yours. The original author stays credited.'],
-            ['Edit', 'Change notes in the piano roll and arrange pieces in the playlist.'],
-            ['Diff', 'See what you changed: new notes in green, deleted in red, moved in yellow.'],
-            ['Trace', 'The origin tree shows every piece in your song and who made it.'],
-          ].map(([t, d]) => (
+          {FLOW.map(([t, d], i) => (
             <li key={t}>
-              <strong>{t}</strong>
-              <span>{d}</span>
+              <button className="flow-step" onClick={() => setDemo(t)} aria-haspopup="dialog" aria-expanded={demo === t}>
+                <strong>{t}</strong>
+                <span>{d}</span>
+                <span className="flow-watch">
+                  <Play size={11} aria-hidden="true" /> See it in the app
+                </span>
+              </button>
+              {demo === t && <FlowDemo step={t} n={i + 1} story={story} onClose={closeDemo} />}
             </li>
           ))}
         </ol>
@@ -174,11 +192,7 @@ function YourProjects({ name, projects }) {
 /** A real lineage from the library ending in an example fork by you, with its actual diff counts. */
 function LineageDemo({ chain }) {
   const [base, child] = chain ?? []
-  const yours = useMemo(() => {
-    if (!child) return null
-    const notas = child.notas.map((n, i) => (i === 3 ? { ...n, inicio: n.inicio + 0.5 } : n)).concat({ ...child.notas[0], inicio: Math.min(child.compases * 4 - 1, 6) })
-    return { ...child, id: 'p-new', autor: 'you', nombre: `${child.nombre} (your fork)`, notas }
-  }, [child])
+  const yours = useMemo(() => child && exampleEdit(child).yours, [child])
   if (!base || !child) return <div className="demo panel" aria-hidden="true" />
   const d = diffNotes(child.notas, yours.notas)
   const rows = [
