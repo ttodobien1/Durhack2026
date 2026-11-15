@@ -170,6 +170,33 @@ export function validatePerfil(body) {
   return clean;
 }
 
+// --- Versions and merges ----------------------------------------------------------------------------
+
+// Optional version number (1, 2...): null when missing.
+export function validateVersionNumber(value, field = 'numero') {
+  if (value === undefined || value === null || value === '') return null;
+  const n = typeof value === 'string' ? Number(value) : value;
+  if (!Number.isInteger(n) || n < 1) throw badRequest(`"${field}" must be a version number (1, 2, 3...)`);
+  return n;
+}
+
+// Optional message describing a saved version (like a commit message).
+export function validateMensaje(value) {
+  if (value === undefined || value === null) return '';
+  if (typeof value !== 'string' || value.length > 200) throw badRequest('"mensaje" must be text up to 200 characters');
+  return value.trim();
+}
+
+// Merge choices: { [conflict id]: "mio" | "suyo" }.
+export function validateResoluciones(value) {
+  if (value === undefined || value === null) return {};
+  if (typeof value !== 'object' || Array.isArray(value)) throw badRequest('"resoluciones" must be an object { conflictId: "mio" | "suyo" }');
+  for (const [id, side] of Object.entries(value)) {
+    if (side !== 'mio' && side !== 'suyo') throw badRequest(`"resoluciones.${id}" must be "mio" or "suyo"`);
+  }
+  return value;
+}
+
 // Song (POST/PUT /canciones). Checking that pieza_id values exist is done by the repository.
 export function validateCancion(body) {
   if (!body || typeof body !== 'object') throw badRequest('Body must be a JSON object');
@@ -183,6 +210,9 @@ export function validateCancion(body) {
     tempo: validateTempo(body.tempo),
     publica: validatePublica(body.publica),
     descripcion: validateDescripcion(body.descripcion),
+    // Only read by POST: the project this one is a copy of, and the version of it that was copied.
+    parent_id: body.parent_id === undefined || body.parent_id === null ? null : requiredString(body.parent_id, 'parent_id'),
+    parent_version: validateVersionNumber(body.parent_version, 'parent_version'),
     pistas: pistas.map((pista, i) => {
       if (!pista || typeof pista !== 'object') throw badRequest(`pistas[${i}] must be an object`);
       const bloques = pista.bloques ?? [];

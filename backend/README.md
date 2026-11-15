@@ -65,8 +65,8 @@ Errors always come back as `{ "error": "message" }` with the matching HTTP statu
 | GET | `/piezas/:id/diff` | Same, against the piece's parent. *Extra* |
 | GET | `/canciones?autor=` | Public songs; with `autor`, every song by that author, private ones included. *Extra* |
 | GET | `/canciones/:id` | One song. *Extra* |
-| POST | `/canciones` | Create a song (contract 4.2 without `id`, plus optional `publica`, default `true`, and `descripcion`, up to 300 characters). Every `pieza_id` must exist. *Extra* |
-| PUT | `/canciones/:id` | Replace name, tempo, visibility (`publica`), tracks and blocks. `descripcion` is replaced when sent (`""` clears it) and kept when left out. *Extra* |
+| POST | `/canciones` | Create a song (contract 4.2 without `id`, plus optional `publica`, default `true`, `descripcion`, up to 300 characters, and `mensaje`). Every `pieza_id` must exist. With `parent_id` (+ optional `parent_version`) it is a fork of that project. Records v1. *Extra* |
+| PUT | `/canciones/:id` | Replace name, tempo, visibility (`publica`), tracks and blocks; optional `mensaje`. Records a new version when the music changed. `descripcion` is replaced when sent (`""` clears it) and kept when left out. *Extra* |
 | GET | `/canciones/:id/arbol` | `{ nodos, aristas }` plus `cancion` and `resumen` (see below) |
 | POST | `/copiloto` | `{ "mensaje", "cancion": Cancion \| null }` → `{ "texto", "piezas_sugeridas" }` |
 
@@ -78,12 +78,54 @@ Routes marked *Extra* are not in the contract table; they are needed so songs ca
 - Tree nodes: `fuente` (attribution) and `en_cancion` (`true` if the piece is used directly in the song, `false` if
   it is only an ancestor). The response also has `cancion: { id, nombre, autor }` (to highlight the user's pieces)
   and `resumen: { piezas, autores }` ("this song has N pieces by M authors").
+- Songs: `version` (latest version number, `0` if none yet), `parent_id` and `parent_version` (the project and version
+  it was forked from, `null` for originals). `PUT` ignores them: the fork origin never changes.
 
 ### Diff rules
 
 Following `CLAUDE.md` section 5: notes with the same `(tono, inicio)` are `iguales`; then the same pitch at another
 time, or the same onset with another pitch, are `movidas` (closest first, at most 4 beats or 12 semitones away);
 the rest are `nuevas` / `borradas`. A change of only `duracion` or `velocidad` still counts as `iguales`.
+
+## Project history (versions, diff, merge, credits)
+
+Every save of a song is a version (v1, v2...), like a commit: a snapshot of the arrangement plus the notes of every
+piece it used at that moment, so any two versions can be compared later. Songs also have their own forks: saving
+someone else's project as a copy (`POST /canciones` with `parent_id`) records which project and version it came from.
+
+| Method | Route | Notes |
+| --- | --- | --- |
+| GET | `/canciones/:id/versiones` | `{ cancion, origen, versiones }`, newest first. Each version: `numero`, `autor`, `mensaje` (written in the Save window or generated, e.g. "Edited Montuno (fork), tempo 90 → 96 BPM"), `fecha`, `merge`, a change `resumen` and the `piezas` it touched |
+| GET | `/canciones/:id/versiones/:n` | One version with its full `snapshot` (to open it in the editor) |
+| GET | `/canciones/:id/versiones/:n/diff[?contra=m]` | What version n changed: against `m`, or by default the version before (for v1 of a fork, the original at the fork point). `{ desde, hasta, nombre, tempo, pistas, piezas, resumen }` |
+| GET | `/canciones/:id/forks` | `{ parent, forks }`: the project it was forked from and the projects forked from it |
+| GET | `/canciones/:id/merge/:otra` | Merge preview of `:otra` into `:id`: `{ base, mio, suyo, conflictos, choques, cambios, resultado }` |
+| POST | `/canciones/:id/merge/:otra/preview` | Same, with `{ "resoluciones": { "<conflict id>": "mio" \| "suyo" } }` |
+| POST | `/canciones/:id/merge/:otra` | Apply the merge (owner of `:id` only): body `{ resoluciones?, mensaje? }` → `{ cancion, version }` |
+| GET | `/canciones/:id/creditos` | Who made what: `{ total_notas, autores: [{ autor, notas, porcentaje, piezas: [{ rol }], versiones, merges }], piezas: [{ notas: [{ ..., autor }] }] }` |
+
+- **Diff** (`src/lib/songDiff.js`): tracks have no ids, so both sides' tracks are matched by content (instrument,
+  position, blocks at the same bar). Tracks come out as `nueva` / `borrada` / `cambiada` with the blocks added and
+  removed. Pieces come out as `agregada` / `quitada` / `editada` (same id, other notes) / `reemplazada` (a fork took
+  the place of its original), each with the note diff from section 5.
+- **Merge** (`src/lib/songMerge.js`), a three-way merge like git. The base is the latest common point between the two
+  projects: the fork point, or their last merge. A change made by only one side is applied, and the same change on
+  both sides is applied once. Conflicts, each with an id that depends only on content:
+  - `tempo`: both changed the tempo.
+  - `instrumento`: both changed the instrument of the same track.
+  - `bloque`: both placed new blocks over the same bars of a track.
+  - `pista`: one side deleted a track the other changed.
+
+  `choques` lists harmonic clashes the merge would create: notes a minor second apart sounding together on two
+  pitched tracks, one from each project. Only a project and its forks (or its original) can be merged (`400`
+  otherwise), and a merge always records a version with `merge` set, so the next merge starts from there.
+- **Credits** (`src/lib/credits.js`) work like `git blame` for notes. A note of a fork that is also in its parent
+  (same `tono` and `inicio`) is credited up the chain to whoever wrote it first; added or moved notes belong to the
+  fork's author. Each note counts every time it plays in the song.
+- Privacy: everything follows the song's visibility (`404` for someone else's private song). If the original of a
+  fork becomes private, the fork's history stops showing it.
+- Songs saved before versions existed get their current state as v1 the first time their history is read or they are
+  saved. `npm run db:seed` records a version for the seed songs.
 
 ## Accounts
 
@@ -120,6 +162,8 @@ request if tables or columns are missing, so deploys never need a manual migrati
 - `bloques`: a piece placed on a track at bar `compas`.
 - `usuarios`: accounts (`nombre`, `email`, `password_hash`, `perfil` JSONB).
 - `sesiones`: login sessions (`token_hash`, `usuario_id`, `expires_at`).
+- `versiones`: song versions (`cancion_id`, `numero`, `autor`, `mensaje`, `snapshot` JSONB, `merge_de`/`merge_version`).
+  `canciones.parent_id` / `parent_version`: the project and version a song was forked from.
 
 The lineage tree is a recursive query that walks `parent_id` up from every piece used in the song.
 

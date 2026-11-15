@@ -14,6 +14,10 @@ function assemble(cancionRows, pistaRows, bloqueRows) {
       tempo: Number(row.tempo),
       publica: row.publica,
       descripcion: row.descripcion ?? null,
+      // Extras (cambios.md §9): the project it was forked from, and its latest version number (0 = none yet).
+      parent_id: row.parent_id ?? null,
+      parent_version: row.parent_version == null ? null : Number(row.parent_version),
+      version: row.version == null ? 0 : Number(row.version),
       pistas: [],
     });
   }
@@ -39,7 +43,12 @@ async function loadCanciones({ id, autor, withPrivate = false } = {}) {
   const args = id ? [id] : [];
   const where = id ? 'WHERE id = $1' : autor ? 'WHERE autor = $1 AND (publica OR $2)' : 'WHERE publica';
   const [canciones, pistas, bloques] = await Promise.all([
-    db.query(`SELECT id, nombre, autor, tempo, publica, descripcion FROM canciones ${where} ORDER BY id`, id ? [id] : autor ? [autor, withPrivate] : []),
+    db.query(
+      `SELECT id, nombre, autor, tempo, publica, descripcion, parent_id, parent_version,
+              (SELECT MAX(numero) FROM versiones v WHERE v.cancion_id = canciones.id) AS version
+       FROM canciones ${where} ORDER BY id`,
+      id ? [id] : autor ? [autor, withPrivate] : [],
+    ),
     db.query(`SELECT cancion_id, posicion, instrumento FROM pistas ${filter} ORDER BY cancion_id, posicion`, args),
     db.query(
       `SELECT cancion_id, pista_posicion, pieza_id, compas FROM bloques ${filter}
@@ -63,6 +72,32 @@ export async function getCancion(id) {
 export async function getCancionOwner(id) {
   const result = await db.query('SELECT usuario_id, autor FROM canciones WHERE id = $1', [id]);
   return result.rows[0] ?? null;
+}
+
+// The project a song was forked from and the projects forked from it (any visibility: the route filters).
+export async function getRelatedCanciones(id) {
+  const result = await db.query(
+    `SELECT c.id, c.nombre, c.autor, c.publica, c.parent_id, c.parent_version, c.updated_at,
+            (SELECT MAX(numero) FROM versiones v WHERE v.cancion_id = c.id) AS version
+     FROM canciones c
+     WHERE c.parent_id = $1 OR c.id = (SELECT parent_id FROM canciones WHERE id = $1)
+     ORDER BY c.updated_at DESC`,
+    [id],
+  );
+  const toItem = (row) => ({
+    id: row.id,
+    nombre: row.nombre,
+    autor: row.autor,
+    publica: row.publica,
+    parent_id: row.parent_id,
+    parent_version: row.parent_version == null ? null : Number(row.parent_version),
+    version: row.version == null ? 0 : Number(row.version),
+    actualizado: new Date(row.updated_at).toISOString(),
+  });
+  return {
+    parent: result.rows.filter((row) => row.parent_id !== id).map(toItem)[0] ?? null,
+    forks: result.rows.filter((row) => row.parent_id === id).map(toItem),
+  };
 }
 
 async function assertPiezasExist(cancion) {
@@ -94,19 +129,16 @@ async function writeTracks(tx, id, cancion) {
 }
 
 // Creates a song with a new sequential id, owned by `usuarioId` (null = anonymous). Returns the stored Cancion.
-export async function createCancion(cancion, usuarioId = null) {
+// `fork` = { parent_id, parent_version } when the song is a copy of another project.
+export async function createCancion(cancion, usuarioId = null, fork = null) {
   await assertPiezasExist(cancion);
   const id = await insertWithNewId('canciones', 'c', (newId) =>
     db.transaction(async (tx) => {
-      await tx.query('INSERT INTO canciones (id, nombre, autor, tempo, publica, usuario_id, descripcion) VALUES ($1, $2, $3, $4, $5, $6, $7)', [
-        newId,
-        cancion.nombre,
-        cancion.autor,
-        cancion.tempo,
-        cancion.publica ?? true,
-        usuarioId,
-        cancion.descripcion || null,
-      ]);
+      await tx.query(
+        `INSERT INTO canciones (id, nombre, autor, tempo, publica, usuario_id, parent_id, parent_version, descripcion)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [newId, cancion.nombre, cancion.autor, cancion.tempo, cancion.publica ?? true, usuarioId, fork?.parent_id ?? null, fork?.parent_version ?? null, cancion.descripcion || null],
+      );
       await writeTracks(tx, newId, cancion);
     }),
   );

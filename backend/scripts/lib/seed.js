@@ -3,6 +3,7 @@ import path from 'node:path';
 import { validateCancion, validateNewPieza } from '../../src/lib/validate.js';
 import { saveCancion } from '../../src/repo/canciones.js';
 import { getPieza, upsertPieza } from '../../src/repo/piezas.js';
+import { recordVersion } from '../../src/repo/versiones.js';
 import { DATA_DIR } from './paths.js';
 
 // Reads every *.json in a folder. A file may hold one object or an array of objects.
@@ -78,6 +79,7 @@ export async function seedDatabase({ dataDir = DATA_DIR, log = console.log } = {
       cancion = validateCancion(item);
       if (!cancion.id) throw new Error('seed songs need an "id"');
       await saveCancion(cancion.id, cancion);
+      await recordVersion(cancion.id, { autor: cancion.autor }); // v1, or a new version if /data changed it
     } catch (err) {
       throw new Error(`canciones/${file}: ${err.message}`);
     }

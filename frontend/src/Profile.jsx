@@ -368,7 +368,14 @@ function ProjectList({ projects, byId, name, own, onUpdate }) {
                   Open <ArrowRight size={13} />
                 </a>
                 {/* Options (Privacy / Tree / History) only for your own projects */}
-                {own && <ProjectMenu project={p} onChange={(patch) => onUpdate(p.id, patch)} />}
+                {own && (
+                  <ProjectMenu
+                    project={p}
+                    onChange={(patch) => onUpdate(p.id, patch)}
+                    onTree={() => (location.hash = `#/project/${p.id}?history=tree`)}
+                    onHistory={() => (location.hash = `#/project/${p.id}?history=versions`)}
+                  />
+                )}
               </div>
             </div>
           </li>

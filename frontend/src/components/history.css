@@ -1,0 +1,147 @@
+/* Project history window (History.jsx): GitHub-style repo header and tabs in the FL Studio look. */
+.window.history { height: min(760px, 100%); }
+.hist-head { display: grid; gap: 4px; padding: 10px 14px 8px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.hist-repo { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 15px; color: var(--dim); }
+.hist-repo a { color: var(--t-acordes); text-decoration: none; }
+.hist-repo a:hover { text-decoration: underline; }
+.hist-repo b { color: var(--text); }
+.hist-forked { color: var(--dim); font-size: 11.5px; }
+.hist-forked a, .commit-origin a, .commit-meta a, .related a { color: var(--t-acordes); text-decoration: none; }
+.hist-forked a:hover, .commit-origin a:hover, .commit-meta a:hover, .related a:hover { text-decoration: underline; }
+.hist-dirty { color: #ffc785; font-size: 11.5px; }
+.vis-tag { padding: 0 7px; border: 1px solid var(--bevel); border-radius: 2em; font-size: 10.5px; font-weight: 600; line-height: 18px; }
+.vis-tag.private { color: #ffc785; border-color: #8a6a3a; }
+.ver-tag { flex: none; padding: 0 6px; border-radius: 2em; background: #1f2427; color: var(--orange); font: 600 11px/18px var(--mono); }
+
+.hist-tabs { display: flex; gap: 2px; padding: 0 10px; border-bottom: 1px solid var(--line); background: var(--panel); overflow-x: auto; }
+.hist-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 12px 8px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.hist-tabs button:hover { color: var(--text); border-bottom-color: var(--bevel); }
+.hist-tabs button.on { color: var(--text); border-bottom-color: var(--orange); font-weight: 600; }
+.hist-count { display: inline-block; min-width: 18px; padding: 0 6px; border-radius: 2em; background: #1f2427; color: var(--dim); font-size: 10.5px; line-height: 16px; text-align: center; font-weight: 600; }
+.hist-count.warn { background: #4a3a22; color: #ffc785; }
+
+.hist-body { flex: 1; min-height: 0; overflow-y: auto; background: var(--well); }
+.hist-body.flush { display: flex; flex-direction: column; overflow: hidden; }
+.hist-pane { max-width: 980px; margin: 0 auto; padding: 14px 16px 24px; }
+.hist-empty { display: flex; align-items: center; gap: 6px; margin: 12px 0; padding: 14px; border: 1px dashed #4a545b; border-radius: 3px; color: var(--dim); }
+.error-text { color: #ffb4ae; border-color: #7a3a36; }
+.hist-intro { margin: 0 0 6px; color: var(--dim); }
+.hist-h { display: flex; align-items: center; gap: 6px; margin: 16px 0 8px; font-size: 13px; }
+.stale { opacity: 0.6; transition: opacity 0.15s; }
+
+/* Changes */
+.compare-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 10px; margin-bottom: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 3px; color: var(--dim); }
+.compare-bar label { display: inline-flex; align-items: center; gap: 6px; }
+.compare-bar select { max-width: 330px; height: 26px; background: var(--well); border: 1px solid var(--line); border-radius: 2px; color: var(--text); font: inherit; }
+.compare-bar select:focus { border-color: var(--orange); outline: none; }
+.version-line { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin: 0 0 10px; }
+.diff-stats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border: 1px solid var(--line); border-radius: 2em; background: var(--panel); font-size: 11.5px; }
+.chip.add { color: var(--new); }
+.chip.del { color: var(--del); }
+.chip.mov { color: var(--mov); }
+.history .add { color: var(--new); }
+.history .del { color: var(--del); }
+.history .mov { color: var(--mov); }
+.note-stats { font: 600 11px var(--mono); white-space: nowrap; }
+.diff-block { margin: 0 0 14px; }
+.diff-block > h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; font-size: 13px; }
+.diff-tracks { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 3px; background: var(--panel); }
+.diff-tracks li { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; padding: 6px 10px; border-bottom: 1px solid #2b3135; }
+.diff-tracks li:last-child { border-bottom: 0; }
+.diff-tracks .mark { width: 14px; text-align: center; font: 700 13px var(--mono); }
+.st-nueva .mark { color: var(--new); }
+.st-borrada .mark { color: var(--del); }
+.st-cambiada .mark { color: var(--mov); }
+.diff-tracks .blocks { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-left: auto; font-size: 11.5px; }
+
+.piece-card { margin-bottom: 8px; border: 1px solid var(--line); border-left: 3px solid var(--tc, var(--dim)); border-radius: 3px; background: var(--panel); overflow: hidden; }
+.piece-card header { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; padding: 6px 10px; border-bottom: 1px solid var(--line); background: linear-gradient(var(--title-a), var(--title-b)); }
+.piece-card-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.piece-card .counts { margin-left: auto; font: 600 11px var(--mono); }
+.state { padding: 0 6px; border-radius: 2px; font-size: 10.5px; font-weight: 700; line-height: 16px; text-transform: uppercase; letter-spacing: 0.03em; background: #1f2427; }
+.mini-roll { display: block; width: 100%; background: var(--black-row); }
+.mini-roll line { stroke: #4a545b; stroke-width: 1; }
+.mini-roll rect { fill: var(--note); }
+.mini-roll .mr-same { fill: var(--same); }
+.mini-roll .mr-new { fill: var(--new); }
+.mini-roll .mr-del { fill: var(--del); }
+.mini-roll .mr-mov { fill: var(--mov); }
+.mini-roll .mr-from { fill: none; stroke: var(--mov); stroke-width: 1; stroke-dasharray: 3 2; }
+.mini-roll.none { padding: 10px; color: var(--dim); }
+
+/* Versions */
+.commit-day { margin-bottom: 14px; }
+.commit-day h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; color: var(--dim); font-size: 12px; font-weight: 600; }
+.commits { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 3px; background: var(--panel); }
+.commits li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid #2b3135; }
+.commits li:last-child { border-bottom: 0; }
+.commits li.merge { box-shadow: inset 3px 0 0 var(--t-bajo); }
+.commit-main { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.commit-msg { display: flex; align-items: center; gap: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.commit-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; color: var(--dim); font-size: 11.5px; }
+.commit-pieces { display: flex; flex-wrap: wrap; gap: 4px; }
+.piece-chip { padding: 0 6px; border-left: 3px solid var(--tc, var(--dim)); border-radius: 2px; background: #2a3034; font-size: 11px; line-height: 18px; white-space: nowrap; }
+.commit-actions { display: flex; gap: 4px; }
+.commit-origin { display: flex; align-items: center; gap: 6px; color: var(--dim); }
+
+/* Merge */
+.related { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 3px; background: var(--panel); color: var(--dim); }
+.related-main { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.related-main b { color: var(--text); }
+.link-back { display: inline-flex; align-items: center; gap: 4px; padding: 0; margin-bottom: 8px; border: 0; background: none; color: var(--t-acordes); }
+.link-back:hover { text-decoration: underline; }
+.merge-title { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 0 0 4px; font-size: 14px; font-weight: 400; }
+.merge-base { margin: 0 0 12px; }
+.conflict { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 6px; padding: 8px 10px; border: 1px solid #8a6a3a; border-radius: 3px; background: #3a332a; }
+.conflict p { flex: 1 1 320px; margin: 0; }
+.conflict .seg { flex: none; }
+.conflict .seg button { padding: 4px 12px; white-space: nowrap; }
+.clashes ul { margin: 0; padding-left: 18px; }
+.clashes li { margin-bottom: 4px; }
+.merge-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.merge-actions p { margin: 0; }
+
+/* Credits */
+.credits-lead { margin: 0 0 10px; font-size: 13px; }
+.share-bar { display: flex; height: 10px; margin-bottom: 14px; border-radius: 2em; overflow: hidden; background: var(--black-row); }
+.share-bar span { min-width: 3px; }
+.contributors { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.contributors > li { display: flex; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 3px; background: var(--panel); }
+.contrib-main { flex: 1; min-width: 0; display: grid; gap: 6px; }
+.contrib-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.contrib-head a { color: var(--text); text-decoration: none; }
+.contrib-head a.mine-text { color: var(--orange); }
+.contrib-head a:hover { text-decoration: underline; }
+.contrib-bar { height: 6px; border-radius: 2em; background: var(--black-row); overflow: hidden; }
+.contrib-bar span { display: block; height: 100%; }
+.contrib-roles { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-size: 11.5px; }
+.contrib-roles li { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
+.role { padding: 0 6px; border-radius: 2px; font-size: 10px; font-weight: 700; line-height: 16px; text-transform: uppercase; letter-spacing: 0.03em; background: #1f2427; }
+.r-original { color: var(--new); }
+.r-fork { color: var(--mov); }
+.r-origen { color: var(--t-acordes); }
+.hist-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; }
+.hist-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 8px; color: var(--dim); }
+
+@media (max-width: 700px) {
+  .window-backdrop { padding: 8px; }
+  .commits li { flex-wrap: wrap; }
+  .commit-main { flex-basis: 100%; }
+  .diff-tracks .blocks { margin-left: 0; }
+}
+
+/* Toolbar: version next to the History button, and the confirmation strip (App.jsx) */
+.ver-chip { padding: 0 5px; border-radius: 2em; background: rgb(0 0 0 / 0.25); color: var(--orange); font: 600 10.5px/16px var(--mono); }
+.error.notice { background: #2c4a2a; border-color: #142411; color: #dff5d6; }
+.error.notice button { border-color: #dff5d6; }

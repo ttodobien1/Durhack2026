@@ -14,7 +14,12 @@ node src/markdown.test.js
 ## Pages
 
 - `#/` landing (`src/Landing.jsx`): hero, public projects with search, tag filters and preview, Log in / Sign up.
-- `#/project/<id>` project page (`src/App.jsx`); `#/project/new` starts empty.
+- `#/project/<id>` project page (`src/App.jsx`); `#/project/new` starts empty. The **History** button opens the project history window (`src/components/History.jsx`), with GitHub-style tabs:
+  - **Tree**: where every piece comes from (the origin tree).
+  - **Changes**: what a version changed, track by track and note by note (green new, red deleted, yellow moved), against the previous version or any other.
+  - **Versions**: v1, v2… one per save, like commits, with an optional message from the Save window; any version can be opened in the editor.
+  - **Merge**: bring in the changes of a fork (or of the original) with conflicts to resolve and harmonic clash warnings.
+  - **Credits**: who wrote each note of the song, forks included.
 - `#/u/<name>` profile (`src/Profile.jsx`): README, pinned projects, contribution graph, projects and pieces tabs.
 - `#/upload` split a MIDI song into loops (`src/split.js`, same rules as `data/scripts` 04/05/08) and publish the chosen ones with `POST /piezas`.
 - `#/settings` profile settings (`src/Settings.jsx`): name, bio, picture, accent colour, README, pins.
@@ -31,10 +36,11 @@ Log in / Sign up use real accounts on the backend (`/auth/registro`, `/auth/logi
 - `GET /piezas/:id/diff/:otra` is called as **changed piece first, original second**: `nuevas` = notes only in `:id`.
 - `POST /piezas/:id/fork` sends `{ "autor": ME }` (the backend uses the logged-in account when there is a token).
 - The origin tree is built client-side by walking `parent_id` with `GET /piezas/:id`, so it also reflects unsaved changes.
+- Project history uses the routes in `cambios.md` §9 (versions, diff, forks, merge, credits). Saving someone else's project as a copy sends `parent_id` + `parent_version` (a project fork); every save can send `mensaje`. Offline (mock data) only the Tree tab works.
 
 ## For the tree view (role C)
 
-`src/components/OriginTree.jsx` is a placeholder. Keep its props (`song`, `loadPiece`, `onClose`) and restyle or replace the React Flow view freely.
+`src/components/OriginTree.jsx` is a placeholder. Keep its props (`song`, `loadPiece`, `onClose`) and restyle or replace the React Flow view freely. `TreeView` (same file) is the tree without the window, used by the Tree tab of the project history.
 
 ## Layout
 
@@ -45,4 +51,5 @@ Log in / Sign up use real accounts on the backend (`/auth/registro`, `/auth/logi
 | `components/Playlist.jsx` | Song lanes with piece clips (8 bars) |
 | `components/PianoRoll.jsx` | Note editor + diff view |
 | `components/Copilot.jsx` | Chat to `/copiloto`, suggestion chips, credits |
+| `components/History.jsx` | Project history window: Tree, Changes, Versions, Merge, Credits (styles in `history.css`) |
 | `audio.js` | Tone.js playback in beats (sampled piano, synth bass/lead, synthesized clave/congas/bell) |

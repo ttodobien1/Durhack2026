@@ -8,8 +8,8 @@ const projectUrl = (id) => `${location.origin}${location.pathname}#/project/${id
 /**
  * "..." options button for one of your projects (My projects). Opens a small menu:
  *   Privacy  switch public / private and share the project's link (this component).
- *   Tree     being built by role B (onTree prop; disabled until it is passed).
- *   History  being built by role B (onHistory prop; disabled until it is passed).
+ *   Tree     opens the project with the Tree tab of its history window (onTree prop; disabled without it).
+ *   History  opens the project with its version history (onHistory prop; disabled without it).
  *
  * Props: project (Cancion), onChange(patch) after the visibility is saved, onTree?(), onHistory?().
  */
