@@ -249,15 +249,12 @@ export function Copilot({ song, pieces, onAddMany, onSelect, onTree, remember, f
           placeholder={humming ? 'Add a note for your melody (optional)…' : 'Ask DJ Stemy for pieces…'}
           aria-label={humming ? 'Note sent with your humming' : 'Message DJ Stemy'}
         />
-        <button
-          className="icon"
-          type="submit"
-          disabled={busy || !text.trim() || humming}
-          aria-label="Send"
-          title={humming ? 'Your text goes with the melody: use “Send to DJ Stemy” above' : 'Send'}
-        >
-          <Send size={14} />
-        </button>
+        {/* While humming there is one way to send: "Send to DJ Stemy" in the panel, which takes this text along. */}
+        {!humming && (
+          <button className="icon" type="submit" disabled={busy || !text.trim()} aria-label="Send" title="Send">
+            <Send size={14} />
+          </button>
+        )}
       </form>
 
       <h2 className="title">Credits</h2>
