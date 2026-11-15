@@ -1,6 +1,7 @@
 // Fingerprints of the public library, kept in memory: computing them is cheap, reading every piece is not.
 import { describeAxis, featureNames, fingerprint, nearest, pca, tooClose, typicalDistance, windowFingerprints } from '../lib/fingerprint.js';
-import { searchPiezas } from './piezas.js';
+import { getPiezasByIds, searchPiezas } from './piezas.js';
+import { HttpError } from '../lib/errors.js';
 import { db } from '../db/client.js';
 import { features } from '../db/features.js';
 import { huellaVector, similitud } from '../lib/fingerprint.js';
@@ -76,6 +77,28 @@ export async function nearCopyOf(pieza, autor) {
   // The near-copy test pieces (data/piezas/near-copy-tests.json) are copies on purpose: never name them as an original.
   const originals = (byTipo[pieza.tipo] ?? []).filter((e) => !isNearCopyTest(e.pieza));
   return tooClose(pieza, originals, { autor, id: pieza.id ?? null, parentId: pieza.parent_id ?? null, scale: scale[pieza.tipo] });
+}
+
+/**
+ * Refuses a save (409) while `pieza` (notes being saved by `autor`) nearly copies someone else's melody. `fix` says
+ * how to put it right. The warning used to be advice only; a near-copy can no longer be published or saved.
+ */
+export async function assertNotNearCopy(pieza, autor, fix = 'Change it more, or fork the original so its author is credited.') {
+  const aviso = await nearCopyOf(pieza, autor);
+  if (aviso) {
+    const name = pieza.nombre ? `"${pieza.nombre}"` : 'These notes';
+    throw new HttpError(409, `Can't save: ${name} sounds a lot like "${aviso.nombre}" by ${aviso.autor} (${aviso.similitud}% alike, even across keys). ${fix}`);
+  }
+}
+
+/** Refuses a song save (409) while one of its melody blocks nearly copies a melody by someone other than its author. */
+export async function assertSongHasNoNearCopies(pistas) {
+  const ids = [...new Set((pistas ?? []).flatMap((t) => (t.bloques ?? []).map((b) => b.pieza_id)))];
+  if (!ids.length) return;
+  for (const p of await getPiezasByIds(ids)) {
+    if (p.tipo !== 'melodia') continue;
+    await assertNotNearCopy(p, p.autor, 'Remove that block or use the original piece instead, then save again.');
+  }
 }
 
 const round = (x, digits = 3) => Math.round(x * 10 ** digits) / 10 ** digits;

@@ -502,3 +502,19 @@ el contrato no cambia.
   - `POST /piezas/parecidas` con el `id` de una pieza guardada excluye las piezas del autor de esa pieza, no las de quien pregunta.
   - Las piezas de prueba nunca se nombran como "el original" (`isNearCopyTest` en `repo/similares.js`). Así, agregar la Oda a la alegría original no avisa.
 - **Producción:** hay que cargarlas en Tiger con `npm run db:seed` (está en `BRIEF_B.md`).
+- **Ahora bloquea (no solo avisa).** Mientras haya una copia, no se puede guardar ni enviar.
+  - **Proyecto:**
+    - La barra amarilla dice "Can't save yet" y no se puede cerrar.
+    - Botones de la barra: "Remove it" (quita los bloques de esa pieza y las pistas que quedan vacías) y "Open the original".
+    - Mientras haya un bloque copiado quedan desactivados "Save project", "Save a copy", Ctrl+S y los dos botones de propuesta.
+    - Al abrir un proyecto también se revisan sus melodías.
+  - **Piano roll:** antes de guardar, revisa las notas. Si casi copian otra melodía, no envía nada y muestra "Not saved". Hay que cambiar más notas o hacer un fork del original.
+  - **Upload:** los loops que son casi copias quedan desmarcados y bloqueados ("Can't publish").
+  - **Servidor** (aunque se salte la interfaz): responde 409 con el motivo en estas rutas:
+    - `POST /piezas`
+    - `PUT /piezas/:id` con notas; la pieza no cambia.
+    - `POST/PUT /canciones`
+    - `POST /canciones/:id/propuestas`
+    - `POST /canciones/:id/merge/:otra`
+
+    Los forks de una pieza no se bloquean, porque acreditan al autor original.

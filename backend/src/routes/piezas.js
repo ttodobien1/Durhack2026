@@ -22,7 +22,7 @@ import { explainDiff } from '../copilot/explain.js';
 import { embedLater } from '../repo/vectores.js';
 import { activity, logEvent, trending } from '../repo/eventos.js';
 import { searchHybrid } from '../repo/busqueda.js';
-import { forgetFingerprints, mapOf, nearCopyOf, similarTo } from '../repo/similares.js';
+import { assertNotNearCopy, forgetFingerprints, mapOf, nearCopyOf, similarTo } from '../repo/similares.js';
 
 const router = Router();
 
@@ -61,6 +61,7 @@ router.post('/', async (req, res) => {
   if (data.parent_id && !(await getVisiblePieza(data.parent_id, req.usuario?.id ?? null))) {
     throw badRequest(`Unknown parent_id: ${data.parent_id}`);
   }
+  await assertNotNearCopy(data, data.autor); // a near-copy of someone else's melody is not published
   forgetFingerprints();
   const created = await createPieza(data, req.usuario?.id ?? null);
   embedLater(created.id); // Gemini embedding in the background (public pieces only); never fails the save
@@ -146,6 +147,10 @@ router.put('/:id', async (req, res) => {
   if (!owner) throw notFound(`Pieza not found: ${req.params.id}`);
   assertOwner(req, owner.usuario_id, 'piece');
   const { publica, ...changes } = validatePiezaUpdate(req.body);
+  if (changes.notas) {
+    const current = await getPieza(req.params.id);
+    await assertNotNearCopy({ ...current, ...changes, id: current.id }, current.autor); // checked before anything changes
+  }
   if (publica !== undefined) {
     const current = await getPieza(req.params.id);
     if (current.publica !== publica) {

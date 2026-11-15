@@ -58,6 +58,7 @@ import {
 } from '../repo/versiones.js';
 
 import { logEvent, songPlaysToday } from '../repo/eventos.js';
+import { assertSongHasNoNearCopies } from '../repo/similares.js';
 
 const router = Router();
 
@@ -180,6 +181,7 @@ router.post('/', async (req, res) => {
     const latest = await ensureVersions(parent.id);
     fork = { parent_id: parent.id, parent_version: Math.min(cancion.parent_version ?? latest, latest) };
   }
+  await assertSongHasNoNearCopies(cancion.pistas); // 409 while a melody block nearly copies someone else's
   const created = await createCancion(cancion, req.usuario?.id ?? null, fork);
   await recordVersion(created.id, { autor: cancion.autor, mensaje });
   await logEvent({ tipo: 'guardado', cancion_id: created.id, autor: cancion.autor });
@@ -209,6 +211,7 @@ router.put('/:id', async (req, res) => {
   }
   const mensaje = validateMensaje(req.body?.mensaje);
   if (!cancion.publica && !owner.usuario_id) throw badRequest('Only songs owned by an account can be private');
+  await assertSongHasNoNearCopies(cancion.pistas); // 409 while a melody block nearly copies someone else's
   await ensureVersions(req.params.id); // songs from before versions existed keep their old state as v1
   await saveCancion(req.params.id, cancion, req.usuario?.id ?? null);
   await recordVersion(req.params.id, { autor: req.usuario?.nombre ?? owner.autor, mensaje });
@@ -303,6 +306,7 @@ router.post('/:id/propuestas', async (req, res) => {
   if (hidden.length) {
     throw badRequest(`Make these pieces public first, so ${target.autor} can hear them: ${hidden.map((p) => `${p.nombre} (${p.id})`).join(', ')}`);
   }
+  await assertSongHasNoNearCopies((desde ?? nueva).pistas); // a proposal cannot carry a near-copy either
   if (nueva) {
     const latest = await ensureVersions(target.id);
     const created = await createCancion(nueva, usuario.id, { parent_id: target.id, parent_version: Math.min(nueva.parent_version ?? latest, latest) });
@@ -408,6 +412,7 @@ router.post('/:id/merge/:otra', async (req, res) => {
   if (!owner) throw notFound(`Project not found: ${req.params.id}`);
   if ((await rolEn(req.params.id, req.usuario)) !== 'colaborador') assertOwner(req, owner.usuario_id, 'song');
   const { cancion, otra, preview } = await mergePreview(req);
+  await assertSongHasNoNearCopies(preview.resultado.pistas);
   const mensaje = validateMensaje(req.body?.mensaje) || `Merged ${otra.id} v${preview.suyo.version} by ${otra.autor}`;
   await saveCancion(cancion.id, { ...cancion, descripcion: null, tempo: preview.resultado.tempo, pistas: preview.resultado.pistas }, req.usuario?.id ?? null);
   const version = await recordVersion(cancion.id, {

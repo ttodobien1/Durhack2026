@@ -50,7 +50,8 @@ export function Upload() {
       // Compare each loop with the public library (any key or start beat): flag near-copies of someone else's piece.
       const autor = loadUser()?.name ?? null
       Promise.all(rows.map((r) => api.checkSimilar({ tipo: r.tipo, notas: r.notas, autor }))).then((checks) =>
-        setSong((s) => (s?.file === file.name ? { ...s, rows: s.rows.map((r, i) => ({ ...r, aviso: checks[i]?.aviso ?? null })) } : s)),
+        // A near-copy cannot be published (the server refuses it too): it is unticked and locked.
+        setSong((s) => (s?.file === file.name ? { ...s, rows: s.rows.map((r, i) => (checks[i]?.aviso ? { ...r, aviso: checks[i].aviso, on: false } : { ...r, aviso: null })) } : s)),
       )
     } catch (e) {
       setError(e.message)
@@ -58,7 +59,8 @@ export function Upload() {
   }
 
   const edit = (key, patch) => setSong((s) => ({ ...s, rows: s.rows.map((r) => (r.key === key ? { ...r, ...patch } : r)) }))
-  const chosen = song?.rows.filter((r) => r.on) ?? []
+  const chosen = song?.rows.filter((r) => r.on && !r.aviso) ?? []
+  const blocked = song?.rows.filter((r) => r.aviso).length ?? 0
 
   const preview = (row) => {
     if (playing === row.key) {
@@ -214,7 +216,14 @@ export function Upload() {
             <ul className="up-rows">
               {song.rows.map((r) => (
                 <li key={r.key} className={`t-${r.tipo} ${r.on ? '' : 'off'}`}>
-                  <input type="checkbox" checked={r.on} onChange={() => edit(r.key, { on: !r.on })} aria-label={`Publish ${r.nombre}`} />
+                  <input
+                    type="checkbox"
+                    checked={r.on && !r.aviso}
+                    disabled={Boolean(r.aviso)}
+                    onChange={() => edit(r.key, { on: !r.on })}
+                    aria-label={`Publish ${r.nombre}`}
+                    title={r.aviso ? 'This loop nearly copies someone else’s melody, so it cannot be published' : undefined}
+                  />
                   <button className={`tbtn square ${playing === r.key ? 'on' : ''}`} onClick={() => preview(r)} aria-label={`${playing === r.key ? 'Stop' : 'Play'} ${r.nombre}`}>
                     {playing === r.key ? <Square size={12} /> : <Play size={13} />}
                   </button>
@@ -238,8 +247,8 @@ export function Upload() {
                     <p className="up-warn">
                       <TriangleAlert size={13} aria-hidden="true" />
                       <span>
-                        {r.aviso.similitud}% like <b>{r.aviso.nombre}</b> by {r.aviso.autor}, even across keys. If it is theirs, fork their piece instead so they are
-                        credited.
+                        <b>Can’t publish:</b> {r.aviso.similitud}% like <b>{r.aviso.nombre}</b> by {r.aviso.autor}, even across keys. If it is theirs, fork
+                        their piece instead so they are credited.
                       </span>
                     </p>
                   )}
@@ -249,7 +258,7 @@ export function Upload() {
 
             <div className="up-foot">
               <span className="fine">
-                {chosen.length} of {song.rows.length} selected · {autor ? `credited to ${autor}` : 'log in to publish'} · {licencia}
+                {chosen.length} of {song.rows.length} selected{blocked > 0 && ` · ${blocked} can’t be published (near-copies)`} · {autor ? `credited to ${autor}` : 'log in to publish'} · {licencia}
               </span>
               <button className="tbtn accent big" onClick={publish} disabled={!chosen.length || progress}>
                 {progress

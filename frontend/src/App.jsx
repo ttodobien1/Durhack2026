@@ -57,6 +57,7 @@ export default function App({ projectId = 'new' }) {
   const [share, setShare] = useState(false) // Share window open
   const [propose, setPropose] = useState(null) // null | { fromFork, target: { id, nombre, autor } }
   const [notice, setNotice] = useState(null) // short confirmation shown under the toolbar
+  const checkCopyRef = useRef(() => {}) // checkCopy (defined below), for the project loader
   const [ask, setAsk] = useState(null) // starter prompt sent from the empty Playlist
   const [error, setError] = useState(null)
   const beat = usePlayhead()
@@ -100,7 +101,9 @@ export default function App({ projectId = 'new' }) {
     if (projectId !== 'new')
       api.project(projectId).then(async ({ rol, ...p }) => {
         const ids = [...new Set(p.pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id)))]
-        remember(await Promise.all(ids.map(api.getPiece)))
+        const loaded = await Promise.all(ids.map(api.getPiece))
+        remember(loaded)
+        loaded.forEach((piece) => checkCopyRef.current(piece)) // a saved project may hold a near-copy from before the rule
         undoLog.current.skip = true // loading is not an undo step
         setSong(p)
         setSavedJson(JSON.stringify(p))
@@ -239,6 +242,7 @@ export default function App({ projectId = 'new' }) {
 
   /** Saves with optional name/visibility changes (and `mensaje`, what changed). Throws on failure; returns the saved project. */
   const writeProject = async ({ mensaje, ...changes } = {}) => {
+    if (copyBlock) throw new Error(`${copyBlock}.`)
     const me = loadUser().name
     setSavingSong(true)
     try {
@@ -263,7 +267,7 @@ export default function App({ projectId = 'new' }) {
     }
   }
   const saveProject = () => {
-    if (savingSong || !song.pistas.length) return
+    if (savingSong || !song.pistas.length || copyBlock) return
     // Someone else's project whose author allows no copies: the only way to keep your edits is to propose them.
     if (!songMine && !meta.permite_fork) return meta.permite_propuestas ? startPropose(false) : fail(`${song.autor} does not allow copies of this project.`)
     if (!signedIn('Log in to save this project.', () => setSaveAs({ saved: null }))) return
@@ -273,6 +277,7 @@ export default function App({ projectId = 'new' }) {
   // Proposed changes, like pull requests (cambios.md §14): your unsaved edits of someone else's project (kept in a
   // new private copy), or your saved fork offered back to the project it came from.
   const startPropose = async (fromFork) => {
+    if (copyBlock) return
     if (!signedIn('Log in to propose changes.', () => startPropose(fromFork))) return
     try {
       const target = fromFork ? await api.project(song.parent_id) : song
@@ -307,7 +312,7 @@ export default function App({ projectId = 'new' }) {
     )
   }
   const quickSave = () => {
-    if (savingSong || !song.pistas.length || !songDirty) return
+    if (savingSong || !song.pistas.length || !songDirty || copyBlock) return
     writeProject().catch(fail)
   }
   // Project history: open an old version in the editor (as unsaved changes), or take the result of a merge.
@@ -343,16 +348,33 @@ export default function App({ projectId = 'new' }) {
   }
 
   // Song editing -----------------------------------------------------------
-  // A melody block added to the song is checked against the library: if it nearly copies someone else's melody
-  // (even in another key, upside down or starting later), a warning names the original. Never blocks the add.
-  const [copyWarn, setCopyWarn] = useState(null) // { piece, aviso }
+  // Melody blocks are checked against the library when added (and when a project opens): one that nearly copies
+  // someone else's melody (even in another key, upside down or starting later) can be placed, but the project cannot
+  // be saved, copied or proposed until that block is removed. The server refuses it too (repo/similares.js).
+  const [copies, setCopies] = useState({}) // piece id -> aviso (the melody it nearly copies) | null (checked: fine)
   const checkCopy = (piece) => {
-    if (piece.tipo !== 'melodia' || !piece.notas?.length) return
+    if (piece?.tipo !== 'melodia' || !piece.notas?.length || piece.id in copies) return
     api.checkSimilar({ id: piece.id, parent_id: piece.parent_id, tipo: piece.tipo, notas: piece.notas }).then((r) => {
-      if (!r?.aviso) return
-      setCopyWarn({ piece, aviso: r.aviso })
-      setAviso({ pieceId: piece.id, ...r.aviso }) // also shown in the piano roll when the block is opened
+      setCopies((c) => ({ ...c, [piece.id]: r?.aviso ?? null }))
+      if (r?.aviso) setAviso({ pieceId: piece.id, ...r.aviso }) // also shown in the piano roll when the block is opened
     })
+  }
+  useEffect(() => {
+    checkCopyRef.current = checkCopy
+  })
+  const flagged = [...new Set(song.pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id)))]
+    .filter((id) => copies[id])
+    .map((id) => ({ piece: pieces[id] ?? { id, nombre: id }, aviso: copies[id] }))
+  const copyBlock = flagged.length ? `Remove the copied melody (${flagged[0].piece.nombre}) before saving` : null
+  /** Takes every block of one piece out of the song (and the tracks it leaves empty). */
+  const removePiece = (id) => {
+    const emptied = song.pistas
+      .map((t, i) => [t, i])
+      .filter(([t]) => t.bloques.length > 0 && t.bloques.every((b) => b.pieza_id === id))
+      .map(([, i]) => i)
+      .reverse()
+    editLanes((pistas) => pistas.map((t) => ({ ...t, bloques: t.bloques.filter((b) => b.pieza_id !== id) })))
+    emptied.forEach(removeLane)
   }
   const addToSong = (piece) => {
     remember([piece])
@@ -444,11 +466,17 @@ export default function App({ projectId = 'new' }) {
   const save = async () => {
     if (!signedIn('Log in to save your changes to this piece.', save)) return false
     try {
+      // Too close to someone else's melody? Not saved until it is changed (or theirs is forked, which credits them).
+      const piece = selected
+      const check = await api.checkSimilar({ id: piece.id, parent_id: piece.parent_id, tipo: piece.tipo, notas: notes })
+      if (check?.aviso) {
+        setAviso({ pieceId: piece.id, ...check.aviso, blocked: true })
+        return false
+      }
       const saved = await api.saveNotes(selected.id, notes, bars)
       recordContribution()
-      // Too close to someone else's public piece? A note, never a block (forking would credit them).
-      const piece = selected
-      api.checkSimilar({ id: piece.id, parent_id: piece.parent_id, tipo: piece.tipo, notas: notes }).then((r) => setAviso(r?.aviso ? { pieceId: piece.id, ...r.aviso } : null))
+      setAviso((a) => (a?.pieceId === piece.id ? null : a))
+      setCopies((c) => ({ ...c, [piece.id]: null })) // its new notes passed
       remember([{ ...selected, ...saved, notas: saved.notas ?? notes, compases: saved.compases ?? bars }])
       if (bars !== selected.compases) ripple(selected.id, bars)
       setDraft(null)
@@ -673,8 +701,8 @@ export default function App({ projectId = 'new' }) {
         <button
           className="tbtn"
           onClick={saveProject}
-          disabled={!songDirty || savingSong || !song.pistas.length || (!songMine && !meta.permite_fork && !meta.permite_propuestas)}
-          title={!songMine && !meta.permite_fork && !meta.permite_propuestas ? `${song.autor} allows no copies or proposals on this project` : 'Save project (Ctrl+S)'}
+          disabled={!songDirty || savingSong || !song.pistas.length || Boolean(copyBlock) || (!songMine && !meta.permite_fork && !meta.permite_propuestas)}
+          title={copyBlock ?? (!songMine && !meta.permite_fork && !meta.permite_propuestas ? `${song.autor} allows no copies or proposals on this project` : 'Save project (Ctrl+S)')}
         >
           {!songMine && !meta.permite_fork && meta.permite_propuestas ? <GitPullRequestArrow size={14} /> : <Save size={14} />}{' '}
           {savingSong
@@ -690,12 +718,17 @@ export default function App({ projectId = 'new' }) {
                     : 'Copies are off'}
         </button>
         {!songMine && meta.permite_fork && meta.permite_propuestas && songDirty && (
-          <button className="tbtn" onClick={() => startPropose(false)} title={`Offer your changes to ${song.autor}, like a pull request`}>
+          <button className="tbtn" onClick={() => startPropose(false)} disabled={Boolean(copyBlock)} title={copyBlock ?? `Offer your changes to ${song.autor}, like a pull request`}>
             <GitPullRequestArrow size={14} /> Propose changes
           </button>
         )}
         {songAuthor && saved && song.parent_id && !songDirty && (
-          <button className="tbtn" onClick={() => startPropose(true)} title="Offer this copy’s changes to the project it was forked from, like a pull request">
+          <button
+            className="tbtn"
+            onClick={() => startPropose(true)}
+            disabled={Boolean(copyBlock)}
+            title={copyBlock ?? 'Offer this copy’s changes to the project it was forked from, like a pull request'}
+          >
             <GitPullRequestArrow size={14} /> Propose to original
           </button>
         )}
@@ -751,15 +784,16 @@ export default function App({ projectId = 'new' }) {
           <button onClick={() => setError(null)}>Dismiss</button>
         </div>
       )}
-      {copyWarn && !error && (
-        <div className="error copy-warn" role="status">
+      {flagged.length > 0 && (
+        <div className="error copy-warn" role="alert">
           <TriangleAlert size={14} aria-hidden="true" />
           <span>
-            <b>{copyWarn.piece.nombre}</b> sounds a lot like <b>{copyWarn.aviso.nombre}</b> by {copyWarn.aviso.autor} ({copyWarn.aviso.similitud}% alike,
-            even in another key, upside down or starting later). If it is built on theirs, use or fork the original so they are credited.
+            <b>Can’t save yet:</b> <b>{flagged[0].piece.nombre}</b> sounds a lot like <b>{flagged[0].aviso.nombre}</b> by {flagged[0].aviso.autor} (
+            {flagged[0].aviso.similitud}% alike, even in another key, upside down or starting later). Remove it, or use the original so its author is credited.
+            {flagged.length > 1 && ` ${flagged.length - 1} more ${flagged.length === 2 ? 'block does' : 'blocks do'} the same.`}
           </span>
-          <button onClick={() => (select(copyWarn.aviso.id), setCopyWarn(null))}>Open the original</button>
-          <button onClick={() => setCopyWarn(null)}>OK</button>
+          <button onClick={() => removePiece(flagged[0].piece.id)}>Remove it</button>
+          <button onClick={() => select(flagged[0].aviso.id)}>Open the original</button>
         </div>
       )}
       {notice && !error && (

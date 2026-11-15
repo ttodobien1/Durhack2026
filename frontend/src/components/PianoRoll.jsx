@@ -554,8 +554,17 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable: canEdit
         <p className="roll-warn" role="status">
           <TriangleAlert size={14} aria-hidden="true" />
           <span>
-            This now sounds a lot like <b>{aviso.nombre}</b> by {aviso.autor} ({aviso.similitud}% alike, even across keys). If you built on it, fork theirs instead so
-            they are credited.
+            {aviso.blocked ? (
+              <>
+                <b>Not saved:</b> these notes sound a lot like <b>{aviso.nombre}</b> by {aviso.autor} ({aviso.similitud}% alike, even across keys). Change
+                more of them, or fork theirs instead so they are credited.
+              </>
+            ) : (
+              <>
+                This sounds a lot like <b>{aviso.nombre}</b> by {aviso.autor} ({aviso.similitud}% alike, even across keys). If it is built on theirs, use or fork
+                the original so they are credited.
+              </>
+            )}
           </span>
           <button className="tbtn" onClick={() => onOpenPiece(aviso.id)}>
             Open it
