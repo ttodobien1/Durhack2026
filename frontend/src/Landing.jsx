@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, Play, Plus, Search, Square, X } from 'lucide-react'
+import { ArrowRight, Lock, Play, Plus, Search, Square, X } from 'lucide-react'
 import { api } from './api.js'
 import * as audio from './audio.js'
 import { diffNotes } from './diff.js'
@@ -14,6 +14,9 @@ function updated(iso) {
   return Math.abs(h) < 24 ? ago.format(Math.round(h), 'hour') : ago.format(Math.round(h / 24), 'day')
 }
 
+// Work saved without an account belongs to nobody: every visitor would read "you / …" as their own project.
+const OWNERLESS = new Set(['you', 'anonymous'])
+
 export function Landing() {
   const [projects, setProjects] = useState(null)
   const [pieces, setPieces] = useState({})
@@ -21,6 +24,12 @@ export function Landing() {
   const [playing, setPlaying] = useState(null)
 
   const [chain, setChain] = useState(null) // [parent, fork] from the library, for the hero
+  const [mine, setMine] = useState(null) // your projects (private ones included), only while logged in
+
+  useEffect(() => {
+    setMine(null)
+    if (user) api.projects(user.name).then(setMine, () => setMine([]))
+  }, [user?.name])
 
   useEffect(() => {
     api.projects().then(async (list) => {
@@ -28,7 +37,7 @@ export function Landing() {
       const loaded = await Promise.all(ids.map((id) => api.getPiece(id).catch(() => null)))
       const byId = Object.fromEntries(loaded.filter(Boolean).map((p) => [p.id, p]))
       setPieces(byId)
-      setProjects(list.map((p) => withMeta(p, byId)))
+      setProjects(list.filter((p) => !OWNERLESS.has(p.autor)).map((p) => withMeta(p, byId)))
       if (location.hash === '#explore') requestAnimationFrame(() => document.getElementById('explore')?.scrollIntoView()) // arrived from another page
       // Hero: the first real fork in the library whose parent we can show.
       for (const tipo of ['acordes', 'melodia', 'bajo']) {
@@ -78,6 +87,8 @@ export function Landing() {
           <LineageDemo chain={chain} />
         </section>
 
+        {user && <YourProjects name={user.name} projects={mine} />}
+
         <ol className="flow" aria-label="How it works">
           {[
             ['Search', 'Drum loops, chords, bass lines and melodies, filtered by type and key.'],
@@ -102,6 +113,43 @@ export function Landing() {
       </footer>
 
     </div>
+  )
+}
+
+/** Like the repository list on GitHub's home page: only for the logged-in user, private projects included. */
+function YourProjects({ name, projects }) {
+  return (
+    <section className="panel your-projects" aria-labelledby="your-projects-title">
+      <h2 className="title" id="your-projects-title">
+        Your projects <span className="dim">· {projects ? projects.length : 'loading'}</span>
+        <a className="icon small wide" href="#/project/new" title="Start a new project">
+          <Plus size={12} /> New
+        </a>
+      </h2>
+      {projects?.length === 0 ? (
+        <p className="empty">
+          No projects yet. <a href="#/project/new">Start one</a>, or <a href="#/upload">publish pieces from a MIDI song</a>.
+        </p>
+      ) : (
+        <ul>
+          {(projects ?? []).map((p) => (
+            <li key={p.id}>
+              <a href={`#/project/${p.id}`}>
+                <span className="dim">{name} /</span> {p.nombre}
+              </a>
+              {p.publica === false ? (
+                <span className="public private">
+                  <Lock size={10} aria-hidden="true" /> Private
+                </span>
+              ) : (
+                <span className="public">Public</span>
+              )}
+              <span className="dim">{p.tempo} BPM</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }
 

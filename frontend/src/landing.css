@@ -71,3 +71,14 @@
   .site-nav { display: none; }
 }
 .auth-reason { margin: 0; padding: 8px 10px; background: var(--well); border: 1px solid var(--line); border-radius: 2px; color: var(--text); font-size: 13px; }
+
+/* Your projects (logged in only) */
+.your-projects .title .icon.small.wide { margin-left: auto; text-decoration: none; }
+.your-projects ul { list-style: none; margin: 0; padding: 4px 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.your-projects li { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px 14px; }
+.your-projects li a { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); font-weight: 600; text-decoration: none; }
+.your-projects li a:hover { color: var(--orange); }
+.your-projects li a .dim { font-weight: 400; }
+.your-projects li > .dim { margin-left: auto; flex: none; font-size: 12px; }
+.your-projects .public { flex: none; }
+.your-projects .empty a { color: var(--orange); }
