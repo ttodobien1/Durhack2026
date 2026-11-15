@@ -72,3 +72,14 @@ test('pca2 finds the direction of largest spread and describes it in words', asy
   assert.deepEqual(words, { menos: ['b'], mas: ['a', 'c'] });
   assert.deepEqual(pca2([[1, 2]]).axes, [], 'too few pieces: no axes');
 });
+
+test('pca(…, 3) gives three uncorrelated axes, largest spread first', async () => {
+  const { pca } = await import('../src/lib/fingerprint.js');
+  const pts = Array.from({ length: 60 }, (_, i) => [Math.sin(i) * 9, Math.cos(i * 1.7) * 4, ((i * 37) % 11) - 5, 1]);
+  const { points, axes } = pca(pts, 3);
+  assert.equal(axes.length, 3);
+  assert.ok(points.every((p) => p.length === 3));
+  assert.ok(axes[0].share >= axes[1].share && axes[1].share >= axes[2].share, 'sorted by spread');
+  const dot = (a, b) => a.reduce((s, x, i) => s + x * b[i], 0);
+  assert.ok(Math.abs(dot(axes[0].weights, axes[2].weights)) < 1e-6, 'axes are orthogonal');
+});

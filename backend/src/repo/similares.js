@@ -1,5 +1,5 @@
 // Fingerprints of the public library, kept in memory: computing them is cheap, reading every piece is not.
-import { describeAxis, featureNames, fingerprint, nearest, pca2, tooClose, typicalDistance, windowFingerprints } from '../lib/fingerprint.js';
+import { describeAxis, featureNames, fingerprint, nearest, pca, tooClose, typicalDistance, windowFingerprints } from '../lib/fingerprint.js';
 import { searchPiezas } from './piezas.js';
 
 const MAX_AGE = 30_000; // also refresh on a timer: pieces can change through routes that do not call forget()
@@ -42,7 +42,7 @@ export async function nearCopyOf(pieza, autor) {
 const round = (x, digits = 3) => Math.round(x * 10 ** digits) / 10 ** digits;
 
 /**
- * 2D map of the public pieces of one type (PCA of their fingerprints): close dots sound alike, in any key.
+ * 3D map of the public pieces of one type (PCA of their fingerprints): close dots sound alike, in any key.
  * Each axis comes with the features that push pieces to each side, in words. Cached with the library.
  */
 export async function mapOf(tipo) {
@@ -50,7 +50,7 @@ export async function mapOf(tipo) {
   lib.maps ??= {};
   if (!lib.maps[tipo]) {
     const entries = lib.byTipo[tipo] ?? [];
-    const { points, axes } = pca2(entries.map((e) => e.f));
+    const { points, axes } = pca(entries.map((e) => e.f), 3);
     const names = featureNames(tipo);
     lib.maps[tipo] = {
       tipo,
@@ -66,6 +66,7 @@ export async function mapOf(tipo) {
         licencia: pieza.licencia,
         x: round(points[i][0]),
         y: round(points[i][1]),
+        z: round(points[i][2] ?? 0),
       })),
     };
   }
