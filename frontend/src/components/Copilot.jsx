@@ -59,7 +59,7 @@ export function Copilot({ song, pieces, onAddMany, onSelect, onTree, remember, f
       <div className="chat" ref={log}>
         {messages.length === 0 && !busy && (
           <div className="stemy-intro">
-            <DJStemy size={84} />
+            <DJStemy size={124} deck mood="talking" />
             <div className="bubble bot">
               <p>
                 Yo! I’m <b>DJ Stemy</b>. Tell me the song you have in mind: I dig up pieces that already exist in the library and tell you why they
@@ -78,7 +78,7 @@ export function Copilot({ song, pieces, onAddMany, onSelect, onTree, remember, f
             </div>
           ) : (
             <div key={i} className="msg-row bot">
-              <DJStemy size={34} mood={i === lastBot && !busy ? 'talking' : 'idle'} />
+              <DJStemy size={48} deck mood={i === lastBot && !busy ? 'talking' : 'idle'} />
               <div className="bubble bot">
                 <p>{m.texto}</p>
                 {m.ids?.length > 0 && (
@@ -120,7 +120,7 @@ export function Copilot({ song, pieces, onAddMany, onSelect, onTree, remember, f
         )}
         {busy && (
           <div className="msg-row bot">
-            <DJStemy size={34} mood="thinking" />
+            <DJStemy size={48} deck mood="thinking" />
             <div className="bubble bot pending" role="status">
               <span className="typing" aria-hidden="true">
                 <i />

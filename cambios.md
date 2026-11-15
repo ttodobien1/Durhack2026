@@ -237,6 +237,8 @@ repositorio:
   - en el chat del proyecto responde en viñetas, tipo SimSimi;
   - en reposo flota, parpadea y mira alrededor;
   - mientras busca piezas cabecea al ritmo, los audífonos laten y salen notas;
-  - al responder da un saltito.
+  - en el chat está detrás de una mesa de DJ, con dos tornamesas cuyos vinilos giran, un mixer con crossfader y luces
+    que parpadean (todo más rápido mientras busca);
+  - cuando entrega una respuesta o sugerencias, da un giro sobre sí mismo. Solo gira Stemy; la mesa se queda quieta.
 - El prompt del sistema empieza con "You are DJ Stemy" y los mensajes de error dicen "DJ Stemy". El código, los
   archivos y la ruta `/copiloto` mantienen el nombre copiloto (contrato de la sección 4.3).
