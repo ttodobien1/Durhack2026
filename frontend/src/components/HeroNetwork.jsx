@@ -11,9 +11,14 @@ import { createPortal } from 'react-dom'
  * `background`: the canvas covers the whole landing page behind its content (fixed to the window, never takes
  * clicks), the first pieces grow on the right, away from the hero text, and the network then spreads over the
  * whole screen. The captions stay in the hero.
+ *
+ * Once the network is complete it lives for REPLAY_AFTER seconds, fades out and the story starts again from the
+ * first piece, over and over while the component is on screen (not with reduced motion: that one stays still).
  */
 
 const COUNT = 150 // pieces in the full network
+const REPLAY_AFTER = 40 // seconds the finished network lives before the story starts again (forever, while shown)
+const FADE = 1.2 // seconds of fade out / fade in between two runs
 const BW = 1 // clip width (world units)
 const BH = 0.42 // clip height
 const DX = 1.5 // distance between columns (one fork to the right)
@@ -151,6 +156,8 @@ export function HeroNetwork({ background = false }) {
     let raf = 0
     let visible = true
     let shownStage = 0
+    let doneAt = null // story time when the last piece was born
+    let fading = null // real time (ms) when the fade out started
 
     // Largest clip size, and where the tree sits on screen (fx, fy: share of the width / height; pad: margin).
     // As a background it starts small and on the right of the hero text, then spreads over the whole window.
@@ -171,12 +178,29 @@ export function HeroNetwork({ background = false }) {
       H = box.height
       canvas.width = Math.round(W * dpr)
       canvas.height = Math.round(H * dpr)
-      if (!cam.s) {
-        cam.s = maxScale()
-        const { fx, fy } = focus(0)
-        cam.x = BW / 2 - ((fx - 0.5) * W) / cam.s
-        cam.y = -((fy - 0.5) * H) / cam.s
+      if (!cam.s) placeCamera()
+    }
+    function placeCamera() {
+      cam.s = maxScale()
+      const { fx, fy } = focus(0)
+      cam.x = BW / 2 - ((fx - 0.5) * W) / cam.s
+      cam.y = -((fy - 0.5) * H) / cam.s
+    }
+
+    // Start the story again: no pieces, no ideas, the camera back on the first piece.
+    const restart = () => {
+      t = 0
+      born = 0
+      nextBirth = 0
+      pulses = []
+      doneAt = null
+      for (const n of nodes) {
+        n.born = undefined
+        n.flash = 0
       }
+      placeCamera()
+      step(0, 0)
+      nodes[0].born = -1 // the first piece is there on the very first frame
     }
 
     // Where a link starts and ends: clip edges while they are clips, node centres once they are a network.
@@ -212,6 +236,7 @@ export function HeroNetwork({ background = false }) {
         birth(nodes[born])
         born++
         nextBirth += gap(born)
+        if (born === COUNT) doneAt = t
       }
       // Ideas: more of them as the network appears; when one reaches a node it lights it and may go on.
       if (Math.random() < dt * nf * 14 && born > 3) {
@@ -383,6 +408,16 @@ export function HeroNetwork({ background = false }) {
     const loop = (now) => {
       const dt = Math.min(0.05, (now - last) / 1000)
       last = now
+      // Replay: REPLAY_AFTER seconds after the network is complete, fade out, start over, fade back in.
+      if (doneAt !== null && fading === null && t - doneAt >= REPLAY_AFTER) {
+        fading = now
+        canvas.style.opacity = '0'
+      }
+      if (fading !== null && now - fading >= FADE * 1000) {
+        fading = null
+        restart()
+        canvas.style.opacity = ''
+      }
       step(dt, netFactor(cam.s))
       draw()
       raf = visible ? requestAnimationFrame(loop) : 0
@@ -401,6 +436,7 @@ export function HeroNetwork({ background = false }) {
       pulses = []
       draw()
     } else {
+      canvas.style.transition = `opacity ${FADE}s ease`
       step(0, 0)
       nodes[0].born = -1 // the first piece is there on the very first frame
       draw()
