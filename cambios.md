@@ -386,3 +386,39 @@ Stemma deja de ser solo un editor: los artistas comparten, comentan, piden ideas
 | POST | `/copiloto` | Acepta además `historial: [{ de: "usuario" \| "stemy", texto }]` y `tarareo: { notas }`; con tarareo responde además `tarareo: { tonalidad, notas, coincidencias }` |
 
 Los campos nuevos son opcionales: el contrato 4.3 de `/copiloto` sigue igual para quien no los mande.
+
+## 16. Huellas musicales: piezas parecidas, aviso de copia y 180 piezas generadas
+
+Hecho por el rol A mientras B y C dormían (con el visto bueno de A). Resumen para revisar:
+
+- **Huella de cada pieza** (`backend/src/lib/fingerprint.js`): magnitudes de la DFT del perfil de clases de altura
+  (6 números) y de la grilla de ataques en semicorcheas (8); la batería, una grilla por voz (bombo, caja, platillos,
+  otra percusión). No cambian al transponer, invertir ni desplazar en el tiempo, así que una copia en otra tonalidad
+  se reconoce. Tests en `backend/test/fingerprint.test.js`.
+- **Rutas nuevas** (solo se agregan; nada del contrato cambia):
+
+| Método | Ruta | Qué hace |
+| --- | --- | --- |
+| GET | `/piezas/:id/parecidas?n=8` | Piezas públicas del mismo tipo que más se parecen, con `similitud` 0-100 |
+| POST | `/piezas/parecidas` | `{ tipo, notas, id?, parent_id?, autor? }` → `{ parecidas, aviso }` (notas sin guardar) |
+
+- **Aviso de copia solo para melodías:** la sección 6 permite reutilizar progresiones y ritmos básicos, y la huella de
+  alturas no distingue el orden de los acordes (i-iv-V7 y ii-V-i en La menor salen iguales). Compara también ventanas
+  de 2 compases (las copias suelen ser fragmentos). Nunca bloquea: sugiere hacer fork para dar crédito. Se ve en la
+  página de subida (`#/upload`) y en el piano roll después de guardar.
+- **Copiloto (DJ Stemy):** `buscar_piezas` acepta `parecido_a` (id de pieza) y ordena por huella. Siguen siendo las dos
+  herramientas de 4.4. Rol C: si conviene, mencionarlo en `systemPrompt.js` ("si el usuario pide algo parecido a una
+  pieza, usa parecido_a").
+- **Datos (rol C):** `data/piezas/stemma-generated.json` (`p-2001` a `p-2180`) con 100 melodías, 40 progresiones y 40
+  bajos para beats de rap, generados por `data/scripts/generate_loops.py` (reglas musicales, determinista). Autor
+  "Stemma generator", CC BY 4.0. La huella encontró que la semilla 2026 producía casi "Mary Had a Little Lamb"; se usa
+  2027 (sin copias). **Falta escucharlas.** Para cargarlas en una base existente: `npm run db:seed` en `backend/`.
+- **El mapa 2D (PCA) no se construyó:** con estos datos el mapa muestra sobre todo de qué fuente o plantilla viene cada
+  pieza (los acordes de free-midi-chords comparten un solo ritmo), no zonas musicales sin explorar. Solo el mapa de
+  batería (Groove) refleja diferencias reales.
+
+### Propuestas para CLAUDE.md (no aplicadas: necesitan el acuerdo de los tres)
+- 4.2 Canción: campos opcionales `publica` (bool, por defecto `true`) y `descripcion` (texto, hasta 300 caracteres),
+  ya guardados por el backend.
+- 4.4 Herramientas: `buscar_piezas(estilo, tipo, tonalidad, texto, parecido_a)`.
+

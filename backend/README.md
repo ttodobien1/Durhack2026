@@ -58,6 +58,8 @@ Errors always come back as `{ "error": "message" }` with the matching HTTP statu
 | GET | `/health` | Database type and row counts (pieces, songs, accounts) |
 | GET | `/piezas?estilo=&tipo=&tonalidad=&q=&autor=` | All filters optional. `estilo` takes several tags (`rap,boombap`; `boom bap` and `lo-fi` also work), `tonalidad` accepts `Am` / `A minor` / `La menor`, `q` ignores case and accents |
 | GET | `/piezas/:id` | One piece |
+| GET | `/piezas/:id/parecidas?n=8` | Public pieces of the same type that sound most like this one (musical fingerprint, see below), closest first, each with `similitud` 0-100. *Extra* |
+| POST | `/piezas/parecidas` | `{ tipo, notas, id?, parent_id?, autor? }` (notes need not be saved) -> `{ parecidas, aviso }`. `aviso` is a public **melody** by someone else, outside the piece's fork family, that these notes nearly copy (also transposed, inverted, shifted or as a 2-bar excerpt), else `null`. *Extra* |
 | POST | `/piezas` | Create an original piece (id is generated). `"publica": false` (logged in) keeps it private until it is saved in a public project. *Extra* |
 | POST | `/piezas/:id/fork` | Body optional `{ "autor", "nombre" }`. Returns the new piece (`201`) with `parent_id` |
 | PUT | `/piezas/:id` | `{ "notas": [...] }` replaces the notes; also accepts `nombre`, `tonalidad`, `tempo`, `estilo`, `compases`. Lineage fields (`autor`, `tipo`, `licencia`, `parent_id`) cannot change |
@@ -275,11 +277,27 @@ POST /copiloto
   Joy, Twinkle Twinkle, Happy Birthday, Jingle Bells, Beethoven's 5th, Eine kleine Nachtmusik, Canon in D, Frère
   Jacques, Mary Had a Little Lamb, Bridal Chorus, In the Hall of the Mountain King, Greensleeves, Toccata and Fugue).
 
+## Musical fingerprints (similar pieces and the "too close" warning)
+
+- `src/lib/fingerprint.js`: the magnitudes of the DFT of a piece's pitch-class profile (6 numbers) and of its 16-step
+  onset grid (8 numbers); drums get one onset fingerprint per voice (kick, snare, hats, other percussion: 32 numbers).
+  Magnitudes do not change under transposition, inversion or a time shift (Lewin / Quinn / Amiot), so a copy in
+  another key or starting on another beat matches. Pure functions with tests in `test/fingerprint.test.js`.
+- `src/repo/similares.js` keeps the fingerprints of the public library in memory (cleared on piece writes, refreshed
+  at least every 30 s). `similitud` is 100 for the same notes and 0 for two typical pieces of that type (the median
+  distance, per type).
+- The warning (`aviso`) is for **melodies only**: CLAUDE.md section 6 lets anyone reuse progressions and basic
+  rhythms, and the pitch fingerprint cannot tell chord order apart (i-iv-V7 and ii-V-i in A minor look the same).
+  It compares 2-bar windows too, since copies are usually excerpts. Threshold: distance < 0.15 (two changed notes in
+  a melody are about 0.09; different authors' nearest melodies are 0.3 or more apart in this library).
+
 ## Copilot
 
 - Model: `claude-opus-5-5` (low effort, short answers), tools in `src/copilot/tools.js`, style traits in
   `src/copilot/styles.js`, system prompt in `src/copilot/systemPrompt.js` (role C can edit these two freely).
 - The final answer is forced into JSON (`texto`, `piezas_sugeridas`) with structured outputs, and suggested ids are
   checked against the database before being returned, so it can never suggest a piece that does not exist.
+- `buscar_piezas` takes an optional `parecido_a` (a piece id): results are the pieces that sound most like it, by
+  musical fingerprint, each with `similitud`; the other filters still apply. Still the two tools of CLAUDE.md 4.4.
 - Server-side fallback is on (`fallbacks: "default"`): if a safety classifier wrongly declines a request, the API
   retries it on a fallback model instead of failing.

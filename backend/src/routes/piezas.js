@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { assertOwner, autorFor } from '../lib/auth.js';
 import { diffNotas } from '../lib/diff.js';
 import { HttpError, badRequest, notFound } from '../lib/errors.js';
-import { validateNewPieza, validatePiezaUpdate } from '../lib/validate.js';
+import { validateNewPieza, validateNotas, validatePiezaUpdate, validateTipo } from '../lib/validate.js';
 import {
   createPieza,
   forkPieza,
@@ -15,6 +15,7 @@ import {
   updatePieza,
   visibilityBlocker,
 } from '../repo/piezas.js';
+import { forgetFingerprints, nearCopyOf, similarTo } from '../repo/similares.js';
 
 const router = Router();
 
@@ -52,7 +53,25 @@ router.post('/', async (req, res) => {
   if (data.parent_id && !(await getVisiblePieza(data.parent_id, req.usuario?.id ?? null))) {
     throw badRequest(`Unknown parent_id: ${data.parent_id}`);
   }
+  forgetFingerprints();
   res.status(201).json(await createPieza(data, req.usuario?.id ?? null));
+});
+
+// POST /piezas/parecidas   { tipo, notas, id?, parent_id?, autor? } -> { parecidas, aviso }
+// Checks notes before (or after) they are published: the public pieces that sound most like them, and `aviso` when
+// one by someone else, outside this piece's fork family, is a near-copy (transposed, inverted or shifted counts too).
+router.post('/parecidas', async (req, res) => {
+  const body = req.body ?? {};
+  const pieza = { tipo: validateTipo(body.tipo), notas: validateNotas(body.notas ?? []), id: body.id ?? null, parent_id: body.parent_id ?? null };
+  const autor = req.usuario?.nombre ?? (typeof body.autor === 'string' ? body.autor : null);
+  res.json({ parecidas: await similarTo(pieza, { n: 5 }), aviso: await nearCopyOf(pieza, autor) });
+});
+
+// GET /piezas/:id/parecidas?n=8  -> public pieces of the same type that sound most like this one, with similitud 0-100
+router.get('/:id/parecidas', async (req, res) => {
+  const pieza = await findPieza(req, req.params.id);
+  const n = Math.min(20, Math.max(1, Number.parseInt(req.query.n, 10) || 8));
+  res.json(await similarTo(pieza, { n }));
 });
 
 // GET /piezas/:id
@@ -67,6 +86,7 @@ router.post('/:id/fork', async (req, res) => {
   const body = req.body ?? {};
   const autor = await autorFor(req, body.autor);
   const nombre = typeof body.nombre === 'string' && body.nombre.trim() ? body.nombre.trim() : undefined;
+  forgetFingerprints();
   res.status(201).json(await forkPieza(original, { autor, nombre, usuarioId: req.usuario?.id ?? null }));
 });
 
@@ -87,6 +107,7 @@ router.put('/:id', async (req, res) => {
       await setPiezaPublica(req.params.id, publica);
     }
   }
+  forgetFingerprints();
   res.json(Object.keys(changes).length ? await updatePieza(req.params.id, changes) : await getPieza(req.params.id));
 });
 
