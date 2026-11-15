@@ -1,10 +1,9 @@
-// Signed-in user, public profiles and contribution counts, kept in this browser.
-// shortcut: accounts are out of scope (CLAUDE.md §2), so nothing here reaches the backend; swap for real
-// user routes if the team ever adds them to the contract.
-import { useState } from 'react'
-import { ME } from './api.js'
+// Signed-in user (a real account on the backend, see api.js), public profiles and contribution counts.
+// Profiles are stored on the backend (/auth/yo, /usuarios/:nombre); this browser keeps a copy so pages and
+// avatars render instantly and the app still works offline (mock mode).
+import { useEffect, useState } from 'react'
+import { api, currentUser, ME, onSession } from './api.js'
 
-const USER_KEY = 'lineage-user'
 const profileKey = (name) => `lineage-profile:${name}`
 const activityKey = (name) => `lineage-activity:${name}`
 
@@ -16,40 +15,56 @@ function read(key, fallback) {
   }
 }
 
-export const loadUser = () => read(USER_KEY, null)
+export const loadUser = currentUser
 
-/** [user, setUser]: setUser(null) signs out. */
+/** [user, setUser]: setUser(null) logs out; logging in goes through AuthDialog (api.login / api.register). */
 export function useUser() {
-  const [user, set] = useState(loadUser)
-  const setUser = (u) => {
-    try {
-      if (u) localStorage.setItem(USER_KEY, JSON.stringify(u))
-      else localStorage.removeItem(USER_KEY)
-    } catch {
-      /* storage blocked: signed in for this visit only */
-    }
-    set(u)
-  }
+  const [user, set] = useState(currentUser)
+  useEffect(() => onSession(set), [])
+  const setUser = (u) => (u ? set(u) : api.logout())
   return [user, setUser]
 }
 
 export const ACCENTS = { green: 'var(--note)', orange: 'var(--orange)', blue: 'var(--t-acordes)', purple: 'var(--t-bajo)', teal: 'var(--t-melodia)', red: 'var(--t-ritmo)' }
 export const emptyProfile = { displayName: '', bio: '', location: '', website: '', readme: '', accent: 'green', avatar: null, pinned: [] }
 export const loadProfile = (name) => ({ ...emptyProfile, ...read(profileKey(name), {}) })
-/** Throws when storage is full (a large avatar), so the caller can keep the form and show the error. */
-export const saveProfile = (name, profile) => localStorage.setItem(profileKey(name), JSON.stringify(profile))
 
-/** Made by whoever is signed in. "you" (api.js ME) authored everything created before saving needed a login. */
+/** Keeps a copy of a profile in this browser. Throws when storage is full (a large avatar). */
+export const cacheProfile = (name, profile) => localStorage.setItem(profileKey(name), JSON.stringify(profile))
+
+/**
+ * Saves the signed-in user's profile on the backend, then in this browser. Rejects with the server's
+ * message, or when browser storage is full, so the caller can keep the form and show the error.
+ */
+export async function saveProfile(name, profile) {
+  await api.saveProfile(profile)
+  cacheProfile(name, profile)
+}
+
+/** Downloads a user's public profile into the browser copy. Resolves true if it changed what loadProfile returns. */
+export async function syncProfile(name) {
+  const remote = await api.getUser(name)
+  if (!remote?.perfil) return false
+  const before = JSON.stringify(loadProfile(name))
+  try {
+    cacheProfile(name, remote.perfil)
+  } catch {
+    return false // storage full: keep showing the old copy
+  }
+  return JSON.stringify(loadProfile(name)) !== before
+}
+
+/** Made by the person using the app: ME is their username, or "you" (unsaved work) when signed out. */
 export const isMine = (autor) => autor === ME || (autor != null && autor === loadUser()?.name)
 
 /** Pieces and projects made while signed out are authored "you" (api.js ME): they belong to whoever is signed in. */
-export const authorsFor = (name) => (name === (loadUser()?.name ?? ME) ? [...new Set([name, ME])] : [name])
+export const authorsFor = (name) => (name === ME ? [...new Set([name, 'you'])] : [name])
 
 const day = (d) => d.toLocaleDateString('en-CA') // local YYYY-MM-DD
 
 /** Count one contribution (a fork, a saved piece or a saved project) today for the signed-in user. */
 export function recordContribution() {
-  const name = loadUser()?.name ?? ME
+  const name = ME
   const log = read(activityKey(name), {})
   log[day(new Date())] = (log[day(new Date())] ?? 0) + 1
   try {

@@ -1,9 +1,13 @@
 import cors from 'cors';
 import express from 'express';
 import { databaseKind, db } from './db/client.js';
+import { ensureSchema } from './db/migrate.js';
+import { authenticate } from './lib/auth.js';
+import auth from './routes/auth.js';
 import canciones from './routes/canciones.js';
 import copiloto from './routes/copiloto.js';
 import piezas from './routes/piezas.js';
+import usuarios from './routes/usuarios.js';
 
 const app = express();
 
@@ -14,21 +18,33 @@ app.get('/', (req, res) => {
   res.json({ name: 'Stemma API', status: 'ok', docs: 'See backend/README.md' });
 });
 
+// Creates missing tables/columns after a deploy (one cheap check per server instance), then reads the
+// Bearer token, if any, into req.usuario.
+app.use(async (req, res, next) => {
+  await ensureSchema();
+  next();
+});
+app.use(authenticate);
+
 // Health check: confirms the database answers and shows how much data there is.
 app.get('/health', async (req, res) => {
   const result = await db.query(
-    'SELECT (SELECT COUNT(*) FROM piezas) AS piezas, (SELECT COUNT(*) FROM canciones) AS canciones',
+    `SELECT (SELECT COUNT(*) FROM piezas) AS piezas, (SELECT COUNT(*) FROM canciones) AS canciones,
+            (SELECT COUNT(*) FROM usuarios) AS usuarios`,
   );
-  const { piezas: totalPiezas, canciones: totalCanciones } = result.rows[0];
+  const { piezas: totalPiezas, canciones: totalCanciones, usuarios: totalUsuarios } = result.rows[0];
   res.json({
     status: 'ok',
     database: databaseKind,
     piezas: Number(totalPiezas),
     canciones: Number(totalCanciones),
+    usuarios: Number(totalUsuarios),
     copiloto: Boolean(process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY),
   });
 });
 
+app.use('/auth', auth);
+app.use('/usuarios', usuarios);
 app.use('/piezas', piezas);
 app.use('/canciones', canciones);
 app.use('/copiloto', copiloto);

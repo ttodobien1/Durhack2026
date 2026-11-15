@@ -9,7 +9,9 @@ import re
 TIPOS = {"ritmo", "acordes", "melodia", "bajo"}
 COMPASES = {1, 2, 4}
 BEATS_PER_BAR = 4
-ALLOWED_LICENSES = {"CC0", "CC0 1.0", "Public Domain", "CC BY 3.0", "CC BY 4.0"}
+# Permissive licenses only. MIT added for free-midi-chords (team decision, November 2026):
+# it is permissive and only asks to keep the copyright + license notice (data/licenses/).
+ALLOWED_LICENSES = {"CC0", "CC0 1.0", "Public Domain", "CC BY 3.0", "CC BY 4.0", "MIT"}
 # The 9 drum sounds the pipeline maps to; agreed with A for the Tone.js sampler.
 DRUM_SOUNDS = {36, 38, 42, 46, 43, 47, 50, 49, 51}
 

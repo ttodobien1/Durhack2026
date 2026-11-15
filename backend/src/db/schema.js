@@ -1,7 +1,11 @@
--- Stemma database schema (PostgreSQL: TigerData in production, PGlite locally).
--- Column names follow the shared contracts in CLAUDE.md (section 4).
--- Apply with: npm run db:init   (or npm run db:reset to drop + recreate + seed)
+// Stemma database schema (PostgreSQL: TigerData in production, PGlite locally).
+// Column names follow the shared contracts in CLAUDE.md (section 4).
+// Every statement is idempotent, so it can run on an existing database: `npm run db:init` applies it, and the
+// server applies it by itself when it finds tables or columns missing (see migrate.js), so a deploy never
+// needs a manual migration.
+// It lives in a JS module (not a .sql file) so Vercel always bundles it with the function.
 
+export const SCHEMA = /* sql */ `
 -- A reusable musical piece (short MIDI fragment).
 CREATE TABLE IF NOT EXISTS piezas (
   id          TEXT PRIMARY KEY,                      -- "p-017"
@@ -35,8 +39,8 @@ CREATE TABLE IF NOT EXISTS canciones (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
--- Visibility, like a GitHub repo. Private songs are left out of GET /canciones unless ?autor= names their author.
--- An ALTER so db:init also upgrades databases created before the column existed.
+-- Visibility, like a GitHub repo: a private song is listed and opened only by its author's account.
+-- An ALTER so databases created before the column existed get it too (see migrate.js).
 ALTER TABLE canciones ADD COLUMN IF NOT EXISTS publica BOOLEAN NOT NULL DEFAULT true;
 
 -- Tracks of a song, ordered by posicion (0, 1, 2...).
@@ -47,7 +51,7 @@ CREATE TABLE IF NOT EXISTS pistas (
   PRIMARY KEY (cancion_id, posicion)
 );
 
--- A piece placed on a track, starting at bar `compas`.
+-- A piece placed on a track, starting at bar \`compas\`.
 CREATE TABLE IF NOT EXISTS bloques (
   id              INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   cancion_id      TEXT NOT NULL,
@@ -59,3 +63,31 @@ CREATE TABLE IF NOT EXISTS bloques (
 
 CREATE INDEX IF NOT EXISTS idx_bloques_cancion ON bloques (cancion_id);
 CREATE INDEX IF NOT EXISTS idx_bloques_pieza   ON bloques (pieza_id);
+
+-- User accounts. \`nombre\` is the username and also the \`autor\` of everything they publish.
+CREATE TABLE IF NOT EXISTS usuarios (
+  id             TEXT PRIMARY KEY,                   -- "u-3f9a1c2b7d10" (random)
+  nombre         TEXT NOT NULL,
+  email          TEXT NOT NULL,                      -- stored lowercase
+  password_hash  TEXT NOT NULL,                      -- scrypt$N$r$p$salt$hash
+  perfil         JSONB NOT NULL DEFAULT '{}',        -- public profile: bio, readme, avatar, accent, pins...
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_usuarios_nombre ON usuarios (lower(nombre));
+CREATE UNIQUE INDEX IF NOT EXISTS idx_usuarios_email  ON usuarios (lower(email));
+
+-- Login sessions. Only a SHA-256 hash of each token is stored.
+CREATE TABLE IF NOT EXISTS sesiones (
+  token_hash  TEXT PRIMARY KEY,
+  usuario_id  TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at  TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sesiones_usuario ON sesiones (usuario_id);
+
+-- Owner account of pieces and songs created while logged in (NULL = seed data or anonymous).
+ALTER TABLE piezas    ADD COLUMN IF NOT EXISTS usuario_id TEXT REFERENCES usuarios(id);
+ALTER TABLE canciones ADD COLUMN IF NOT EXISTS usuario_id TEXT REFERENCES usuarios(id);
+`;

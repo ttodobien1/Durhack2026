@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { assertOwner, autorFor } from '../lib/auth.js';
 import { diffNotas } from '../lib/diff.js';
 import { badRequest, notFound } from '../lib/errors.js';
 import { validateNewPieza, validatePiezaUpdate } from '../lib/validate.js';
@@ -6,6 +7,7 @@ import {
   createPieza,
   forkPieza,
   getPieza,
+  getPiezaOwner,
   isAncestor,
   searchPiezas,
   updatePieza,
@@ -36,13 +38,14 @@ router.get('/', async (req, res) => {
   res.json(piezas);
 });
 
-// POST /piezas  -> creates an original piece (id is generated)
+// POST /piezas  -> creates an original piece (id is generated). Logged in, the author is the account.
 router.post('/', async (req, res) => {
-  const data = validateNewPieza(req.body);
+  const data = validateNewPieza({ ...req.body, autor: req.usuario?.nombre ?? req.body?.autor });
+  data.autor = await autorFor(req, data.autor);
   if (data.parent_id && !(await getPieza(data.parent_id))) {
     throw badRequest(`Unknown parent_id: ${data.parent_id}`);
   }
-  res.status(201).json(await createPieza(data));
+  res.status(201).json(await createPieza(data, req.usuario?.id ?? null));
 });
 
 // GET /piezas/:id
@@ -51,20 +54,23 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /piezas/:id/fork   body (optional): { "autor": "...", "nombre": "..." }
+// Logged in, the fork belongs to the account and `autor` is its username.
 router.post('/:id/fork', async (req, res) => {
   const original = await findPieza(req.params.id);
   const body = req.body ?? {};
-  const autor = typeof body.autor === 'string' && body.autor.trim() ? body.autor.trim() : 'anonymous';
+  const autor = await autorFor(req, body.autor);
   const nombre = typeof body.nombre === 'string' && body.nombre.trim() ? body.nombre.trim() : undefined;
-  res.status(201).json(await forkPieza(original, { autor, nombre }));
+  res.status(201).json(await forkPieza(original, { autor, nombre, usuarioId: req.usuario?.id ?? null }));
 });
 
 // PUT /piezas/:id   body: { "notas": [...] } (+ optional nombre, tonalidad, tempo, estilo, compases)
+// Pieces owned by an account can only be edited by that account.
 router.put('/:id', async (req, res) => {
+  const owner = await getPiezaOwner(req.params.id);
+  if (!owner) throw notFound(`Pieza not found: ${req.params.id}`);
+  assertOwner(req, owner.usuario_id, 'piece');
   const changes = validatePiezaUpdate(req.body);
-  const updated = await updatePieza(req.params.id, changes);
-  if (!updated) throw notFound(`Pieza not found: ${req.params.id}`);
-  res.json(updated);
+  res.json(await updatePieza(req.params.id, changes));
 });
 
 // GET /piezas/:id/diff  -> diff of a fork against its parent

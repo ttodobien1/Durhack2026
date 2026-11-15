@@ -5,4 +5,3 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 
 // Repo-level /data folder (seed pieces, songs, MIDI files). Override with DATA_DIR.
 export const DATA_DIR = path.resolve(process.env.DATA_DIR || path.join(here, '..', '..', '..', 'data'));
-export const SCHEMA_FILE = path.join(here, '..', '..', 'src', 'db', 'schema.sql');

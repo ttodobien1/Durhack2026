@@ -30,9 +30,9 @@ BandLab ya tiene fork, Splice Create combina samples con IA, y Mozart AI y Veena
 | Prioridad | Qué entra |
 | --- | --- |
 | Imprescindible | Librería con búsqueda, reproducción, fork, árbol de origen |
-| Importante | Diff visual, copiloto con tool use, piano roll editable |
+| Importante | Diff visual, copiloto con tool use, piano roll editable, cuentas de usuario (login con email y contraseña) |
 | Extra (solo si sobra tiempo) | Merge con detección de choques armónicos, exportar MIDI, varios estilos |
-| Fuera (no se construye) | Audio grabado, voces, letras generadas, mezcla/mastering, cuentas de usuario, red social |
+| Fuera (no se construye) | Audio grabado, voces, letras generadas, mezcla/mastering, red social |
 
 - **Solo MIDI, nunca audio.** MIDI son datos estructurados (nota, tiempo, duración, velocidad), comparables como texto.
 - **Un solo estilo para la demo:** beats de rap (instrumentales: batería, bajo, acordes y melodías cortas en loop). Tiene que sonar bien.

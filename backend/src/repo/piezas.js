@@ -89,16 +89,25 @@ export async function searchPiezas({ estilo, tipo, tonalidad, q, autor, limit } 
 }
 
 const INSERT_SQL = `INSERT INTO piezas
-  (id, nombre, tipo, autor, licencia, fuente, tonalidad, tempo, estilo, compases, parent_id, notas, busqueda)
-  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12::jsonb, $13)`;
+  (id, nombre, tipo, autor, licencia, fuente, tonalidad, tempo, estilo, compases, parent_id, notas, busqueda, usuario_id)
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12::jsonb, $13, $14)`;
 
-// Creates a piece with a new sequential id (ignores pieza.id). Returns the stored Pieza.
-export async function createPieza(pieza) {
-  const id = await insertWithNewId('piezas', 'p', (newId) => db.query(INSERT_SQL, [newId, ...rowValues(pieza)]));
+// Creates a piece with a new sequential id (ignores pieza.id). `usuarioId` is the owner account, or null
+// for anonymous work. Returns the stored Pieza.
+export async function createPieza(pieza, usuarioId = null) {
+  const id = await insertWithNewId('piezas', 'p', (newId) =>
+    db.query(INSERT_SQL, [newId, ...rowValues(pieza), usuarioId]),
+  );
   return getPieza(id);
 }
 
-// Insert or overwrite a piece keeping its id (used by the seed script).
+// Owner account of a piece: { usuario_id } (null when unowned), or null if the piece does not exist.
+export async function getPiezaOwner(id) {
+  const result = await db.query('SELECT usuario_id FROM piezas WHERE id = $1', [id]);
+  return result.rows[0] ?? null;
+}
+
+// Insert or overwrite a piece keeping its id (used by the seed script; never changes the owner).
 export async function upsertPieza(pieza) {
   await db.query(
     `${INSERT_SQL}
@@ -108,7 +117,7 @@ export async function upsertPieza(pieza) {
        tempo = EXCLUDED.tempo, estilo = EXCLUDED.estilo, compases = EXCLUDED.compases,
        parent_id = EXCLUDED.parent_id, notas = EXCLUDED.notas, busqueda = EXCLUDED.busqueda,
        updated_at = now()`,
-    [pieza.id, ...rowValues(pieza)],
+    [pieza.id, ...rowValues(pieza), null],
   );
 }
 
@@ -128,14 +137,17 @@ export async function updatePieza(id, changes) {
 }
 
 // Copies a piece as a fork: same notes and metadata, new id, parent_id = original.
-export async function forkPieza(original, { autor, nombre }) {
-  return createPieza({
-    ...original,
-    nombre: nombre || `${original.nombre} (fork)`,
-    autor,
-    fuente: `Fork of ${original.id}`,
-    parent_id: original.id,
-  });
+export async function forkPieza(original, { autor, nombre, usuarioId = null }) {
+  return createPieza(
+    {
+      ...original,
+      nombre: nombre || `${original.nombre} (fork)`,
+      autor,
+      fuente: `Fork of ${original.id}`,
+      parent_id: original.id,
+    },
+    usuarioId,
+  );
 }
 
 // true if `ancestorId` appears somewhere up the parent_id chain of `pieceId`.

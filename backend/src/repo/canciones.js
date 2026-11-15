@@ -31,13 +31,14 @@ function assemble(cancionRows, pistaRows, bloqueRows) {
   return [...canciones.values()];
 }
 
-// One song by id, or the list: public songs, or every song by `autor` (private ones included).
-async function loadCanciones({ id, autor } = {}) {
+// One song by id (any visibility: the route decides who may see it), or a list: public songs, or the songs by
+// `autor`, private ones included only when `withPrivate` (the author is the one asking).
+async function loadCanciones({ id, autor, withPrivate = false } = {}) {
   const filter = id ? 'WHERE cancion_id = $1' : '';
   const args = id ? [id] : [];
-  const where = id ? 'WHERE id = $1' : autor ? 'WHERE autor = $1' : 'WHERE publica';
+  const where = id ? 'WHERE id = $1' : autor ? 'WHERE autor = $1 AND (publica OR $2)' : 'WHERE publica';
   const [canciones, pistas, bloques] = await Promise.all([
-    db.query(`SELECT id, nombre, autor, tempo, publica FROM canciones ${where} ORDER BY id`, id ? [id] : autor ? [autor] : []),
+    db.query(`SELECT id, nombre, autor, tempo, publica FROM canciones ${where} ORDER BY id`, id ? [id] : autor ? [autor, withPrivate] : []),
     db.query(`SELECT cancion_id, posicion, instrumento FROM pistas ${filter} ORDER BY cancion_id, posicion`, args),
     db.query(
       `SELECT cancion_id, pista_posicion, pieza_id, compas FROM bloques ${filter}
@@ -48,8 +49,8 @@ async function loadCanciones({ id, autor } = {}) {
   return assemble(canciones.rows, pistas.rows, bloques.rows);
 }
 
-export async function listCanciones(autor) {
-  return loadCanciones({ autor });
+export async function listCanciones(autor, withPrivate = false) {
+  return loadCanciones({ autor, withPrivate });
 }
 
 export async function getCancion(id) {
@@ -57,9 +58,10 @@ export async function getCancion(id) {
   return cancion ?? null;
 }
 
-export async function cancionExists(id) {
-  const result = await db.query('SELECT 1 FROM canciones WHERE id = $1', [id]);
-  return result.rows.length > 0;
+// Owner of a song: { usuario_id (null when unowned), autor }, or null if the song does not exist.
+export async function getCancionOwner(id) {
+  const result = await db.query('SELECT usuario_id, autor FROM canciones WHERE id = $1', [id]);
+  return result.rows[0] ?? null;
 }
 
 async function assertPiezasExist(cancion) {
@@ -90,17 +92,18 @@ async function writeTracks(tx, id, cancion) {
   }
 }
 
-// Creates a song with a new sequential id. Returns the stored Cancion.
-export async function createCancion(cancion) {
+// Creates a song with a new sequential id, owned by `usuarioId` (null = anonymous). Returns the stored Cancion.
+export async function createCancion(cancion, usuarioId = null) {
   await assertPiezasExist(cancion);
   const id = await insertWithNewId('canciones', 'c', (newId) =>
     db.transaction(async (tx) => {
-      await tx.query('INSERT INTO canciones (id, nombre, autor, tempo, publica) VALUES ($1, $2, $3, $4, $5)', [
+      await tx.query('INSERT INTO canciones (id, nombre, autor, tempo, publica, usuario_id) VALUES ($1, $2, $3, $4, $5, $6)', [
         newId,
         cancion.nombre,
         cancion.autor,
         cancion.tempo,
         cancion.publica ?? true,
+        usuarioId,
       ]);
       await writeTracks(tx, newId, cancion);
     }),

@@ -1,7 +1,7 @@
 """Stage 6: normalize slices into contract notes (tono, inicio, duracion, velocidad).
 
-Input:  data/build/05_slice.json
-Output: data/build/06_normalize.json
+Input:  data/build/<source>/05_slice.json
+Output: data/build/<source>/06_normalize.json
 
 For "ritmo" (ROL_C.md, section 4.6):
   - Map Roland TD-11 pitches to the 9 drum classes used by the Groove MIDI
@@ -16,7 +16,9 @@ For "ritmo" (ROL_C.md, section 4.6):
 
 For melodic types (acordes, bajo, melodia; later collections):
   - Same soft quantization of start and end; keep the real duration.
-  - Detect the key (tonalidad) with the Krumhansl-Schmuckler algorithm.
+  - tonalidad: the key the source declares (free-midi-chords filename, team manifest);
+    otherwise detected with the Krumhansl-Schmuckler algorithm. When both exist,
+    the report shows how often the detector agrees (a sanity check of the detector).
 
 For all: velocidad = velocity / 127, times rounded to 3 decimals and
 clamped inside the window [0, compases * 4).
@@ -24,10 +26,8 @@ clamped inside the window [0, compases * 4).
 
 from collections import Counter
 
-from common import BUILD_DIR, print_report, read_json, write_json
+from common import print_report, read_json, rel, source_from_args, stage_file, write_json
 
-INPUT = BUILD_DIR / "05_slice.json"
-OUTPUT = BUILD_DIR / "06_normalize.json"
 
 BEATS_PER_BAR = 4
 GRID = 0.25  # a 16th note, in beats
@@ -119,7 +119,10 @@ def normalize_melodic(notes: list[dict], length: float) -> list[dict]:
 
 
 def main() -> None:
-    slices = read_json(INPUT)
+    source = source_from_args(__doc__)
+    input_path = stage_file(source, "05_slice")
+    output_path = stage_file(source, "06_normalize")
+    slices = read_json(input_path)
     out, reasons, stats, shift = [], Counter(), Counter(), []
 
     for s in slices:
@@ -129,7 +132,11 @@ def main() -> None:
             tonalidad = None
         else:
             notas = normalize_melodic(s["notes"], length)
-            tonalidad = detect_key(notas)
+            detected = detect_key(notas)
+            tonalidad = s.get("key") or detected
+            if s.get("key"):
+                stats["key detector agrees with source" if detected == s["key"]
+                      else "key detector disagrees with source"] += 1
         if not notas:
             reasons["no notes left after normalizing"] += 1
             continue
@@ -141,17 +148,22 @@ def main() -> None:
         rest = {k: v for k, v in s.items() if k != "notes"}
         out.append({**rest, "tonalidad": tonalidad, "notas": notas})
 
-    write_json(OUTPUT, out)
-    print_report("stage 6 (normalize)", len(slices), len(out), reasons)
+    write_json(output_path, out)
+    print_report(f"stage 6 (normalize) [{source}]", len(slices), len(out), reasons)
     print()
     for k in ("hits in", "hits remapped to a standard drum",
               "hits merged (same sound, same 16th)", "hits dropped: unknown drum pitch",
               "hits out"):
         print(f"  {k}: {stats[k]}")
-    print(f"  mean quantization shift: {sum(shift) / len(shift):.3f} beats")
-    used = Counter(n["tono"] for s in out for n in s["notas"])
-    print(f"  drum sounds used: {dict(sorted(used.items()))}")
-    print(f"written: {OUTPUT.relative_to(OUTPUT.parents[2])}")
+    print(f"  mean quantization shift: {sum(shift) / len(shift):.3f} beats" if shift else "")
+    used = Counter(n["tono"] for s in out if s["tipo"] == "ritmo" for n in s["notas"])
+    if used:
+        print(f"  drum sounds used: {dict(sorted(used.items()))}")
+    agree, disagree = stats["key detector agrees with source"], stats["key detector disagrees with source"]
+    if agree + disagree:
+        print(f"  key detector vs source key: agrees {agree}, disagrees {disagree} "
+              f"({agree / (agree + disagree):.0%}); the source key is the one used")
+    print(f"written: {rel(output_path)}")
 
 
 if __name__ == "__main__":
