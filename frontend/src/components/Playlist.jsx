@@ -202,7 +202,7 @@ export function Playlist({ song, pieces, selectedId, songBars, mix, onMix, onSel
         {song.pistas.length === 0 && (
           <div className="empty lanes-empty">
             <p>
-              <strong>No tracks yet.</strong> Add pieces from the Browser with <b>+</b>, or let the Copilot suggest a start:
+              <strong>No tracks yet.</strong> Add pieces from the Browser with <b>+</b>, or let DJ Stemy suggest a start:
             </p>
             <button className="tbtn accent" onClick={onStarter}>
               Try: “{STARTER}”

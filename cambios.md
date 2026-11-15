@@ -228,3 +228,15 @@ repositorio:
 | DELETE | `/auth/yo/favoritos/:piezaId` | La desmarca → `204` (repetirlo no da error) |
 
 - Sin backend (datos de prueba), los favoritos se guardan en el navegador (`stemma-favorites:<usuario>`).
+
+## 12. El copiloto se llama DJ Stemy
+
+- En la interfaz, el asistente ahora se llama **DJ Stemy**. Sus funciones no cambian: sigue buscando y explicando
+  piezas existentes, sin componer.
+- Su personaje es el logo de Stemma con ojos estilo emoji y audífonos de DJ (`frontend/src/components/DJStemy.jsx`):
+  - en el chat del proyecto responde en viñetas, tipo SimSimi;
+  - en reposo flota, parpadea y mira alrededor;
+  - mientras busca piezas cabecea al ritmo, los audífonos laten y salen notas;
+  - al responder da un saltito.
+- El prompt del sistema empieza con "You are DJ Stemy" y los mensajes de error dicen "DJ Stemy". El código, los
+  archivos y la ruta `/copiloto` mantienen el nombre copiloto (contrato de la sección 4.3).

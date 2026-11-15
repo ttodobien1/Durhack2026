@@ -52,7 +52,7 @@ The Tree tab of the project history is now `src/components/VersionTree.jsx` (one
 | `components/Browser.jsx` | Search + type filter, preview, add to song |
 | `components/Playlist.jsx` | Song lanes with piece clips (8 bars) |
 | `components/PianoRoll.jsx` | Note editor + diff view |
-| `components/Copilot.jsx` | Chat to `/copiloto`, suggestion chips, credits |
+| `components/Copilot.jsx` | The assistant's chat, shown as **DJ Stemy** (`components/DJStemy.jsx`: the Stemma logo with eyes and DJ headphones, animated while idle, searching and answering) in speech bubbles; calls `/copiloto`, suggestion chips, credits |
 | `components/History.jsx` | Project history window: Tree, Changes, Versions, Merge, Credits (styles in `history.css`) |
 | `components/VersionTree.jsx` | Tree tab: versions as rows of pieces, draggable, restore / continue working (`versionTree.js` builds the rows) |
 | `components/NewPieceDialog.jsx` | New piece window for the "+" buttons of the Playlist |

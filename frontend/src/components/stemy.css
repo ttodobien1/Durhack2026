@@ -1,0 +1,65 @@
+/* DJ Stemy (DJStemy.jsx) and its chat (Copilot.jsx): speech bubbles like SimSimi, in the FL Studio look. */
+.stemy { flex: none; display: block; overflow: visible; color: #cfd6da; }
+/* Only the animated groups get their own origin: the logo group keeps its SVG transform as it is. */
+.stemy .stemy-body, .stemy .stemy-eye, .stemy .stemy-pupils, .stemy .stemy-cup, .stemy .stemy-note { transform-box: fill-box; transform-origin: center; }
+.stemy .stemy-body { transform-origin: 50% 100%; animation: stemy-float 2.6s ease-in-out infinite; animation-delay: var(--stemy-delay, 0s); }
+.stemy .stemy-eye { animation: stemy-blink 4.4s infinite; animation-delay: var(--stemy-delay, 0s); }
+.stemy .stemy-pupils { animation: stemy-look 7s ease-in-out infinite; animation-delay: var(--stemy-delay, 0s); }
+.stemy .stemy-note { opacity: 0; fill: var(--orange); font: 700 9px var(--ui); }
+.stemy .stemy-note.n2 { fill: var(--note); }
+.stemy .stemy-note.n3 { fill: var(--t-acordes); }
+
+/* Thinking: nods to the beat, the cups thump, notes float out of the headphones. */
+.stemy.thinking .stemy-body { animation: stemy-nod 0.48s ease-in-out infinite; }
+.stemy.thinking .stemy-cup { animation: stemy-thump 0.48s ease-in-out infinite; }
+.stemy.thinking .stemy-pupils { animation: stemy-think 1.9s ease-in-out infinite; }
+.stemy.thinking .stemy-note { animation: stemy-note 1.44s ease-out infinite; }
+.stemy.thinking .stemy-note.n2 { animation-delay: 0.48s; }
+.stemy.thinking .stemy-note.n3 { animation-delay: 0.96s; }
+
+/* Talking: a bounce when the answer arrives. */
+.stemy.talking .stemy-body { animation: stemy-pop 0.7s cubic-bezier(0.3, 1.6, 0.5, 1) 1, stemy-float 2.6s ease-in-out 0.7s infinite; }
+
+@keyframes stemy-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.6px); } }
+@keyframes stemy-nod { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(1.4px) rotate(-4deg); } }
+@keyframes stemy-pop { 0% { transform: translateY(5px) scale(0.82); } 60% { transform: translateY(-2px) scale(1.06); } 100% { transform: none; } }
+@keyframes stemy-blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.08); } }
+@keyframes stemy-look { 0%, 35%, 100% { transform: translate(0, 0); } 45%, 60% { transform: translate(3px, 0); } 70%, 82% { transform: translate(1px, -1.2px); } }
+@keyframes stemy-think { 0%, 100% { transform: translate(2.4px, -2px); } 50% { transform: translate(0.4px, -2.4px); } }
+@keyframes stemy-thump { 0%, 100% { transform: scale(1); } 45% { transform: scale(1.1); } }
+@keyframes stemy-note { 0% { opacity: 0; transform: translate(0, 2px); } 25% { opacity: 1; } 100% { opacity: 0; transform: translate(0, -12px); } }
+@media (prefers-reduced-motion: reduce) { .stemy, .stemy * { animation: none !important; } }
+
+/* Panel title */
+.title.stemy-title { gap: 6px; overflow: visible; }
+.title.stemy-title .stemy { margin: -3px 0 -2px; }
+
+/* Chat */
+.chat .stemy-intro { display: grid; justify-items: center; gap: 10px; padding: 14px 6px 6px; }
+.stemy-intro .bubble { justify-self: stretch; }
+.stemy-intro .bubble.bot::before { left: calc(50% - 7px); top: -8px; border-width: 0 7px 8px; border-color: transparent transparent var(--line); }
+.stemy-intro .bubble.bot::after { left: calc(50% - 6px); top: -6.5px; border-width: 0 6px 7px; border-color: transparent transparent var(--panel); }
+.stemy-intro .starter { justify-self: stretch; height: auto; padding: 7px 10px; white-space: normal; text-align: left; color: var(--text); }
+
+.msg-row { display: flex; align-items: flex-end; gap: 8px; min-width: 0; }
+.msg-row.me { justify-content: flex-end; }
+.msg-row.bot .stemy { margin-bottom: 2px; }
+.bubble { position: relative; min-width: 0; padding: 8px 11px; border: 1px solid var(--line); border-radius: 14px; line-height: 1.45; animation: bubble-in 0.28s ease-out; }
+.bubble p { margin: 0 0 6px; }
+.bubble p:last-child { margin: 0; }
+.bubble.bot { flex: 1; background: var(--panel); border-bottom-left-radius: 4px; }
+.bubble.me { max-width: 85%; background: #4f5a62; border-bottom-right-radius: 4px; }
+/* The tail of each bubble points at who is talking. */
+.bubble::before, .bubble::after { content: ''; position: absolute; width: 0; height: 0; border-style: solid; }
+.msg-row.bot .bubble::before { left: -8px; bottom: 6px; border-width: 6px 8px 6px 0; border-color: transparent var(--line) transparent transparent; }
+.msg-row.bot .bubble::after { left: -6.5px; bottom: 7px; border-width: 5px 7px 5px 0; border-color: transparent var(--panel) transparent transparent; }
+.msg-row.me .bubble::before { right: -8px; bottom: 6px; border-width: 6px 0 6px 8px; border-color: transparent transparent transparent var(--line); }
+.msg-row.me .bubble::after { right: -6.5px; bottom: 7px; border-width: 5px 0 5px 7px; border-color: transparent transparent transparent #4f5a62; }
+.bubble.pending { display: flex; align-items: center; gap: 8px; color: var(--dim); }
+.typing { display: inline-flex; gap: 3px; }
+.typing i { width: 5px; height: 5px; border-radius: 50%; background: var(--orange); animation: typing 1s ease-in-out infinite; }
+.typing i:nth-child(2) { animation-delay: 0.15s; background: var(--note); }
+.typing i:nth-child(3) { animation-delay: 0.3s; background: var(--t-acordes); }
+@keyframes typing { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-4px); opacity: 1; } }
+@keyframes bubble-in { from { opacity: 0; transform: translateY(4px) scale(0.98); } }
+@media (prefers-reduced-motion: reduce) { .bubble, .typing i { animation: none; } }

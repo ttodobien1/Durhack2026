@@ -143,7 +143,7 @@ export function Landing() {
                 Explore public projects <ArrowRight size={15} />
               </a>
             </div>
-            <p className="fine">MIDI only. Every piece carries its author and license, and the copilot suggests pieces but never writes your song.</p>
+            <p className="fine">MIDI only. Every piece carries its author and license, and DJ Stemy, the assistant, suggests pieces but never writes your song.</p>
           </div>
           <HeroNetwork background />
         </section>

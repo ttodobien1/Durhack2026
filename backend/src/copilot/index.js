@@ -31,7 +31,7 @@ const RESPONSE_FORMAT = {
 let client = null;
 function getClient() {
   if (!process.env.ANTHROPIC_API_KEY) {
-    throw new HttpError(503, 'Copilot unavailable: set ANTHROPIC_API_KEY (or GEMINI_API_KEY) on the server');
+    throw new HttpError(503, 'DJ Stemy is unavailable: set ANTHROPIC_API_KEY (or GEMINI_API_KEY) on the server');
   }
   client ??= new Anthropic({ timeout: 60_000 });
   return client;
@@ -81,10 +81,10 @@ async function onlyExistingIds(ids) {
 }
 
 function toHttpError(err) {
-  if (err instanceof Anthropic.AuthenticationError) return new HttpError(503, 'Copilot unavailable: invalid ANTHROPIC_API_KEY');
-  if (err instanceof Anthropic.RateLimitError) return new HttpError(429, 'Copilot is rate limited, try again in a moment');
-  if (err instanceof Anthropic.APIConnectionError) return new HttpError(502, 'Copilot could not reach the Claude API');
-  if (err instanceof Anthropic.APIError) return new HttpError(502, `Copilot error: ${err.message}`);
+  if (err instanceof Anthropic.AuthenticationError) return new HttpError(503, 'DJ Stemy is unavailable: invalid ANTHROPIC_API_KEY');
+  if (err instanceof Anthropic.RateLimitError) return new HttpError(429, 'DJ Stemy is rate limited, try again in a moment');
+  if (err instanceof Anthropic.APIConnectionError) return new HttpError(502, 'DJ Stemy could not reach the Claude API');
+  if (err instanceof Anthropic.APIError) return new HttpError(502, `DJ Stemy error: ${err.message}`);
   return err;
 }
 
@@ -157,5 +157,5 @@ export async function runCopilot(mensaje, cancion) {
     return { texto: answer.texto, piezas_sugeridas: await onlyExistingIds(answer.piezas_sugeridas) };
   }
 
-  throw new HttpError(502, 'Copilot did not finish (too many tool rounds)');
+  throw new HttpError(502, 'DJ Stemy did not finish (too many tool rounds)');
 }

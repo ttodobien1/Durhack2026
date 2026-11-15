@@ -35,12 +35,12 @@ async function generate(contents) {
       signal: AbortSignal.timeout(60_000),
     });
   } catch {
-    throw new HttpError(502, 'Copilot could not reach the Gemini API');
+    throw new HttpError(502, 'DJ Stemy could not reach the Gemini API');
   }
   const data = await res.json().catch(() => ({}));
-  if (res.status === 401 || res.status === 403) throw new HttpError(503, 'Copilot unavailable: invalid GEMINI_API_KEY');
-  if (res.status === 429) throw new HttpError(429, 'Copilot is rate limited, try again in a moment');
-  if (!res.ok) throw new HttpError(502, `Copilot error: ${data.error?.message ?? res.status}`);
+  if (res.status === 401 || res.status === 403) throw new HttpError(503, 'DJ Stemy is unavailable: invalid GEMINI_API_KEY');
+  if (res.status === 429) throw new HttpError(429, 'DJ Stemy is rate limited, try again in a moment');
+  if (!res.ok) throw new HttpError(502, `DJ Stemy error: ${data.error?.message ?? res.status}`);
   return data;
 }
 
@@ -85,5 +85,5 @@ export async function askGemini(userText) {
     );
     contents.push({ role: 'user', parts: responses });
   }
-  throw new HttpError(502, 'Copilot did not finish (too many tool rounds)');
+  throw new HttpError(502, 'DJ Stemy did not finish (too many tool rounds)');
 }
