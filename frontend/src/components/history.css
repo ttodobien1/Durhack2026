@@ -200,3 +200,13 @@
 .lane-tools { display: inline-flex; align-items: center; }
 .lane-tools .icon.small.add { color: var(--note); }
 .lanes-empty .lanes-or { margin: 8px 0; color: var(--dim); }
+
+/* "+ Add track" row under the Playlist tracks */
+.lane-add { height: auto; border-bottom: 0; }
+.lane-add .lane-head { grid-template-columns: 1fr; }
+.add-track { justify-content: center; color: var(--note); }
+.lane-add.open .add-track { color: var(--text); }
+.add-track-body { position: sticky; flex: 1; min-width: 0; display: flex; align-items: center; padding: 6px 10px; }
+.add-track-hint { display: inline-flex; align-items: center; gap: 6px; width: 100%; height: 100%; min-height: 36px; padding: 0 12px; border: 1px dashed #4f5a61; border-radius: 3px; background: none; color: var(--dim); text-align: left; }
+.add-track-hint:hover { border-color: var(--note); color: var(--text); }
+.add-track-pick { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }

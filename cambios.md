@@ -177,6 +177,8 @@ repositorio:
   **+ New piece** (pista nueva). Abre una ventana para elegir nombre, tipo, compases y tonalidad. La pieza se crea
   vacía y se abre en el piano roll para dibujar las notas.
   - En una pista existente, el tipo sale de esa pista y la pieza queda después del último bloque.
+  - Debajo de las pistas hay una fila **+ Add track**: se elige el instrumento (Drums, Piano, Bass, Lead, Rhodes, Pad,
+    Electric bass, Synth bass, Vibraphone) y se crea la pieza en una pista nueva con ese instrumento.
   - Al editar una batería, el piano roll muestra además un kit básico (bombo, caja, palmas, hi-hats, tom, platillos),
     para poder dibujar una batería vacía o agregar un sonido que no estaba.
 - **Piezas privadas hasta publicarlas**: las piezas creadas con "+" las ve solo su autor (columna nueva

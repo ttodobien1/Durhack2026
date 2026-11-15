@@ -3,7 +3,7 @@ import { Plus, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { useWidth } from '../useWidth.js'
 import { isMine } from '../profile.js'
 import { STARTER } from './Copilot.jsx'
-import { LANE_NAMES } from '../lanes.js'
+import { LANE_NAMES, TRACK_INSTRUMENTS } from '../lanes.js'
 
 const MIN_BARS = 16 // the arrangement always shows at least this many bars, plus 4 empty ones after the last clip
 const HEAD = 150
@@ -19,7 +19,8 @@ export function overlaps(bloques, pieces, compas, len, skip = () => false) {
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 const keyOf = (lane, compas) => `${lane}:${compas}` // a block is unique by lane + start bar (lanes never overlap)
 
-// onNewPiece(lane | null): the "+" buttons create a piece of your own on that track (null: on a new track).
+// onNewPiece(lane | null, instrumento?): the "+" buttons create a piece of your own on that track, or on a new track
+// (with the instrument picked in the "+ Add track" row under the tracks).
 export function Playlist({ song, pieces, selectedId, songBars, mix, onMix, onSelect, onRemoveLane, onMoveBlocks, onAddBlock, onRemoveBlocks, onSeek, onStarter, onNewPiece, playhead }) {
   const [measure, width] = useWidth()
   const [drag, setDrag] = useState(null) // { items: [{ lane, j, compas, len, pieza_id }], click, x0, y0, dBar, dLane, copy, moved }
@@ -294,6 +295,8 @@ export function Playlist({ song, pieces, selectedId, songBars, mix, onMix, onSel
             </div>
           )
         })}
+
+        <AddTrack onPick={(instrumento) => onNewPiece(null, instrumento)} />
         {playhead != null && song.pistas.length > 0 && (
           // Spans every lane, not just the visible part, so it keeps going when the playlist scrolls down.
           <div
@@ -335,5 +338,48 @@ export function MiniNotes({ notas, beats }) {
         <rect key={i} x={n.inicio} width={Math.max(n.duracion, 0.15)} y={90 - ((n.tono - lo) / span) * 80} height="8" />
       ))}
     </svg>
+  )
+}
+
+/** The empty row under the tracks: "+ Add track", then pick an instrument to compose a piece on a new track. */
+function AddTrack({ onPick }) {
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e) => e.key === 'Escape' && setOpen(false)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+  return (
+    <div className={`lane lane-add ${open ? 'open' : ''}`} style={{ minHeight: LANE_H }}>
+      <div className="lane-head" style={{ width: HEAD }}>
+        <button className="tbtn add-track" onClick={() => setOpen(!open)} aria-expanded={open} title="Add a track and compose its first piece">
+          {open ? <X size={13} aria-hidden="true" /> : <Plus size={13} aria-hidden="true" />} {open ? 'Cancel' : 'Add track'}
+        </button>
+      </div>
+      <div className="add-track-body" style={{ left: HEAD }}>
+        {open ? (
+          <div className="add-track-pick" role="group" aria-label="Instrument of the new track">
+            <span className="dim">Instrument:</span>
+            {TRACK_INSTRUMENTS.map(([instrumento]) => (
+              <button
+                key={instrumento}
+                className="tbtn"
+                onClick={() => {
+                  setOpen(false)
+                  onPick(instrumento)
+                }}
+              >
+                {LANE_NAMES[instrumento] ?? instrumento}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <button className="add-track-hint" onClick={() => setOpen(true)}>
+            <Plus size={12} aria-hidden="true" /> New track: pick an instrument and compose its first piece
+          </button>
+        )}
+      </div>
+    </div>
   )
 }

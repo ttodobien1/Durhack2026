@@ -21,7 +21,7 @@ node src/markdown.test.js
   - **Merge**: bring in the changes of a fork (or of the original) with conflicts to resolve and harmonic clash warnings.
   - **Credits**: who wrote each note of the song, forks included.
 - `#/u/<name>` profile (`src/Profile.jsx`): README, pinned projects, contribution graph, projects and pieces tabs.
-- Playlist: the **+** on a track (or **+ New piece** in its title bar) opens `components/NewPieceDialog.jsx` and creates an empty piece of your own (`POST /piezas` with `publica: false`, private until it is in a public project) that opens in the piano roll. Editing a beat offers a basic drum kit to draw on.
+- Playlist: the **+** on a track, **+ New piece** in its title bar, or the **+ Add track** row under the tracks (pick an instrument first) opens `components/NewPieceDialog.jsx` and creates an empty piece of your own (`POST /piezas` with `publica: false`, private until it is in a public project) that opens in the piano roll. Editing a beat offers a basic drum kit to draw on.
 - `#/upload` split a MIDI song into loops (`src/split.js`, same rules as `data/scripts` 04/05/08) and publish the chosen ones with `POST /piezas`.
 - `#/settings` profile settings (`src/Settings.jsx`): name, bio, picture, accent colour, README, pins.
 

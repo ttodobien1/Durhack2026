@@ -4,7 +4,7 @@ import { api, isMock, ME } from './api.js'
 import * as audio from './audio.js'
 import { Browser } from './components/Browser.jsx'
 import { Playlist } from './components/Playlist.jsx'
-import { LANE_NAMES } from './lanes.js'
+import { LANE_NAMES, TIPO_OF_INSTRUMENTO } from './lanes.js'
 import { PianoRoll } from './components/PianoRoll.jsx'
 import { Copilot } from './components/Copilot.jsx'
 import { History } from './components/History.jsx'
@@ -375,13 +375,18 @@ export default function App({ projectId = 'new' }) {
   }
 
   // New pieces of your own ("+" on a track or on the Playlist title bar) -------------------------
-  const [newPiece, setNewPiece] = useState(null) // { lane: index | null, tipo, name } while the New piece window is open
-  const TIPO_OF_LANE = { bateria: 'ritmo', drums: 'ritmo', piano: 'acordes', rhodes: 'acordes', pad: 'acordes', bajo: 'bajo', bass: 'bajo', bajo_electrico: 'bajo', bajo_synth: 'bajo', melodia: 'melodia', lead: 'melodia', vibrafono: 'melodia' }
-  const startNewPiece = (lane = null) => {
-    if (!signedIn('Log in to compose your own pieces.', () => startNewPiece(lane))) return
+  // newPiece: { lane: index | null, instrumento (new track) | null, tipo, name } while the New piece window is open
+  const [newPiece, setNewPiece] = useState(null)
+  const startNewPiece = (lane = null, instrumento = null) => {
+    if (!signedIn('Log in to compose your own pieces.', () => startNewPiece(lane, instrumento))) return
     const track = lane == null ? null : song.pistas[lane]
-    const tipo = track ? (pieces[track.bloques[0]?.pieza_id]?.tipo ?? TIPO_OF_LANE[track.instrumento] ?? 'acordes') : null
-    setNewPiece({ lane, tipo, name: track ? (LANE_NAMES[track.instrumento] ?? track.instrumento).toLowerCase() : null })
+    const tipo = track
+      ? (pieces[track.bloques[0]?.pieza_id]?.tipo ?? TIPO_OF_INSTRUMENTO[track.instrumento] ?? 'acordes')
+      : instrumento
+        ? (TIPO_OF_INSTRUMENTO[instrumento] ?? 'acordes')
+        : null
+    const shown = track?.instrumento ?? instrumento
+    setNewPiece({ lane, instrumento: track ? null : instrumento, tipo, name: shown ? (LANE_NAMES[shown] ?? shown) : null })
   }
   const createPiece = async ({ nombre, tipo, compases, tonalidad }) => {
     const piece = await api.createPiece({
@@ -398,9 +403,12 @@ export default function App({ projectId = 'new' }) {
     })
     remember([piece])
     recordContribution()
-    const { lane } = newPiece
+    const { lane, instrumento } = newPiece
     setSong((s) => {
-      if (lane == null || !s.pistas[lane]) return { ...s, pistas: [...s.pistas, { instrumento: audio.instrumentFor(tipo), bloques: [{ pieza_id: piece.id, compas: 0 }] }] }
+      if (lane == null || !s.pistas[lane]) {
+        // A new track, with the instrument picked under the tracks (or the usual one for the piece type).
+        return { ...s, pistas: [...s.pistas, { instrumento: instrumento ?? audio.instrumentFor(tipo), bloques: [{ pieza_id: piece.id, compas: 0 }] }] }
+      }
       // On an existing track: right after its last block.
       const end = Math.max(0, ...s.pistas[lane].bloques.map((b) => b.compas + (pieces[b.pieza_id]?.compases ?? 1)))
       return { ...s, pistas: s.pistas.map((t, i) => (i === lane ? { ...t, bloques: [...t.bloques, { pieza_id: piece.id, compas: end }] } : t)) }
@@ -625,7 +633,9 @@ export default function App({ projectId = 'new' }) {
         />
       )}
 
-      {newPiece && <NewPieceDialog tipo={newPiece.tipo} lane={newPiece.name} onCreate={createPiece} onClose={() => setNewPiece(null)} />}
+      {newPiece && (
+        <NewPieceDialog tipo={newPiece.tipo} lane={newPiece.name} newTrack={newPiece.lane == null} onCreate={createPiece} onClose={() => setNewPiece(null)} />
+      )}
 
       {saveAs && (
         <SaveDialog

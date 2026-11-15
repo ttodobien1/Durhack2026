@@ -9,10 +9,10 @@ const KEYS = ['', 'C', 'Cm', 'C#m', 'D', 'Dm', 'Eb', 'Ebm', 'E', 'Em', 'F', 'Fm'
 /**
  * "New piece" window: the "+" on a track (or on the Playlist title bar) creates an empty piece of your own, which
  * opens in the piano roll to draw its notes.
- * Props: tipo (preset type, or null), lane (track name when it goes on an existing track), onCreate({ nombre, tipo,
- * compases, tonalidad }) -> Promise, onClose().
+ * Props: tipo (preset type, or null), lane (instrument name of the track, if any), newTrack (true: it goes on a new
+ * track), onCreate({ nombre, tipo, compases, tonalidad }) -> Promise, onClose().
  */
-export function NewPieceDialog({ tipo: preset, lane, onCreate, onClose }) {
+export function NewPieceDialog({ tipo: preset, lane, newTrack = false, onCreate, onClose }) {
   const [tipo, setTipo] = useState(preset ?? 'acordes')
   const [nombre, setNombre] = useState(DEFAULT_NAMES[preset ?? 'acordes'])
   const [touched, setTouched] = useState(false)
@@ -49,7 +49,7 @@ export function NewPieceDialog({ tipo: preset, lane, onCreate, onClose }) {
     <div className="window-backdrop" onClick={() => !busy && onClose()}>
       <form className="panel window auth save-as new-piece" role="dialog" aria-modal="true" aria-labelledby="new-piece-title" onClick={(e) => e.stopPropagation()} onSubmit={submit}>
         <h2 className="title roll-title" id="new-piece-title">
-          <span>{lane ? `New piece on the ${lane} track` : 'New piece on a new track'}</span>
+          <span>{!lane ? 'New piece on a new track' : newTrack ? `New piece on a new ${lane} track` : `New piece on the ${lane.toLowerCase()} track`}</span>
           <button type="button" className="icon small" onClick={onClose} disabled={busy} aria-label="Close">
             <X size={13} />
           </button>
