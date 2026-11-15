@@ -120,7 +120,7 @@ export function tooClose(candidate, entries, { autor, id = null, parentId = null
   return best && best.d < TOO_CLOSE ? { ...best.e.pieza, similitud: similitud(best.d, scale), distancia: Math.round(best.d * 1000) / 1000 } : null;
 }
 
-// --- Map (PCA to 2D) ---------------------------------------------------------------------------------------------
+// --- Map (PCA to 3D) ---------------------------------------------------------------------------------------------
 
 // Plain words for the website. |f5| and |f7| of a 16-step grid both rise with off-beat, irregular accents: "syncopation".
 const PITCH_TERMS = ['chromatic clusters', 'fourths (quartal) colour', 'triad colour', 'octatonic colour', 'major/minor scale colour', 'whole-tone colour'];
@@ -132,14 +132,14 @@ export function featureNames(tipo) {
 }
 
 /**
- * 2D map of fingerprints by PCA: standardize each number, then the two directions of largest spread (Jacobi
- * eigen-decomposition of the covariance; the matrices are at most 32x32). Returns points [x, y] and, per axis, the
- * share of the spread it shows and its weights.
+ * Map of fingerprints by PCA: standardize each number, then the k directions of largest spread (Jacobi
+ * eigen-decomposition of the covariance; the matrices are at most 32x32). Returns points [x, y, ...] and, per axis,
+ * the share of the spread it shows and its weights.
  */
-export function pca2(vectors) {
+export function pca(vectors, k = 2) {
   const n = vectors.length;
   const d = vectors[0]?.length ?? 0;
-  if (n < 3 || !d) return { points: vectors.map(() => [0, 0]), axes: [] };
+  if (n < 3 || !d) return { points: vectors.map(() => Array(k).fill(0)), axes: [] };
   const mean = Array.from({ length: d }, (_, j) => vectors.reduce((s, v) => s + v[j], 0) / n);
   const sd = Array.from({ length: d }, (_, j) => Math.sqrt(vectors.reduce((s, v) => s + (v[j] - mean[j]) ** 2, 0) / n) || 1);
   const Z = vectors.map((v) => v.map((x, j) => (x - mean[j]) / sd[j]));
@@ -173,9 +173,11 @@ export function pca2(vectors) {
   }
   const order = A.map((row, i) => [row[i], i]).sort((a, b) => b[0] - a[0]);
   const total = order.reduce((s, [l]) => s + Math.max(l, 0), 0) || 1;
-  const axes = order.slice(0, 2).map(([l, i]) => ({ share: Math.max(l, 0) / total, weights: V.map((row) => row[i]) }));
+  const axes = order.slice(0, k).map(([l, i]) => ({ share: Math.max(l, 0) / total, weights: V.map((row) => row[i]) }));
   return { points: Z.map((z) => axes.map((ax) => z.reduce((s, x, j) => s + x * ax.weights[j], 0))), axes };
 }
+
+export const pca2 = (vectors) => pca(vectors, 2);
 
 /** "less X · more Y" description of one axis: the two strongest features on each side. */
 export function describeAxis(weights, names) {

@@ -1,35 +1,31 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Play, Search, Square } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Pause, Play, RotateCw, Search, Square } from 'lucide-react'
 import { api } from './api.js'
 import * as audio from './audio.js'
 import { SiteBar } from './Site.jsx'
 import { useUser } from './profile.js'
-import { useWidth } from './useWidth.js'
 import { TYPES, typeLabel } from './components/Browser.jsx'
+import { SoundMap3D } from './components/SoundMap3D.jsx'
 import './soundmap.css'
 
 // Dots are coloured by where a piece came from: on this library the clusters mostly follow the source.
+// [key, label, test, colour token in index.css]
 const SOURCES = [
-  ['groove', 'Groove MIDI recordings', (p) => /\(Groove MIDI\)/.test(p.autor)],
-  ['fmc', 'free-midi-chords', (p) => /free-midi-chords/.test(p.autor) || p.licencia === 'MIT'],
-  ['generated', 'Stemma generator', (p) => p.autor === 'Stemma generator'],
-  ['public-domain', 'Public-domain melodies', (p) => p.licencia === 'Public Domain'],
-  ['people', 'Team and users', () => true],
+  ['groove', 'Groove MIDI recordings', (p) => /\(Groove MIDI\)/.test(p.autor), '--t-ritmo'],
+  ['fmc', 'free-midi-chords', (p) => /free-midi-chords/.test(p.autor) || p.licencia === 'MIT', '--t-acordes'],
+  ['generated', 'Stemma generator', (p) => p.autor === 'Stemma generator', '--t-melodia'],
+  ['public-domain', 'Public-domain melodies', (p) => p.licencia === 'Public Domain', '--mov'],
+  ['people', 'Team and users', () => true, '--orange'],
 ]
 const sourceOf = (p) => SOURCES.find(([, , test]) => test(p))[0]
-
-/** Map bounds from the 2nd-98th percentiles, so a few far-out pieces do not squash everyone else into a corner. */
-function bounds(values) {
-  const v = [...values].sort((a, b) => a - b)
-  const lo = v[Math.floor(v.length * 0.02)] ?? 0
-  const hi = v[Math.ceil(v.length * 0.98) - 1] ?? 1
-  const pad = (hi - lo || 1) * 0.08
-  return [lo - pad, hi + pad]
-}
+const AXIS_NAMES = ['x', 'y', 'z']
 
 const readHash = () => new URLSearchParams(location.hash.split('?')[1] ?? '')
 
-/** #/map: every public piece of one type, placed by its musical fingerprint (backend lib/fingerprint.js, PCA). */
+/**
+ * #/map: every public piece of one type in 3D, placed by its musical fingerprint (backend lib/fingerprint.js, PCA).
+ * All three directions are fingerprint components, so "close together = sounds alike" holds whichever way you turn it.
+ */
 export function SoundMap() {
   const [user, setUser] = useUser()
   const [tipo, setTipo] = useState(() => (TYPES.some(([k]) => k && k === readHash().get('tipo')) ? readHash().get('tipo') : 'ritmo'))
@@ -39,7 +35,8 @@ export function SoundMap() {
   const [near, setNear] = useState([]) // similar pieces of the selected one
   const [q, setQ] = useState('')
   const [playing, setPlaying] = useState(false)
-  const [measure, width] = useWidth()
+  const [spin, setSpin] = useState(() => !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+  const scene = useRef(null)
 
   useEffect(() => {
     let live = true
@@ -67,20 +64,18 @@ export function SoundMap() {
     }
   }, [sel?.id])
 
-  const W = Math.max(280, width)
-  const H = Math.round(Math.min(560, Math.max(320, W * 0.62)))
-  const scale = useMemo(() => {
-    if (!map?.puntos?.length) return null
-    const [x0, x1] = bounds(map.puntos.map((p) => p.x))
-    const [y0, y1] = bounds(map.puntos.map((p) => p.y))
-    const sx = (x) => Math.min(W - 6, Math.max(6, ((x - x0) / (x1 - x0)) * W))
-    const sy = (y) => Math.min(H - 6, Math.max(6, H - ((y - y0) / (y1 - y0)) * H))
-    const out = (p) => p.x < x0 || p.x > x1 || p.y < y0 || p.y > y1
-    return { sx, sy, out }
-  }, [map, W, H])
-
   const text = q.trim().toLowerCase()
-  const matches = text && map?.puntos ? map.puntos.filter((p) => `${p.nombre} ${p.autor} ${p.id}`.toLowerCase().includes(text)) : null
+  const matches = useMemo(
+    () => (text && map?.puntos ? map.puntos.filter((p) => `${p.nombre} ${p.autor} ${p.id}`.toLowerCase().includes(text)) : null),
+    [text, map],
+  )
+  const matchIds = useMemo(() => matches && new Set(matches.map((p) => p.id)), [matches])
+  const nearIds = useMemo(() => near.map((n) => n.id), [near])
+  const colorOf = useMemo(() => {
+    const css = getComputedStyle(document.documentElement)
+    const colors = Object.fromEntries(SOURCES.map(([key, , , token]) => [key, css.getPropertyValue(token).trim() || '#cccccc']))
+    return (p) => colors[sourceOf(p)]
+  }, [])
   const counts = useMemo(() => {
     const c = {}
     for (const p of map?.puntos ?? []) c[sourceOf(p)] = (c[sourceOf(p)] ?? 0) + 1
@@ -99,7 +94,10 @@ export function SoundMap() {
     setPlaying(true)
   }
 
-  const [ex, ey] = map?.ejes ?? []
+  const toggleSpin = () => {
+    scene.current?.setAutoRotate(!spin)
+    setSpin(!spin)
+  }
   return (
     <div className="site">
       <SiteBar user={user} onUser={setUser} />
@@ -107,8 +105,9 @@ export function SoundMap() {
         <header className="sm-head">
           <h1>Sound map</h1>
           <p>
-            Every public piece of one type, placed by its musical fingerprint. Dots close together sound alike, even in different keys or starting on
-            different beats. Colours show where pieces came from: on this library, that is what most clusters follow.
+            Every public piece of one type in 3D, placed by its musical fingerprint. Dots close together sound alike, even in different keys or
+            starting on different beats. Drag to turn it, scroll or pinch to zoom, right-drag to move. Colours show where pieces came from: on
+            this library, that is what most clusters follow.
           </p>
         </header>
 
@@ -138,50 +137,51 @@ export function SoundMap() {
             {!map && <p className="empty">Placing pieces…</p>}
             {map?.error && <p className="empty">{map.error}</p>}
             {map?.puntos?.length === 0 && <p className="empty">No public {typeLabel(tipo).toLowerCase()} pieces yet.</p>}
-            <div className="sm-canvas" ref={measure}>
-              {scale && (
-                <svg width={W} height={H} role="img" aria-label={`${map.total} ${typeLabel(tipo).toLowerCase()} pieces. Click a dot to see what sounds like it.`}>
-                  <line className="sm-axis" x1={0} x2={W} y1={H / 2} y2={H / 2} />
-                  <line className="sm-axis" x1={W / 2} x2={W / 2} y1={0} y2={H} />
-                  {sel &&
-                    near
-                      .filter((n) => byId[n.id])
-                      .map((n) => <line key={n.id} className="sm-link" x1={scale.sx(sel.x)} y1={scale.sy(sel.y)} x2={scale.sx(byId[n.id].x)} y2={scale.sy(byId[n.id].y)} />)}
-                  {map.puntos.map((p) => {
-                    const dim = matches && !matches.includes(p)
-                    return (
-                      <circle
-                        key={p.id}
-                        className={`sm-dot s-${sourceOf(p)} ${scale.out(p) ? 'out' : ''} ${dim ? 'dim' : ''} ${matches && !dim ? 'hit' : ''} ${p.id === selId ? 'sel' : ''}`}
-                        cx={scale.sx(p.x)}
-                        cy={scale.sy(p.y)}
-                        r={p.id === selId ? 7 : matches && !dim ? 5.5 : 4}
-                        onMouseEnter={() => setHover(p)}
-                        onMouseLeave={() => setHover((h) => (h === p ? null : h))}
-                        onClick={() => setSelId(p.id)}
-                      />
-                    )
-                  })}
-                </svg>
-              )}
-              {hover && scale && (
-                <div className="sm-tip" style={{ left: Math.min(W - 220, scale.sx(hover.x) + 10), top: Math.max(0, scale.sy(hover.y) - 34) }}>
-                  <b>{hover.nombre}</b>
-                  <span>{hover.autor}</span>
+            {map?.puntos?.length > 0 && (
+              <div className="sm-canvas" role="img" aria-label={`${map.total} ${typeLabel(tipo).toLowerCase()} pieces in 3D. Click a dot to see what sounds like it.`}>
+                <SoundMap3D
+                  ref={scene}
+                  points={map.puntos}
+                  axes={map.ejes}
+                  colorOf={colorOf}
+                  selId={selId}
+                  nearIds={nearIds}
+                  matches={matchIds}
+                  onHover={(p, at) => setHover(p && { p, ...at })}
+                  onSelect={setSelId}
+                  onAutoRotate={setSpin}
+                />
+                <div className="sm3-tools">
+                  <button className="tbtn" onClick={toggleSpin} aria-pressed={spin} title={spin ? 'Stop turning' : 'Turn slowly'}>
+                    {spin ? <Pause size={13} /> : <RotateCw size={13} />} {spin ? 'Stop' : 'Turn'}
+                  </button>
+                  <button className="tbtn" onClick={() => scene.current?.reset()} title="Back to the starting view">
+                    Reset view
+                  </button>
                 </div>
-              )}
-            </div>
-            {ex && (
-              <p className="sm-xaxis">
-                <span>← {ex.menos.join(' · ')}</span>
-                <span className="dim">across: {Math.round(ex.varianza * 100)}% of the differences</span>
-                <span>{ex.mas.join(' · ')} →</span>
-              </p>
+                {hover && (
+                  <div className="sm-tip" style={{ left: hover.x + 240 > hover.w ? Math.max(0, hover.x - 232) : hover.x + 12, top: Math.max(0, hover.y - 38) }}>
+                    <b>{hover.p.nombre}</b>
+                    <span>{hover.p.autor}</span>
+                  </div>
+                )}
+              </div>
             )}
-            {ey && (
-              <p className="sm-yaxis">
-                Up: <b>{ey.mas.join(' · ')}</b> · down: <b>{ey.menos.join(' · ')}</b> <span className="dim">({Math.round(ey.varianza * 100)}%)</span>
-              </p>
+            {map?.ejes?.length > 0 && (
+              <ul className="sm-axes" aria-label="What the directions mean">
+                {map.ejes.map((a, i) => (
+                  <li key={AXIS_NAMES[i]}>
+                    <b className={`ax-${AXIS_NAMES[i]}`}>{AXIS_NAMES[i]}</b>
+                    <span>
+                      − {a.menos.join(' · ') || '—'} <span className="dim">↔</span> + {a.mas.join(' · ') || '—'}
+                    </span>
+                    <span className="dim">{Math.round(a.varianza * 100)}%</span>
+                  </li>
+                ))}
+                <li className="fine">
+                  Together the three directions show {Math.round(map.ejes.reduce((t, a) => t + a.varianza, 0) * 100)}% of the differences between pieces.
+                </li>
+              </ul>
             )}
             {map?.puntos?.length > 0 && (
               <ul className="sm-legend" aria-label="Colours">

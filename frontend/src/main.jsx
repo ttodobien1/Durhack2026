@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useState } from 'react'
+import { StrictMode, Suspense, lazy, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { api, currentUser } from './api.js'
@@ -11,7 +11,6 @@ import { Profile } from './Profile.jsx'
 import { cacheProfile } from './profile.js'
 import { Settings } from './Settings.jsx'
 import { Upload } from './Upload.jsx'
-import { SoundMap } from './SoundMap.jsx'
 
 // Check the stored login once per visit: an expired session signs out; a valid one refreshes the profile copy.
 api.me().then((perfil) => {
@@ -25,6 +24,9 @@ api.me().then((perfil) => {
 
 // Hash routes: "#/" landing, "#/project/<id>" project page ("new" = empty project), "#/u/<name>" profile, "#/settings", "#/upload",
 // "#/messages[/<name>]" messages, "#/invite/<token>" invitation to collaborate on a project.
+// The sound map loads three.js, so it is fetched only when someone opens it (the landing stays light).
+const SoundMap = lazy(() => import('./SoundMap.jsx').then((m) => ({ default: m.SoundMap })))
+
 const decode = (s) => {
   try {
     return decodeURIComponent(s)
@@ -58,7 +60,12 @@ function Root() {
   if (invite) return <Invite key={invite} token={invite} />
   if (hash.startsWith('#/settings')) return <Settings />
   if (hash.startsWith('#/upload')) return <Upload />
-  if (hash.startsWith('#/map')) return <SoundMap />
+  if (hash.startsWith('#/map'))
+    return (
+      <Suspense fallback={<div className="site" />}>
+        <SoundMap />
+      </Suspense>
+    )
   return <Landing />
 }
 

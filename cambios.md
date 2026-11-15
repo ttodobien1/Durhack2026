@@ -421,6 +421,13 @@ Hecho por el rol A mientras B y C dormían (con el visto bueno de A). Resumen pa
   de free-midi-chords comparten un solo ritmo); la página lo dice. No se presentan las zonas vacías como "mundos
   nuevos": hoy son huecos entre fuentes, no música sin explorar. Solo el mapa de batería (Groove) refleja diferencias
   musicales reales.
+- **Mapa de sonido en 3D (three.js, rol C):** el mapa ahora es 3D (`frontend/src/components/SoundMap3D.jsx`): se gira
+  arrastrando, zoom con la rueda o pellizcando, se mueve con clic derecho o dos dedos; botones "Turn" (gira solo,
+  apagado con "reducir movimiento") y "Reset view". La tercera dimensión es **la tercera componente de la PCA**, no
+  el género ni el tipo: así "cerca = suena parecido" vale en las tres direcciones (los mapas de cada tipo tienen ejes
+  distintos, apilarlos no tendría sentido, y `estilo` es una lista de etiquetas, no una posición). La API agrega `z`
+  a cada punto y un tercer eje en `ejes` (`pca(vectores, k)` en `lib/fingerprint.js`; `pca2` sigue existiendo).
+  La página `#/map` carga three.js aparte (`React.lazy`), así que la portada no pesa más.
 
 ### Propuestas para CLAUDE.md (no aplicadas: necesitan el acuerdo de los tres)
 - 4.2 Canción: campos opcionales `publica` (bool, por defecto `true`) y `descripcion` (texto, hasta 300 caracteres),

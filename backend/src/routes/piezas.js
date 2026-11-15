@@ -82,8 +82,8 @@ router.get('/:id/actividad', async (req, res) => {
   res.json(await activity(pieza.id));
 });
 
-// GET /piezas/mapa?tipo=ritmo  -> { tipo, total, ejes: [{ varianza, menos, mas }], puntos: [{ id, nombre, autor, x, y, ... }] }
-// The public pieces of one type on a 2D map of their musical fingerprints (PCA): close dots sound alike, in any key.
+// GET /piezas/mapa?tipo=ritmo  -> { tipo, total, ejes: [{ varianza, menos, mas }], puntos: [{ id, nombre, autor, x, y, z, ... }] }
+// The public pieces of one type on a 3D map of their musical fingerprints (PCA): close dots sound alike, in any key.
 router.get('/mapa', async (req, res) => {
   res.json(await mapOf(validateTipo(firstValue(req.query.tipo) ?? 'ritmo')));
 });
