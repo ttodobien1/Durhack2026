@@ -11,7 +11,6 @@ import './hum.css'
 export const STARTER = 'A laid-back boom bap beat for late-night verses'
 const HUM_MESSAGE = 'Here’s the melody I have in mind (hummed). Find pieces like it, or pieces that fit it.'
 const HISTORY = 8 // earlier messages sent along, so "lo-fi piano" said before a humming still counts
-const STRONG = 0.7 // same threshold as the backend (copilot/hum.js): "it sounds like this piece"
 
 // The assistant's chat. On screen it is DJ Stemy (DJStemy.jsx), who answers in speech bubbles; the code and the
 // route keep the copilot name (POST /copiloto, CLAUDE.md 4.3).
@@ -46,10 +45,12 @@ export function Copilot({ song, pieces, onAddMany, onSelect, onTree, remember, f
       const ids = res.piezas_sugeridas ?? []
       remember(await Promise.all(ids.filter((id) => !pieces[id]).map(api.getPiece)))
       const match = Object.fromEntries((res.tarareo?.coincidencias ?? []).map((c) => [c.id, c.similitud]))
+      // The server's verdict says whether the best match IS the hummed melody (green) or only resembles it.
+      const sure = res.tarareo?.veredicto === 'coincide' ? res.tarareo.coincidencias[0]?.id : null
       const key = res.tarareo?.tonalidad // the humming's key, used if it becomes a piece
       setMessages((m) => [
         ...m.map((x, j) => (j === mine && x.hum && key ? { ...x, hum: { ...x.hum, tonalidad: key } } : x)),
-        { from: 'bot', texto: res.texto, ids, match },
+        { from: 'bot', texto: res.texto, ids, match, sure },
       ])
     } catch (e) {
       fail(e)
@@ -172,7 +173,7 @@ export function Copilot({ song, pieces, onAddMany, onSelect, onTree, remember, f
                               </span>
                             </button>
                             {match !== undefined && (
-                              <span className={`match ${match < STRONG ? 'weak' : ''}`} title="How much it sounds like your humming">
+                              <span className={`match ${id === m.sure ? '' : 'weak'}`} title="How much it sounds like your humming">
                                 {Math.round(match * 100)}%
                               </span>
                             )}
@@ -228,7 +229,7 @@ export function Copilot({ song, pieces, onAddMany, onSelect, onTree, remember, f
         className="ask"
         onSubmit={(e) => {
           e.preventDefault()
-          send(text)
+          if (!humming) send(text) // while humming, the text goes with the melody ("Send to DJ Stemy" in the panel)
         }}
       >
         <button
@@ -242,8 +243,19 @@ export function Copilot({ song, pieces, onAddMany, onSelect, onTree, remember, f
         >
           <Mic size={14} />
         </button>
-        <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Ask DJ Stemy for pieces…" aria-label="Message DJ Stemy" />
-        <button className="icon" type="submit" disabled={busy || !text.trim()} aria-label="Send">
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder={humming ? 'Add a note for your melody (optional)…' : 'Ask DJ Stemy for pieces…'}
+          aria-label={humming ? 'Note sent with your humming' : 'Message DJ Stemy'}
+        />
+        <button
+          className="icon"
+          type="submit"
+          disabled={busy || !text.trim() || humming}
+          aria-label="Send"
+          title={humming ? 'Your text goes with the melody: use “Send to DJ Stemy” above' : 'Send'}
+        >
           <Send size={14} />
         </button>
       </form>

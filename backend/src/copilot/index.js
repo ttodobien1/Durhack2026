@@ -5,7 +5,7 @@ import { existingPiezaIds, getPiezasByIds } from '../repo/piezas.js';
 import { SYSTEM_PROMPT } from './systemPrompt.js';
 import { TOOL_DEFINITIONS, runTool } from './tools.js';
 import { askGemini } from './gemini.js';
-import { analyzeHum, describeHum, humFallbackAnswer, humSummary, strongMatch } from './hum.js';
+import { analyzeHum, answerAgrees, describeHum, humFallbackAnswer, humSummary, verdictMatch } from './hum.js';
 
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-opus-5-5';
 const MAX_ROUNDS = 6; // model calls per request (each tool round is one call)
@@ -136,9 +136,16 @@ export async function runCopilot(mensaje, cancion, { tarareo = null, historial =
       console.error(`Copilot failed on a humming, using the fallback answer: ${err.message}`);
       answer = await humFallbackAnswer(hum);
     }
+    // The verdict is Stemma's, not the model's: an answer that denies a clear match (or never names the melody) is
+    // replaced by Stemma's own words, keeping the model's accompaniment suggestions after Stemma's.
+    if (!answerAgrees(hum, answer.texto)) {
+      console.warn(`Copilot contradicted the humming verdict (${hum.veredicto.tipo}); using Stemma's answer`);
+      const own = await humFallbackAnswer(hum);
+      answer = { texto: own.texto, piezas_sugeridas: [...own.piezas_sugeridas, ...answer.piezas_sugeridas] };
+    }
   }
   // The melody the humming sounds like always comes first, whatever the model wrote.
-  const best = strongMatch(hum);
+  const best = verdictMatch(hum);
   const ids = best ? [best.pieza.id, ...answer.piezas_sugeridas.filter((id) => id !== best.pieza.id)] : answer.piezas_sugeridas;
   return { texto: answer.texto, piezas_sugeridas: await onlyExistingIds(ids), tarareo: humSummary(hum) };
 }

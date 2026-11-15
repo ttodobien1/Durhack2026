@@ -106,7 +106,8 @@ export function HumRecorder({ bpm, onPreview, previewing, onSend, onClose }) {
         <>
           <MiniRoll notes={hum.notas} beats={beats} />
           <p className="hum-note">
-            {hum.notas.length} notes · {hum.compases} {hum.compases === 1 ? 'bar' : 'bars'} at {bpm} BPM. Listen to it before DJ Stemy does.
+            {hum.notas.length} notes · {hum.compases} {hum.compases === 1 ? 'bar' : 'bars'} at {bpm} BPM. Listen to it before DJ Stemy does; anything
+            you type below goes with it.
           </p>
           <div className="hum-actions">
             <button className={`tbtn ${previewing ? 'on' : ''}`} onClick={() => onPreview(hum)} aria-label={previewing ? 'Stop' : 'Play the notes'}>

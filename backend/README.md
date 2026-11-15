@@ -263,10 +263,12 @@ POST /copiloto
 - `src/lib/melody.js` compares the humming with every public `melodia` piece: intervals between notes (any key) and
   note lengths relative to each other (any tempo), with local alignment (a fragment, a missing or extra note, repeated
   notes merged into one). It returns a similarity from 0 to 1 and the transposition.
-- The copilot gets the closest melodies (`src/copilot/hum.js`) and is told to say what the humming sounds like when
-  the best match is 70% or more, and to search for chords, bass and drums in the humming's key. The strong match is
-  always the first suggestion. Without an API key, or if the model fails, the server answers by itself with the same
-  matches plus pieces in that key, so the demo never stops.
+- Stemma decides the verdict itself (`src/copilot/hum.js`, `verdict`): **coincide** (the humming is that piece: 60%
+  or more and 10 points ahead of the next melody, or 80% or more), **parecido** (it reminds of it: 45% or more) or
+  **ninguno**. The copilot is told the verdict in plain words and searches for chords, bass and drums in the humming's
+  key; the matched melody is always the first suggestion. If the model's answer denies a clear match or never names
+  the melody, it is replaced by Stemma's own answer. Without an API key, or if the model fails, the server answers by
+  itself the same way, so the demo never stops. The response's `tarareo.veredicto` carries the verdict.
 - Extra response field: `tarareo: { tonalidad, notas, coincidencias: [{ id, nombre, autor, licencia, similitud, transponer }] }`.
 - `historial` (up to 10 messages, oldest first) works on every request: DJ Stemy remembers what was said before.
 - `data/piezas/famous-melodies.json` (`p-501` to `p-514`): public-domain melodies everyone can hum (Für Elise, Ode to
