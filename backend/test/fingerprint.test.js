@@ -59,3 +59,16 @@ test('a 2-bar excerpt of a longer piece by someone else is caught (windows), eve
   assert.ok(distance(fingerprint(excerpt), fingerprint(long)) > TOO_CLOSE, 'whole pieces alone would miss it');
   assert.equal(tooClose(excerpt, lib, { autor: 'bob' })?.id, 'p-1');
 });
+
+test('pca2 finds the direction of largest spread and describes it in words', async () => {
+  const { pca2, describeAxis } = await import('../src/lib/fingerprint.js');
+  // Points spread along x = y (plus a little noise in the other direction): one main axis.
+  const pts = Array.from({ length: 50 }, (_, i) => [i, i + ((i * 7) % 3) * 0.1, 5]);
+  const { points, axes } = pca2(pts);
+  assert.equal(points.length, 50);
+  assert.ok(axes[0].share > 0.95, `PC1 carries the spread (${axes[0].share})`);
+  assert.ok(Math.abs(Math.abs(axes[0].weights[0]) - Math.abs(axes[0].weights[1])) < 0.05, 'x and y weigh the same');
+  const words = describeAxis([0.7, -0.2, 0.1], ['a', 'b', 'c']);
+  assert.deepEqual(words, { menos: ['b'], mas: ['a', 'c'] });
+  assert.deepEqual(pca2([[1, 2]]).axes, [], 'too few pieces: no axes');
+});

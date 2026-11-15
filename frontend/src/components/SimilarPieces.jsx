@@ -48,6 +48,7 @@ export function SimilarPieces({ piece, onOpen, onAdd }) {
           {list === null && <p className="fine similar-note">Comparing fingerprints…</p>}
           {list?.length === 0 && <p className="fine similar-note">No public {typeLabel(piece.tipo).toLowerCase()} pieces to compare with yet.</p>}
           {list?.length > 0 && (
+            <>
             <ul>
               {list.map((p) => (
                 <li key={p.id} className={`t-${p.tipo}`}>
@@ -67,6 +68,10 @@ export function SimilarPieces({ piece, onOpen, onAdd }) {
                 </li>
               ))}
             </ul>
+            <a className="similar-map" href={`#/map?tipo=${piece.tipo}&p=${piece.id}`}>
+              Show on the sound map
+            </a>
+            </>
           )}
         </div>
       )}

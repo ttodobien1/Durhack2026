@@ -413,9 +413,14 @@ Hecho por el rol A mientras B y C dormían (con el visto bueno de A). Resumen pa
   bajos para beats de rap, generados por `data/scripts/generate_loops.py` (reglas musicales, determinista). Autor
   "Stemma generator", CC BY 4.0. La huella encontró que la semilla 2026 producía casi "Mary Had a Little Lamb"; se usa
   2027 (sin copias). **Falta escucharlas.** Para cargarlas en una base existente: `npm run db:seed` en `backend/`.
-- **El mapa 2D (PCA) no se construyó:** con estos datos el mapa muestra sobre todo de qué fuente o plantilla viene cada
-  pieza (los acordes de free-midi-chords comparten un solo ritmo), no zonas musicales sin explorar. Solo el mapa de
-  batería (Groove) refleja diferencias reales.
+- **Mapa de sonido (`#/map`, "Sound map" en la barra):** las piezas públicas de cada tipo en 2D (PCA de las huellas,
+  `GET /piezas/mapa?tipo=`). Los ejes se describen en palabras ("pulso de negras ← → síncopa"). Clic en un punto: la
+  pieza, preview y las 5 que más se le parecen (con líneas en el mapa); buscador por nombre; enlace directo
+  `#/map?tipo=melodia&p=p-501` y "Show on the sound map" desde el botón Similar del piano roll. Los colores son la
+  **fuente** de cada pieza porque, con estos datos, los grupos siguen sobre todo a la fuente o plantilla (los acordes
+  de free-midi-chords comparten un solo ritmo); la página lo dice. No se presentan las zonas vacías como "mundos
+  nuevos": hoy son huecos entre fuentes, no música sin explorar. Solo el mapa de batería (Groove) refleja diferencias
+  musicales reales.
 
 ### Propuestas para CLAUDE.md (no aplicadas: necesitan el acuerdo de los tres)
 - 4.2 Canción: campos opcionales `publica` (bool, por defecto `true`) y `descripcion` (texto, hasta 300 caracteres),

@@ -24,6 +24,7 @@ export function SiteBar({ user, onUser }) {
         </a>
         <a href="#/project/new">New project</a>
         <a href="#/upload">Upload</a>
+        <a href="#/map">Sound map</a>
         {user ? (
           <>
             <a href={`#/u/${encodeURIComponent(user.name)}?tab=projects`}>My projects</a>

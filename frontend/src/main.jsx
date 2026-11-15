@@ -11,6 +11,7 @@ import { Profile } from './Profile.jsx'
 import { cacheProfile } from './profile.js'
 import { Settings } from './Settings.jsx'
 import { Upload } from './Upload.jsx'
+import { SoundMap } from './SoundMap.jsx'
 
 // Check the stored login once per visit: an expired session signs out; a valid one refreshes the profile copy.
 api.me().then((perfil) => {
@@ -57,6 +58,7 @@ function Root() {
   if (invite) return <Invite key={invite} token={invite} />
   if (hash.startsWith('#/settings')) return <Settings />
   if (hash.startsWith('#/upload')) return <Upload />
+  if (hash.startsWith('#/map')) return <SoundMap />
   return <Landing />
 }
 

@@ -157,6 +157,8 @@ export const api = {
   // Cached for the visit: the landing, profile and project pages ask for the same pieces again and again.
   // Musical fingerprints (backend lib/fingerprint.js). Offline (mock) there is nothing to compare with.
   similar: (id) => call(`/piezas/${id}/parecidas?n=6`, undefined, () => []),
+  /** Sound map of one piece type: { total, ejes, puntos } (PCA of the fingerprints). Offline: null. */
+  pieceMap: (tipo) => call(`/piezas/mapa?tipo=${tipo}`, undefined, () => null),
   /** { parecidas, aviso }: aviso = a public piece by someone else that these notes nearly copy, or null. */
   checkSimilar: (pieza) => call('/piezas/parecidas', { method: 'POST', body: pieza }, () => null).catch(() => null),
   getPiece: (id) => {

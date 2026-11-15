@@ -119,3 +119,67 @@ export function tooClose(candidate, entries, { autor, id = null, parentId = null
   }
   return best && best.d < TOO_CLOSE ? { ...best.e.pieza, similitud: similitud(best.d, scale), distancia: Math.round(best.d * 1000) / 1000 } : null;
 }
+
+// --- Map (PCA to 2D) ---------------------------------------------------------------------------------------------
+
+// Plain words for the website. |f5| and |f7| of a 16-step grid both rise with off-beat, irregular accents: "syncopation".
+const PITCH_TERMS = ['chromatic clusters', 'fourths (quartal) colour', 'triad colour', 'octatonic colour', 'major/minor scale colour', 'whole-tone colour'];
+const RHYTHM_TERMS = ['one accent per bar', 'half-note pulse', 'tresillo (3+3+2) feel', 'quarter-note pulse', 'syncopation', 'triplet feel', 'syncopation', 'eighth-note pulse'];
+/** Plain-words name of each fingerprint number, in the order fingerprint() returns them. */
+export function featureNames(tipo) {
+  if (tipo === 'ritmo') return ['kick', 'snare', 'hats', 'other percussion'].flatMap((voice) => RHYTHM_TERMS.map((t) => `${voice}: ${t}`));
+  return [...PITCH_TERMS, ...RHYTHM_TERMS]; // pitch terms all end in "colour", so rhythm terms need no prefix
+}
+
+/**
+ * 2D map of fingerprints by PCA: standardize each number, then the two directions of largest spread (Jacobi
+ * eigen-decomposition of the covariance; the matrices are at most 32x32). Returns points [x, y] and, per axis, the
+ * share of the spread it shows and its weights.
+ */
+export function pca2(vectors) {
+  const n = vectors.length;
+  const d = vectors[0]?.length ?? 0;
+  if (n < 3 || !d) return { points: vectors.map(() => [0, 0]), axes: [] };
+  const mean = Array.from({ length: d }, (_, j) => vectors.reduce((s, v) => s + v[j], 0) / n);
+  const sd = Array.from({ length: d }, (_, j) => Math.sqrt(vectors.reduce((s, v) => s + (v[j] - mean[j]) ** 2, 0) / n) || 1);
+  const Z = vectors.map((v) => v.map((x, j) => (x - mean[j]) / sd[j]));
+  const A = Array.from({ length: d }, (_, a) => Array.from({ length: d }, (_, b) => Z.reduce((s, r) => s + r[a] * r[b], 0) / n));
+  const V = Array.from({ length: d }, (_, i) => Array.from({ length: d }, (_, j) => +(i === j)));
+  for (let sweep = 0; sweep < 60; sweep++) {
+    let off = 0;
+    for (let p = 0; p < d; p++) for (let q = p + 1; q < d; q++) off += A[p][q] ** 2;
+    if (off < 1e-18) break;
+    for (let p = 0; p < d; p++) for (let q = p + 1; q < d; q++) {
+      if (Math.abs(A[p][q]) < 1e-15) continue;
+      const th = 0.5 * Math.atan2(2 * A[p][q], A[q][q] - A[p][p]);
+      const c = Math.cos(th);
+      const s = Math.sin(th);
+      for (let k = 0; k < d; k++) {
+        const [kp, kq] = [A[k][p], A[k][q]];
+        A[k][p] = c * kp - s * kq;
+        A[k][q] = s * kp + c * kq;
+      }
+      for (let k = 0; k < d; k++) {
+        const [pk, qk] = [A[p][k], A[q][k]];
+        A[p][k] = c * pk - s * qk;
+        A[q][k] = s * pk + c * qk;
+      }
+      for (let k = 0; k < d; k++) {
+        const [kp, kq] = [V[k][p], V[k][q]];
+        V[k][p] = c * kp - s * kq;
+        V[k][q] = s * kp + c * kq;
+      }
+    }
+  }
+  const order = A.map((row, i) => [row[i], i]).sort((a, b) => b[0] - a[0]);
+  const total = order.reduce((s, [l]) => s + Math.max(l, 0), 0) || 1;
+  const axes = order.slice(0, 2).map(([l, i]) => ({ share: Math.max(l, 0) / total, weights: V.map((row) => row[i]) }));
+  return { points: Z.map((z) => axes.map((ax) => z.reduce((s, x, j) => s + x * ax.weights[j], 0))), axes };
+}
+
+/** "less X · more Y" description of one axis: the two strongest features on each side. */
+export function describeAxis(weights, names) {
+  const ranked = weights.map((w, i) => [w, names[i]]).sort((a, b) => Math.abs(b[0]) - Math.abs(a[0]));
+  const side = (sign) => [...new Set(ranked.filter(([w]) => Math.sign(w) === sign).map(([, name]) => name))].slice(0, 2);
+  return { menos: side(-1), mas: side(1) };
+}

@@ -59,6 +59,7 @@ Errors always come back as `{ "error": "message" }` with the matching HTTP statu
 | GET | `/piezas?estilo=&tipo=&tonalidad=&q=&autor=` | All filters optional. `estilo` takes several tags (`rap,boombap`; `boom bap` and `lo-fi` also work), `tonalidad` accepts `Am` / `A minor` / `La menor`, `q` ignores case and accents |
 | GET | `/piezas/:id` | One piece |
 | GET | `/piezas/:id/parecidas?n=8` | Public pieces of the same type that sound most like this one (musical fingerprint, see below), closest first, each with `similitud` 0-100. *Extra* |
+| GET | `/piezas/mapa?tipo=ritmo` | Sound map of one type: `{ tipo, total, ejes: [{ varianza, menos, mas }], puntos: [{ id, nombre, autor, tonalidad, tempo, estilo, licencia, x, y }] }`. PCA of the public pieces' fingerprints; `menos` / `mas` name, in words, what pushes pieces to each side of an axis. Cached with the library. *Extra* |
 | POST | `/piezas/parecidas` | `{ tipo, notas, id?, parent_id?, autor? }` (notes need not be saved) -> `{ parecidas, aviso }`. `aviso` is a public **melody** by someone else, outside the piece's fork family, that these notes nearly copy (also transposed, inverted, shifted or as a 2-bar excerpt), else `null`. *Extra* |
 | POST | `/piezas` | Create an original piece (id is generated). `"publica": false` (logged in) keeps it private until it is saved in a public project. *Extra* |
 | POST | `/piezas/:id/fork` | Body optional `{ "autor", "nombre" }`. Returns the new piece (`201`) with `parent_id` |

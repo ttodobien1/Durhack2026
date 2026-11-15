@@ -487,3 +487,5 @@ b, strong { font-weight: 600; }
 .roll-warn { display: flex; align-items: center; gap: 8px; margin: 0; padding: 6px 8px; background: rgb(255 210 63 / 0.08); border-bottom: 1px solid rgb(255 210 63 / 0.35); font-size: 12px; line-height: 1.4; }
 .roll-warn > svg { flex: none; color: var(--mov); }
 .roll-warn > span { flex: 1; min-width: 0; }
+.similar-map { display: block; padding: 7px 10px; border-top: 1px solid var(--line); color: var(--orange); font-size: 12px; text-decoration: none; }
+.similar-map:hover { text-decoration: underline; text-underline-offset: 2px; }

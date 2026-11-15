@@ -15,7 +15,7 @@ import {
   updatePieza,
   visibilityBlocker,
 } from '../repo/piezas.js';
-import { forgetFingerprints, nearCopyOf, similarTo } from '../repo/similares.js';
+import { forgetFingerprints, mapOf, nearCopyOf, similarTo } from '../repo/similares.js';
 
 const router = Router();
 
@@ -55,6 +55,12 @@ router.post('/', async (req, res) => {
   }
   forgetFingerprints();
   res.status(201).json(await createPieza(data, req.usuario?.id ?? null));
+});
+
+// GET /piezas/mapa?tipo=ritmo  -> { tipo, total, ejes: [{ varianza, menos, mas }], puntos: [{ id, nombre, autor, x, y, ... }] }
+// The public pieces of one type on a 2D map of their musical fingerprints (PCA): close dots sound alike, in any key.
+router.get('/mapa', async (req, res) => {
+  res.json(await mapOf(validateTipo(firstValue(req.query.tipo) ?? 'ritmo')));
 });
 
 // POST /piezas/parecidas   { tipo, notas, id?, parent_id?, autor? } -> { parecidas, aviso }
