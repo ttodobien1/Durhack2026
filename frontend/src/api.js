@@ -30,7 +30,8 @@ async function call(path, options, fallback) {
 
 export const api = {
   // Songs: extra routes from the backend (cambios.md §3), not in the §4.3 table.
-  projects: () => call('/canciones', undefined, () => mock.projects()),
+  // Public projects, or every project by `autor` including private ones (no accounts: private means unlisted).
+  projects: (autor) => call(autor ? `/canciones?autor=${encodeURIComponent(autor)}` : '/canciones', undefined, () => mock.projects(autor)),
   project: (id) => call(`/canciones/${id}`, undefined, () => mock.project(id)),
   saveProject: ({ id, ...song }) =>
     id && id !== 'c-new'
@@ -40,6 +41,8 @@ export const api = {
     const qs = new URLSearchParams(Object.entries(filters).filter(([, v]) => v)).toString()
     return call(`/piezas?${qs}`, undefined, () => mock.search(filters))
   },
+  // New original piece (the upload page): POST /piezas, which already exists in the backend.
+  createPiece: (pieza) => call('/piezas', { method: 'POST', body: pieza }, () => mock.create(pieza)),
   getPiece: (id) => call(`/piezas/${id}`, undefined, () => mock.get(id)),
   fork: (id, autor) => call(`/piezas/${id}/fork`, { method: 'POST', body: { autor } }, () => mock.fork(id, { autor })),
   saveNotes: (id, notas, compases) => call(`/piezas/${id}`, { method: 'PUT', body: { notas, compases } }, () => mock.update(id, { notas, compases })),

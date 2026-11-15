@@ -16,6 +16,7 @@ export function SiteBar({ user, onUser }) {
       <nav className="site-nav" aria-label="Main">
         <a href="#explore">Explore</a>
         <a href="#/project/new">New project</a>
+        <a href="#/upload">Upload</a>
       </nav>
       <div className="spacer" />
       {user ? (
@@ -67,7 +68,7 @@ export function Avatar({ name, size, profile = loadProfile(name), className = ''
   )
 }
 
-export function AuthDialog({ mode, onMode, onClose, onDone }) {
+export function AuthDialog({ mode, onMode, onClose, onDone, reason }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [error, setError] = useState(null)
@@ -97,6 +98,7 @@ export function AuthDialog({ mode, onMode, onClose, onDone }) {
           </button>
         </h2>
         <div className="auth-body">
+          {reason && <p className="auth-reason">{reason}</p>}
           <label>
             Username
             <input autoFocus value={name} onChange={(e) => (setName(e.target.value), setError(null))} autoComplete="username" />

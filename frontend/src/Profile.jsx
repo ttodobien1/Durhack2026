@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, BookOpen, Disc3, GitFork, Link, MapPin, Music2, Pencil, Play, Search, Square } from 'lucide-react'
+import { ArrowRight, BookOpen, Disc3, GitFork, Link, Lock, MapPin, Music2, Pencil, Play, Search, Square, Upload } from 'lucide-react'
 import { api, ME } from './api.js'
 import * as audio from './audio.js'
 import { Arrangement, withMeta } from './Landing.jsx'
@@ -22,8 +22,11 @@ export function Profile({ name }) {
 
   useEffect(() => {
     const authors = authorsFor(name)
-    Promise.all([api.search({}), api.projects()]).then(
-      async ([all, songs]) => {
+    // Everyone sees public projects; on your own profile your private ones are added, like GitHub.
+    const ownSongs = own ? Promise.all(authors.map((a) => api.projects(a))).then((lists) => lists.flat()) : []
+    Promise.all([api.search({}), api.projects(), ownSongs]).then(
+      async ([all, publicSongs, mine]) => {
+        const songs = [...new Map([...publicSongs, ...mine].map((s) => [s.id, s])).values()]
         const byId = Object.fromEntries(all.map((p) => [p.id, p]))
         const missing = [...new Set(songs.flatMap((s) => s.pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id))))].filter((id) => !byId[id])
         for (const p of await Promise.all(missing.map((id) => api.getPiece(id).catch(() => null)))) if (p) byId[p.id] = p
@@ -42,7 +45,7 @@ export function Profile({ name }) {
       (e) => setData({ error: e.message }),
     )
     return () => audio.stop()
-  }, [name])
+  }, [name, own])
 
   const preview = (p) => {
     if (playing === p.id) {
@@ -174,6 +177,14 @@ const dominantType = (song, byId) => {
   for (const t of song.pistas) for (const b of t.bloques) if (byId[b.pieza_id]) count[byId[b.pieza_id].tipo] = (count[byId[b.pieza_id].tipo] ?? 0) + 1
   return Object.entries(count).sort((a, b) => b[1] - a[1])[0]?.[0]
 }
+const Visibility = ({ song }) =>
+  song.publica === false ? (
+    <span className="public private" title="Only listed for you">
+      <Lock size={10} aria-hidden="true" /> Private
+    </span>
+  ) : (
+    <span className="public">Public</span>
+  )
 const pieceCount = (song) => new Set(song.pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id))).size
 
 /** Pinned projects, or like GitHub's "Popular" fallback: biggest projects, else most-forked pieces. */
@@ -191,7 +202,7 @@ function Pinned({ profile, projects, pieces, data }) {
             <div className="pin-top">
               <Disc3 size={15} aria-hidden="true" />
               <a href={`#/project/${p.id}`}>{p.nombre}</a>
-              <span className="public">Public</span>
+              <Visibility song={p} />
             </div>
             <p>{p.descripcion}</p>
             <div className={`pin-meta t-${dominantType(p, data.byId)}`}>
@@ -299,7 +310,7 @@ function ProjectList({ projects, byId, name, own }) {
           <li key={p.id} className="proj">
             <div className="proj-main">
               <div className="proj-name">
-                <a href={`#/project/${p.id}`}>{p.nombre}</a> <span className="public">Public</span>
+                <a href={`#/project/${p.id}`}>{p.nombre}</a> <Visibility song={p} />
               </div>
               <p>{p.descripcion}</p>
               <div className="proj-tags">
@@ -329,8 +340,21 @@ function ProjectList({ projects, byId, name, own }) {
 }
 
 function PieceList({ pieces, forksOf, playing, onPreview, name, own }) {
-  if (!pieces.length) return <p className="p-empty">{own ? 'You have no pieces yet. Fork one in a project to make it yours.' : `${name} has not published any pieces yet.`}</p>
+  const upload = own && (
+    <a className="tbtn p-upload" href="#/upload">
+      <Upload size={13} aria-hidden="true" /> Publish pieces from a MIDI song
+    </a>
+  )
+  if (!pieces.length)
+    return (
+      <>
+        <p className="p-empty">{own ? 'You have no pieces yet. Fork one in a project, or split a MIDI song into pieces.' : `${name} has not published any pieces yet.`}</p>
+        {upload}
+      </>
+    )
   return (
+    <>
+    {upload}
     <ul className="p-list p-pieces">
       {pieces.map((p) => (
         <li key={p.id} className={`t-${p.tipo}`}>
@@ -355,5 +379,6 @@ function PieceList({ pieces, forksOf, playing, onPreview, name, own }) {
         </li>
       ))}
     </ul>
+    </>
   )
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { GitBranch, Pause, Play, Save, Square, Volume2, VolumeX } from 'lucide-react'
+import { Globe, GitBranch, Lock, Pause, Play, Save, Square, Volume2, VolumeX } from 'lucide-react'
 import { api, isMock, ME } from './api.js'
 import * as audio from './audio.js'
 import { Browser } from './components/Browser.jsx'
@@ -8,12 +8,13 @@ import { PianoRoll } from './components/PianoRoll.jsx'
 import { Copilot } from './components/Copilot.jsx'
 import { OriginTree } from './components/OriginTree.jsx'
 import { usePlayhead } from './usePlayhead.js'
-import { recordContribution } from './profile.js'
+import { isMine, loadUser, recordContribution, useUser } from './profile.js'
+import { AuthDialog, Avatar } from './Site.jsx'
 
 
 const FILL_BARS = 8 // a piece added from the Browser repeats across the first 8 bars
 
-const emptySong = { id: 'c-new', nombre: 'Untitled project', autor: ME, tempo: 96, pistas: [] }
+const emptySong = { id: 'c-new', nombre: 'Untitled project', autor: ME, tempo: 96, publica: true, pistas: [] }
 
 export default function App({ projectId = 'new' }) {
   const [pieces, setPieces] = useState({}) // id → Pieza cache
@@ -42,6 +43,14 @@ export default function App({ projectId = 'new' }) {
   )
 
   const fail = (e) => setError(e.message || String(e))
+  // Saving, forking and publishing need a signed-in user; the dialog finishes the action after login.
+  const [user, setUser] = useUser()
+  const [auth, setAuth] = useState(null) // { mode, reason, then }
+  const signedIn = (reason, then) => {
+    if (loadUser()) return true
+    setAuth({ mode: 'login', reason, then })
+    return false
+  }
   const [volume, setVolume] = useState(audio.getVolume)
   // Per-lane fader and mute, by lane index. Not saved: the song contract (§4.2) has no mix fields.
   const [mix, setMix] = useState([])
@@ -159,7 +168,7 @@ export default function App({ projectId = 'new' }) {
       }
       if (mod && (k === 'z' || k === 'y')) {
         if (e.target.closest('input, textarea, select')) return // native text undo
-        if (selected?.autor === ME && !diff && !e.target.closest('.playlist')) return // the piano roll undoes its own notes
+        if (isMine(selected?.autor) && !diff && !e.target.closest('.playlist')) return // the piano roll undoes its own notes
         e.preventDefault()
         return k === 'y' || e.shiftKey ? travel('future', 'past') : travel('past', 'future')
       }
@@ -174,12 +183,17 @@ export default function App({ projectId = 'new' }) {
   // Project saving (POST /canciones for a new project, PUT /canciones/:id after that).
   const songDirty = JSON.stringify(song) !== savedJson
   const [savingSong, setSavingSong] = useState(false)
+  const songMine = isMine(song.autor)
   const saveProject = async () => {
     if (savingSong || !song.pistas.length) return
+    if (!signedIn('Log in to save this project.', saveProject)) return
+    const me = loadUser().name
     setSavingSong(true)
     try {
       if ((draft || draftBars) && !(await save())) return
-      const saved = await api.saveProject(song)
+      // Someone else's project is saved as your copy, never over theirs.
+      const toSave = songMine ? { ...song, autor: song.id === 'c-new' ? me : song.autor } : { ...song, id: 'c-new', autor: me }
+      const saved = await api.saveProject(toSave)
       recordContribution()
       undoLog.current.skip = true // saving is not an undo step
       setSong(saved)
@@ -259,8 +273,9 @@ export default function App({ projectId = 'new' }) {
   const bars = draftBars ?? selected?.compases ?? 1
 
   const fork = async () => {
+    if (!signedIn('Log in to fork this piece and edit your copy.', fork)) return
     try {
-      const copy = await api.fork(selected.id, ME)
+      const copy = await api.fork(selected.id, loadUser().name)
       recordContribution()
       remember([copy])
       // The song now uses your version wherever it used the original.
@@ -278,6 +293,7 @@ export default function App({ projectId = 'new' }) {
   }
 
   const save = async () => {
+    if (!signedIn('Log in to save your changes to this piece.', save)) return false
     try {
       const saved = await api.saveNotes(selected.id, notes, bars)
       recordContribution()
@@ -318,6 +334,19 @@ export default function App({ projectId = 'new' }) {
           value={song.nombre}
           onChange={(e) => setSong({ ...song, nombre: e.target.value })}
         />
+        <button
+          className={`vis ${song.publica === false ? 'private' : ''}`}
+          onClick={() => setSong({ ...song, publica: song.publica === false })}
+          aria-label={`Visibility: ${song.publica === false ? 'private' : 'public'}. Click to make it ${song.publica === false ? 'public' : 'private'}`}
+          title={
+            song.publica === false
+              ? 'Private: hidden from Explore and from other people’s view of your profile. Anyone with the link can still open it (Stemma has no accounts yet). Click to make public, then save.'
+              : 'Public: listed in Explore and on your profile. Click to make private, then save.'
+          }
+        >
+          {song.publica === false ? <Lock size={12} aria-hidden="true" /> : <Globe size={12} aria-hidden="true" />}
+          {song.publica === false ? 'Private' : 'Public'}
+        </button>
         <div className="transport">
           <button
             className={`tbtn square ${playing === 'song' ? 'on' : ''}`}
@@ -360,13 +389,23 @@ export default function App({ projectId = 'new' }) {
           </div>
         </div>
         <button className="tbtn" onClick={saveProject} disabled={!songDirty || savingSong || !song.pistas.length} title="Save project (Ctrl+S)">
-          <Save size={14} /> {savingSong ? 'Saving…' : songDirty ? 'Save project' : 'Saved'}
+          <Save size={14} /> {savingSong ? 'Saving…' : !songDirty ? 'Saved' : songMine ? 'Save project' : 'Save a copy'}
         </button>
         <div className="spacer" />
         {isMock() && <span className="badge" title="Backend unreachable, using local mock data">Mock data</span>}
         <button className="tbtn" onClick={() => setTreeOpen(true)} disabled={!song.pistas.length}>
           <GitBranch size={14} /> Origin tree
         </button>
+        {user ? (
+          <a className="user-link" href={`#/u/${encodeURIComponent(user.name)}`} title="Your profile">
+            <Avatar name={user.name} size={22} />
+            <span>{user.name}</span>
+          </a>
+        ) : (
+          <button className="tbtn" onClick={() => setAuth({ mode: 'login' })} title="Log in to save, fork and publish">
+            Log in
+          </button>
+        )}
       </header>
 
       {error && (
@@ -402,7 +441,7 @@ export default function App({ projectId = 'new' }) {
           dirty={!!draft || !!draftBars}
           bars={bars}
           onBars={setDraftBars}
-          editable={selected?.autor === ME && !diff}
+          editable={isMine(selected?.autor) && !diff}
           diff={diff}
           onChange={setDraft}
           onFork={fork}
@@ -415,6 +454,20 @@ export default function App({ projectId = 'new' }) {
       </main>
 
       <Copilot song={song} pieces={pieces} onAddMany={addMany} onSelect={select} onTree={() => setTreeOpen(true)} remember={remember} fail={fail} ask={ask} />
+
+      {auth && (
+        <AuthDialog
+          mode={auth.mode}
+          reason={auth.reason}
+          onMode={(mode) => setAuth({ ...auth, mode })}
+          onClose={() => setAuth(null)}
+          onDone={(u) => {
+            setUser(u)
+            setAuth(null)
+            auth.then?.()
+          }}
+        />
+      )}
 
       {treeOpen && <OriginTree song={song} loadPiece={loadPiece} onClose={() => setTreeOpen(false)} />}
     </div>

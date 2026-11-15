@@ -39,6 +39,9 @@ export const loadProfile = (name) => ({ ...emptyProfile, ...read(profileKey(name
 /** Throws when storage is full (a large avatar), so the caller can keep the form and show the error. */
 export const saveProfile = (name, profile) => localStorage.setItem(profileKey(name), JSON.stringify(profile))
 
+/** Made by whoever is signed in. "you" (api.js ME) authored everything created before saving needed a login. */
+export const isMine = (autor) => autor === ME || (autor != null && autor === loadUser()?.name)
+
 /** Pieces and projects made while signed out are authored "you" (api.js ME): they belong to whoever is signed in. */
 export const authorsFor = (name) => (name === (loadUser()?.name ?? ME) ? [...new Set([name, ME])] : [name])
 

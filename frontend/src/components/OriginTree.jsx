@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { ReactFlow, Background, Controls, Handle, Position } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { X } from 'lucide-react'
-import { ME } from '../api.js'
+import { isMine } from '../profile.js'
 import { typeLabel } from './Browser.jsx'
 
 // shortcut: built client-side by walking parent_id, because the contract has no route to send the
@@ -40,20 +40,20 @@ function layout({ nodos, aristas, used }) {
   nodos.filter((n) => !n.parent_id).forEach((r) => place(r, 0))
   return {
     nodes,
-    edges: aristas.map((a) => ({ id: `${a.desde}-${a.hacia}`, source: a.desde, target: a.hacia, animated: nodos.find((n) => n.id === a.hacia)?.autor === ME })),
+    edges: aristas.map((a) => ({ id: `${a.desde}-${a.hacia}`, source: a.desde, target: a.hacia, animated: isMine(nodos.find((n) => n.id === a.hacia)?.autor) })),
   }
 }
 
 function PieceNode({ data }) {
   return (
-    <div className={`tree-node t-${data.tipo} ${data.autor === ME ? 'mine' : ''} ${data.inSong ? '' : 'ancestor'}`}>
+    <div className={`tree-node t-${data.tipo} ${isMine(data.autor) ? 'mine' : ''} ${data.inSong ? '' : 'ancestor'}`}>
       <Handle type="target" position={Position.Top} />
       <div className="tree-head">
         <span className="code">{data.id}</span> {typeLabel(data.tipo)}
       </div>
       <strong>{data.nombre}</strong>
       <span className="tree-meta">
-        {data.autor === ME ? 'you' : data.autor} · {data.licencia}
+        {isMine(data.autor) ? 'you' : data.autor} · {data.licencia}
       </span>
       <Handle type="source" position={Position.Bottom} />
     </div>
@@ -76,8 +76,8 @@ export function OriginTree({ song, loadPiece, onClose }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  const authors = tree ? new Set(tree.nodos.filter((n) => n.autor !== ME).map((n) => n.autor)) : new Set()
-  const mine = tree?.nodos.filter((n) => n.autor === ME).length ?? 0
+  const authors = tree ? new Set(tree.nodos.filter((n) => !isMine(n.autor)).map((n) => n.autor)) : new Set()
+  const mine = tree?.nodos.filter((n) => isMine(n.autor)).length ?? 0
 
   return (
     <div className="window-backdrop" onClick={onClose}>

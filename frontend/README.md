@@ -5,6 +5,8 @@ cd frontend
 npm install
 npm run dev        # http://localhost:5173
 node src/diff.test.js   # diff self-check
+node src/split.test.js  # MIDI splitter self-check
+node src/markdown.test.js
 ```
 
 `VITE_API_URL` (see `.env.example`, default `http://localhost:3001`) points at the backend. If it is unreachable the app switches to the in-memory mock in `src/mock.js` and shows a **Mock data** badge, so it always demos.
@@ -14,6 +16,7 @@ node src/diff.test.js   # diff self-check
 - `#/` landing (`src/Landing.jsx`): hero, public projects with search, tag filters and preview, Log in / Sign up.
 - `#/project/<id>` project page (`src/App.jsx`); `#/project/new` starts empty.
 - `#/u/<name>` profile (`src/Profile.jsx`): README, pinned projects, contribution graph, projects and pieces tabs.
+- `#/upload` split a MIDI song into loops (`src/split.js`, same rules as `data/scripts` 04/05/08) and publish the chosen ones with `POST /piezas`.
 - `#/settings` profile settings (`src/Settings.jsx`): name, bio, picture, accent colour, README, pins.
 
 Log in / Sign up and profiles only live in this browser (`src/profile.js`): accounts are out of scope in CLAUDE.md §2. The contribution graph is seeded per username until the backend stores dates; forks and saves made in this browser are added on top.

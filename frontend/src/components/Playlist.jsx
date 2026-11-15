@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Plus, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { useWidth } from '../useWidth.js'
-import { ME } from '../api.js'
+import { isMine } from '../profile.js'
 import { STARTER } from './Copilot.jsx'
 
 const MIN_BARS = 16 // the arrangement always shows at least this many bars, plus 4 empty ones after the last clip
@@ -246,7 +246,7 @@ export function Playlist({ song, pieces, selectedId, songBars, mix, onMix, onSel
                   return (
                     <button
                       key={j}
-                      className={`clip t-${p.tipo} ${p.autor === ME ? 'mine' : ''} ${selectedId === p.id ? 'sel' : ''} ${sel.includes(keyOf(i, b.compas)) ? 'picked' : ''} ${dragging && !drag.copy ? 'lifted' : ''}`}
+                      className={`clip t-${p.tipo} ${isMine(p.autor) ? 'mine' : ''} ${selectedId === p.id ? 'sel' : ''} ${sel.includes(keyOf(i, b.compas)) ? 'picked' : ''} ${dragging && !drag.copy ? 'lifted' : ''}`}
                       style={{ left: b.compas * barW, width: p.compases * barW - 2 }}
                       onPointerDown={(e) => clipDown(e, i, j)}
                       onPointerMove={clipMove}
@@ -280,7 +280,13 @@ export function Playlist({ song, pieces, selectedId, songBars, mix, onMix, onSel
             </div>
           )
         })}
-        {playhead != null && song.pistas.length > 0 && <div className="playhead" style={{ left: HEAD + (playhead / 4) * barW, top: RULER_H }} />}
+        {playhead != null && song.pistas.length > 0 && (
+          // Spans every lane, not just the visible part, so it keeps going when the playlist scrolls down.
+          <div
+            className="playhead"
+            style={{ left: HEAD + (playhead / 4) * barW, top: RULER_H, bottom: 'auto', height: `max(${lanes * LANE_H}px, calc(100% - ${RULER_H}px))` }}
+          />
+        )}
         {box?.moved && (
           <div
             className="marquee"
@@ -297,7 +303,7 @@ function ClipFace({ p }) {
   return (
     <>
       <span className="clip-head">
-        <span className="clip-name">{p.nombre}</span> <span className="clip-by">{p.autor === ME ? 'yours' : p.autor}</span>
+        <span className="clip-name">{p.nombre}</span> <span className="clip-by">{isMine(p.autor) ? 'yours' : p.autor}</span>
       </span>
       <MiniNotes notas={p.notas} beats={p.compases * 4} />
     </>

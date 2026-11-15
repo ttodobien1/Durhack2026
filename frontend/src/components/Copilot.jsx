@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Check, GitBranch, Plus, Send } from 'lucide-react'
-import { api, ME } from '../api.js'
+import { api } from '../api.js'
+import { isMine } from '../profile.js'
 import { typeLabel } from './Browser.jsx'
 
 export const STARTER = 'A laid-back boom bap beat for late-night verses'
@@ -115,10 +116,10 @@ export function Copilot({ song, pieces, onAddMany, onSelect, onTree, remember, f
           <>
             <ul>
               {credits.map((p) => (
-                <li key={p.id} className={p.autor === ME ? 'mine' : ''}>
+                <li key={p.id} className={isMine(p.autor) ? 'mine' : ''}>
                   <span className="credit-name">{p.nombre}</span>
                   <span className="dim">
-                    {p.autor === ME ? 'you' : p.autor} · {p.licencia}
+                    {isMine(p.autor) ? 'you' : p.autor} · {p.licencia}
                   </span>
                 </li>
               ))}

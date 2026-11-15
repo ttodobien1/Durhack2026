@@ -36,7 +36,7 @@ export function Settings() {
 
   useEffect(() => {
     setForm(name && loadProfile(name))
-    if (name) api.projects().then((list) => setProjects(list.filter((p) => authorsFor(name).includes(p.autor))), () => setProjects([]))
+    if (name) Promise.all(authorsFor(name).map((a) => api.projects(a))).then((lists) => setProjects(lists.flat()), () => setProjects([]))
   }, [name])
   useEffect(() => {
     if (form && location.hash.endsWith('#readme')) document.getElementById('readme')?.scrollIntoView()
@@ -207,7 +207,7 @@ export function Settings() {
                   <li key={p.id}>
                     <label>
                       <input type="checkbox" checked={form.pinned.includes(p.id)} disabled={!form.pinned.includes(p.id) && form.pinned.length >= MAX_PINS} onChange={() => togglePin(p.id)} />
-                      {p.nombre} <span className="dim">{p.id}</span>
+                      {p.nombre} <span className="dim">{p.id}{p.publica === false && ' · private'}</span>
                     </label>
                   </li>
                 ))}

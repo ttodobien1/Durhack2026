@@ -3,7 +3,7 @@ import { GitCompare, GitFork, Magnet, Minus, Play, Plus, Redo2, Save, Square, Un
 import { useWidth } from '../useWidth.js'
 import { instrumentFor, previewNote } from '../audio.js'
 import { typeLabel } from './Browser.jsx'
-import { ME } from '../api.js'
+import { isMine } from '../profile.js'
 
 const ROW = 14
 const KEYS = 64
@@ -300,7 +300,7 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
         <button className={`tbtn ${previewing ? 'on' : ''}`} onClick={onPreview}>
           {previewing ? <Square size={13} /> : <Play size={13} />} {previewing ? 'Stop' : 'Preview'}
         </button>
-        {piece.autor !== ME ? (
+        {!isMine(piece.autor) ? (
           <button className="tbtn accent" onClick={onFork} title="Copy this piece so you can edit it. The original author stays credited.">
             <GitFork size={13} /> Fork to edit
           </button>

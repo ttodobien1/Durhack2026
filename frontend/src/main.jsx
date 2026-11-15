@@ -5,8 +5,9 @@ import App from './App.jsx'
 import { Landing } from './Landing.jsx'
 import { Profile } from './Profile.jsx'
 import { Settings } from './Settings.jsx'
+import { Upload } from './Upload.jsx'
 
-// Hash routes: "#/" landing, "#/project/<id>" project page ("new" = empty project), "#/u/<name>" profile, "#/settings".
+// Hash routes: "#/" landing, "#/project/<id>" project page ("new" = empty project), "#/u/<name>" profile, "#/settings", "#/upload".
 const decode = (s) => {
   try {
     return decodeURIComponent(s)
@@ -27,6 +28,7 @@ function Root() {
   if (id) return <App key={id} projectId={id} />
   if (user) return <Profile key={user} name={decode(user)} />
   if (hash.startsWith('#/settings')) return <Settings />
+  if (hash.startsWith('#/upload')) return <Upload />
   return <Landing />
 }
 

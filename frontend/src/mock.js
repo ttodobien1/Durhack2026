@@ -124,7 +124,8 @@ const PROJECTS = [
 ]
 
 export const mock = {
-  projects: () => structuredClone(PROJECTS),
+  // Same rule as the backend: public songs, or every song by `autor` (private ones included).
+  projects: (autor) => structuredClone(PROJECTS.filter((p) => (autor ? p.autor === autor : p.publica !== false))),
   saveProject(song) {
     const saved = { ...structuredClone(song), id: song.id ?? `c-${nextId++}`, actualizado: new Date().toISOString(), etiquetas: song.etiquetas ?? [] }
     const i = PROJECTS.findIndex((x) => x.id === saved.id)
@@ -147,6 +148,11 @@ export const mock = {
       .map((p) => structuredClone(p))
   },
   get,
+  create(pieza) {
+    const p = { ...structuredClone(pieza), id: `p-${nextId++}`, parent_id: null }
+    db.set(p.id, p)
+    return structuredClone(p)
+  },
   fork(id, { autor = 'you' } = {}) {
     const src = get(id)
     const copy = { ...src, id: `p-${nextId++}`, autor, parent_id: id, fuente: 'forked in Stemma', nombre: `${src.nombre} (fork)` }

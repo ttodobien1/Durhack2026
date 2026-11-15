@@ -8,9 +8,9 @@
 .avatar.ac-red { background: var(--t-ritmo); color: #2e1210; }
 .user-link { display: flex; align-items: center; gap: 8px; color: inherit; text-decoration: none; }
 .user-link:hover span { color: var(--orange); }
-.user .avatar { border-radius: 50%; }
+.user .avatar, .user-link .avatar { border-radius: 50%; }
 a.icon { color: var(--dim); }
-.public { padding: 0 7px; border: 1px solid var(--bevel); border-radius: 2em; color: var(--dim); font-size: 11px; font-weight: 500; line-height: 18px; }
+.public { display: inline-flex; align-items: center; gap: 3px; padding: 0 7px; border: 1px solid var(--bevel); border-radius: 2em; color: var(--dim); font-size: 11px; font-weight: 500; line-height: 18px; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--tc, var(--dim)); vertical-align: -1px; }
 
@@ -174,3 +174,5 @@ a.icon { color: var(--dim); }
   .settings { grid-template-columns: 1fr; grid-template-areas: 'head' 'nav' 'form'; }
   .set-cols { grid-template-columns: 1fr; }
 }
+.public.private { border-color: #8a6a3a; color: #ffc785; }
+.p-upload { margin-bottom: 12px; }
