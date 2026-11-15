@@ -87,3 +87,19 @@ export async function askGemini(userText) {
   }
   throw new HttpError(502, 'DJ Stemy did not finish (too many tool rounds)');
 }
+
+/** One plain text answer, no tools (e.g. explaining a diff). Throws on any error so the caller can fall back. */
+export async function askGeminiText(system, userText, { timeoutMs = 15_000 } = {}) {
+  const res = await fetch(URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
+    body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [{ role: 'user', parts: [{ text: userText }] }] }),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(`Gemini ${res.status}: ${data.error?.message ?? 'error'}`);
+  const text = (data.candidates?.[0]?.content?.parts ?? []).map((p) => p.text ?? '').join('').trim();
+  if (!text) throw new Error('Gemini returned no text');
+  return text;
+}
+

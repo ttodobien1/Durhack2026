@@ -427,3 +427,27 @@ Hecho por el rol A mientras B y C dormían (con el visto bueno de A). Resumen pa
   ya guardados por el backend.
 - 4.4 Herramientas: `buscar_piezas(estilo, tipo, tonalidad, texto, parecido_a)`.
 
+## 17. Diff óptimo, "Explain" del diff y "Who wrote this?" en el piano roll
+
+Hecho por el rol A según las especificaciones #4, #2 y #1 (en ese orden). **Avisos para B y C:** dos rutas nuevas;
+el contrato no cambia.
+
+| Método | Ruta | Qué hace |
+| --- | --- | --- |
+| GET | `/piezas/:id/diff/:otra/explicacion` | `{ texto, hechos, fuente: "modelo" \| "plantilla" }`: DJ Stemy explica el diff en 2-3 frases |
+| GET | `/piezas/:id/blame` | `{ autores: [{ autor, notas, porcentaje }], notas: [{ ...nota, autor }] }` |
+
+- **#4 Diff óptimo** (`lib/diff.js`, `lib/assignment.js`): el paso 2 ahora es una asignación de costo mínimo
+  (algoritmo húngaro) en vez de "lo más cercano primero". Resultado: el mayor número posible de notas movidas con la
+  menor distancia total (ej.: `60@0, 60@1` → `60@0.9, 60@2` ahora se lee como "el riff se movió un pulso", no como un
+  salto de 2 pulsos). Incluye el término Tonnetz (una quinta gana a un semitono si empatan). Mismo formato
+  `{ nuevas, borradas, movidas, iguales }`: piano roll, `songDiff.js` y merge siguen igual. Más de 300 notas
+  sobrantes: vuelve al método anterior. Tests: el ejemplo, contra fuerza bruta y 200 casos aleatorios (nunca peor).
+- **#2 Explain** (`lib/diffFacts.js` puro y con tests, `copilot/explain.js`): hechos musicales (intervalos,
+  desplazamientos en palabras, cambio uniforme, compases, rango) y una llamada al modelo sin herramientas (Claude o
+  Gemini, 15 s). Si no hay clave, se pasa del tiempo o falla, responde una plantilla con los mismos hechos, así la demo
+  no se rompe. Solo describe; nunca sugiere notas. Rol C: el texto del prompt está en `copilot/explain.js` (SYSTEM).
+- **#1 Who wrote this?** (`blameSummary` en `lib/credits.js`): el piano roll colorea cada nota por autor, con barra de
+  porcentajes y nombres. `colorMap` pasó de `History.jsx` a `frontend/src/authorColors.js`: el color de cada autor
+  sale de su nombre, así es el mismo en Créditos y en el piano roll.
+

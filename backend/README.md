@@ -66,6 +66,8 @@ Errors always come back as `{ "error": "message" }` with the matching HTTP statu
 | PUT | `/piezas/:id` | `{ "notas": [...] }` replaces the notes; also accepts `nombre`, `tonalidad`, `tempo`, `estilo`, `compases`. Lineage fields (`autor`, `tipo`, `licencia`, `parent_id`) cannot change |
 | GET | `/piezas/:id/diff/:otra` | `{ original, modificada, nuevas, borradas, movidas, iguales }`. `:id` is the modified piece; if one piece is an ancestor of the other, the ancestor is always the original, whatever the order |
 | GET | `/piezas/:id/diff` | Same, against the piece's parent. *Extra* |
+| GET | `/piezas/:id/diff/:otra/explicacion` | DJ Stemy explains the diff in musical terms: `{ texto, hechos, fuente: "modelo" \| "plantilla" }`. `hechos` comes from `lib/diffFacts.js` (counts, transpositions as intervals, time shifts in words, uniform change, bars, range, notes per bar); one model call without tools (`copilot/explain.js`, Claude or Gemini, 15 s), and a template from the same facts when there is no key or the call fails. It only describes; it never suggests notes. *Extra* |
+| GET | `/piezas/:id/blame` | "git blame" for one piece: `{ autores: [{ autor, notas, porcentaje }], notas: [{ ...nota, autor }] }`, walking the fork chain (`blame` in `lib/credits.js`). Same privacy as `GET /piezas/:id`. *Extra* |
 | GET | `/canciones?autor=` | Public songs; with `autor`, every song by that author, private ones included. *Extra* |
 | GET | `/canciones/:id` | One song. *Extra* |
 | POST | `/canciones` | Create a song (contract 4.2 without `id`, plus optional `publica`, default `true`, `descripcion`, up to 300 characters, and `mensaje`). Every `pieza_id` must exist. With `parent_id` (+ optional `parent_version`) it is a fork of that project. Records v1. *Extra* |
@@ -277,6 +279,15 @@ POST /copiloto
 - `data/piezas/famous-melodies.json` (`p-501` to `p-514`): public-domain melodies everyone can hum (Für Elise, Ode to
   Joy, Twinkle Twinkle, Happy Birthday, Jingle Bells, Beethoven's 5th, Eine kleine Nachtmusik, Canon in D, Frère
   Jacques, Mary Had a Little Lamb, Bridal Chorus, In the Hall of the Mountain King, Greensleeves, Toccata and Fugue).
+
+## Diff: optimal pairing
+
+`lib/diff.js` keeps exact matches (same `tono` and `inicio`) as `iguales`, then pairs the leftovers as `movidas` with a
+**minimum-cost assignment** (Hungarian algorithm, `lib/assignment.js`, O(N³), no dependency): same pitch moved up to a
+bar (cost |Δt|/4) or same onset moved up to an octave (cost |Δp|/12 plus 0.05 × Tonnetz steps, so a fifth beats a
+semitone when distances tie). Leaving a pair unmatched costs 2 (one deleted + one new), so the result is **the largest
+possible set of moved notes at minimum total distance**. Above 300 leftovers it falls back to the old closest-first
+pairing. The response shape is unchanged.
 
 ## Musical fingerprints (similar pieces and the "too close" warning)
 

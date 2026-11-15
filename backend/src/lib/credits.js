@@ -27,6 +27,20 @@ export function blame(id, piezas, memo = new Map()) {
   return memo.get(id);
 }
 
+/**
+ * Blame of one piece for the piano roll: every note with its author, and each author's share.
+ * `who` is blame(pieza.id, ...) (same order as pieza.notas). Shares are rounded; the largest first.
+ */
+export function blameSummary(pieza, who) {
+  const counts = new Map();
+  for (const autor of who) counts.set(autor, (counts.get(autor) ?? 0) + 1);
+  const total = who.length;
+  const autores = [...counts.entries()]
+    .map(([autor, notas]) => ({ autor, notas, porcentaje: total ? Math.round((100 * notas) / total) : 0 }))
+    .sort((a, b) => b.notas - a.notas || a.autor.localeCompare(b.autor));
+  return { autores, notas: pieza.notas.map((nota, i) => ({ ...nota, autor: who[i] })) };
+}
+
 // cancion: Cancion (contract 4.2); piezas: Map with every piece used and all its ancestors;
 // versiones: [{ autor, merge_de }] saved versions of the song.
 export function computeCredits({ cancion, piezas, versiones = [] }) {

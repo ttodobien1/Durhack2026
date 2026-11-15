@@ -8,6 +8,7 @@ import {
   forkPieza,
   getPieza,
   getPiezaOwner,
+  getPiezasWithAncestors,
   getVisiblePieza,
   isAncestor,
   searchPiezas,
@@ -15,6 +16,9 @@ import {
   updatePieza,
   visibilityBlocker,
 } from '../repo/piezas.js';
+import { blame, blameSummary } from '../lib/credits.js';
+import { diffFacts } from '../lib/diffFacts.js';
+import { explainDiff } from '../copilot/explain.js';
 import { forgetFingerprints, mapOf, nearCopyOf, similarTo } from '../repo/similares.js';
 
 const router = Router();
@@ -73,6 +77,15 @@ router.post('/parecidas', async (req, res) => {
   res.json({ parecidas: await similarTo(pieza, { n: 5 }), aviso: await nearCopyOf(pieza, autor) });
 });
 
+// GET /piezas/:id/blame  -> { autores: [{ autor, notas, porcentaje }], notas: [{ ...nota, autor }] }
+// "git blame" for one piece: whose each note is, walking the fork chain (lib/credits.js). Same privacy as GET /piezas/:id.
+router.get('/:id/blame', async (req, res) => {
+  const pieza = await findPieza(req, req.params.id);
+  const chain = new Map((await getPiezasWithAncestors([pieza.id])).map((p) => [p.id, p]));
+  chain.set(pieza.id, pieza);
+  res.json(blameSummary(pieza, blame(pieza.id, chain)));
+});
+
 // GET /piezas/:id/parecidas?n=8  -> public pieces of the same type that sound most like this one, with similitud 0-100
 router.get('/:id/parecidas', async (req, res) => {
   const pieza = await findPieza(req, req.params.id);
@@ -128,12 +141,25 @@ router.get('/:id/diff', async (req, res) => {
 // GET /piezas/:id/diff/:otra
 // :id is the modified piece and :otra the one it is compared against. If one of them is an
 // ancestor of the other, the ancestor is always treated as the original, whatever the order.
-router.get('/:id/diff/:otra', async (req, res) => {
+async function diffPair(req) {
   let [modificada, original] = await Promise.all([findPieza(req, req.params.id), findPieza(req, req.params.otra)]);
   if (await isAncestor(modificada.id, original.id)) {
     [modificada, original] = [original, modificada];
   }
-  res.json({ original: original.id, modificada: modificada.id, ...diffNotas(original.notas, modificada.notas) });
+  return { original, modificada, diff: diffNotas(original.notas, modificada.notas) };
+}
+
+router.get('/:id/diff/:otra', async (req, res) => {
+  const { original, modificada, diff } = await diffPair(req);
+  res.json({ original: original.id, modificada: modificada.id, ...diff });
+});
+
+// GET /piezas/:id/diff/:otra/explicacion  -> { texto, hechos, fuente: "modelo" | "plantilla" }
+// DJ Stemy explains the diff in musical terms (copilot/explain.js). It only describes; it never suggests notes.
+router.get('/:id/diff/:otra/explicacion', async (req, res) => {
+  const { original, modificada, diff } = await diffPair(req);
+  const hechos = diffFacts(diff, original, modificada);
+  res.json({ ...(await explainDiff(hechos)), hechos });
 });
 
 export default router;
