@@ -18,7 +18,9 @@ export const TABS = [TYPES[0], [FAVORITES, 'Favorites'], ...TYPES.slice(1)]
 
 const matches = (p, text) => !text || `${p.nombre} ${p.autor} ${p.id}`.toLowerCase().includes(text)
 
-export function Browser({ onResults, onSelect, onAdd, onPreview, onNeedLogin, playing, selectedId, fail }) {
+// pieces: the project's piece cache (id → Pieza). Rows show that copy when there is one, so a piece renamed in the
+// piano roll shows its new name here too, without searching again.
+export function Browser({ pieces = {}, onResults, onSelect, onAdd, onPreview, onNeedLogin, playing, selectedId, fail }) {
   const [q, setQ] = useState('')
   const [tipo, setTipo] = useState('')
   const [results, setResults] = useState(null)
@@ -99,7 +101,8 @@ export function Browser({ onResults, onSelect, onAdd, onPreview, onNeedLogin, pl
         {onFavorites && favorites.ids.length > 0 && list.length === 0 && !loadingFavs && <li className="empty">No favorite matches “{q}”.</li>}
         {!onFavorites && results?.length === 0 && <li className="empty">No pieces match “{q}”. Try another word or type.</li>}
         {!onFavorites && results == null && <li className="empty">Loading pieces…</li>}
-        {list?.map((p) => {
+        {list?.map((row) => {
+          const p = pieces[row.id] ?? row
           const fav = isFav.has(p.id)
           return (
             <li key={p.id} className={`piece-row t-${p.tipo} ${selectedId === p.id ? 'sel' : ''}`}>

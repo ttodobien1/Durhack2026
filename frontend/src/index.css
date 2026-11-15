@@ -261,6 +261,16 @@ b, strong { font-weight: 600; }
 
 /* Piano roll */
 .roll-title { justify-content: space-between; gap: 12px; }
+.roll-heading { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+/* Your own piece: its name is a field you can rename it in (PianoRoll.jsx, PieceName) */
+.roll-name { width: 24ch; min-width: 0; height: 18px; padding: 0 4px; background: transparent; border: 1px solid transparent; border-radius: 2px; color: var(--text); font-size: 12px; font-weight: 400; }
+.roll-name:hover, .roll-name:focus { background: var(--well); border-color: var(--line); outline: none; }
+@supports (field-sizing: content) {
+  .roll-name { width: auto; min-width: 6ch; max-width: 36ch; field-sizing: content; }
+}
+.roll-rename { display: inline-flex; align-items: center; gap: 2px; min-width: 0; color: var(--dim); cursor: text; }
+.roll-rename:hover { color: var(--text); }
+.roll-rename:focus-within svg { visibility: hidden; }
 .credit { color: var(--dim); font-weight: 400; overflow: hidden; text-overflow: ellipsis; }
 .credit b { color: var(--text); }
 .roll-tools { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; padding: 6px 8px; border-bottom: 1px solid var(--line); }

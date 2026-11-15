@@ -242,3 +242,30 @@ repositorio:
   - cuando entrega una respuesta o sugerencias, da un giro sobre sí mismo. Solo gira Stemy; la mesa se queda quieta.
 - El prompt del sistema empieza con "You are DJ Stemy" y los mensajes de error dicen "DJ Stemy". El código, los
   archivos y la ruta `/copiloto` mantienen el nombre copiloto (contrato de la sección 4.3).
+
+## 13. Renombrar piezas, borrar proyectos (papelera) y aviso al salir sin guardar
+
+- **Renombrar piezas:** el autor de una pieza puede cambiarle el nombre cuando quiera, escribiendo en el título del
+  piano roll (Enter o hacer clic fuera guarda, Esc cancela). Usa `PUT /piezas/:id` con solo `{ "nombre" }`, que ya
+  existía; las notas, el autor y el linaje no cambian. Las piezas de otras personas no muestran el campo.
+- **Borrar proyectos:** en My projects, el menú "..." de cada proyecto propio tiene **Delete**. Pregunta "Are you sure
+  you want to delete...?" y, si se confirma, el proyecto pasa a la **papelera** (abajo de la lista de proyectos). Desde
+  ahí se puede restaurar durante 20 días o borrarlo para siempre (con otra confirmación). A los 20 días el servidor lo
+  borra solo. Las piezas del proyecto no se borran (son reutilizables); los proyectos que eran fork de él quedan como
+  originales.
+- Rutas nuevas (solo la cuenta dueña; las canciones semilla y anónimas no se pueden borrar):
+
+| Método | Ruta | Qué hace |
+| --- | --- | --- |
+| DELETE | `/canciones/:id` | Manda la canción a la papelera → `204`. Desaparece de todas las listas y rutas |
+| GET | `/canciones/papelera` | Canciones en la papelera de la cuenta, con `borrada` y `se_borra` (fechas ISO) |
+| POST | `/canciones/:id/restaurar` | La saca de la papelera y la devuelve |
+| DELETE | `/canciones/papelera/:id` | La borra para siempre → `204` (con sus versiones) |
+
+- Base de datos: columna nueva `canciones.borrada_at`. El servidor la agrega solo al arrancar (migrate.js). No hay
+  cron en Vercel, así que el borrado de las que pasan los 20 días se hace al pedir `GET /canciones` (máximo una vez
+  por hora) y `GET /canciones/papelera`.
+- **Aviso al salir sin guardar:** si el proyecto tiene cambios sin guardar (o notas sin guardar en el piano roll),
+  salir pregunta "Your project has not been saved. Are you sure you want to leave?": el logo, el perfil, My projects
+  y los botones Atrás/Adelante del navegador. Cerrar o recargar la pestaña muestra el aviso propio del navegador (el
+  texto de ese aviso no se puede cambiar). `frontend/src/leave.js`.

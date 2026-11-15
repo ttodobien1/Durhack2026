@@ -1,8 +1,22 @@
 import { Router } from 'express';
-import { assertOwner, autorFor } from '../lib/auth.js';
-import { badRequest, notFound } from '../lib/errors.js';
+import { assertOwner, autorFor, requireUsuario } from '../lib/auth.js';
+import { HttpError, badRequest, notFound } from '../lib/errors.js';
 import { validateCancion, validateMensaje, validateResoluciones, validateVersionNumber } from '../lib/validate.js';
-import { createCancion, getArbol, getCancion, getCancionOwner, getRelatedCanciones, listCanciones, saveCancion } from '../repo/canciones.js';
+import {
+  createCancion,
+  getArbol,
+  getCancion,
+  getCancionOwner,
+  getCancionState,
+  getRelatedCanciones,
+  listCanciones,
+  listPapelera,
+  purgeCancion,
+  purgeExpiredCanciones,
+  restoreCancion,
+  saveCancion,
+  trashCancion,
+} from '../repo/canciones.js';
 import {
   ensureVersions,
   getVersion,
@@ -43,8 +57,51 @@ async function withVisibleOrigin(req, cancion) {
 // GET /canciones            public songs
 // GET /canciones?autor=ana  ana's public songs, plus her private ones when ana is the one logged in
 router.get('/', async (req, res) => {
+  await purgeExpiredCanciones(); // the trash is emptied lazily (at most once an hour)
   const autor = typeof req.query.autor === 'string' && req.query.autor.trim() ? req.query.autor.trim() : undefined;
   res.json(await listCanciones(autor, Boolean(autor) && autor === req.usuario?.nombre));
+});
+
+// --- Trash: deleting a song moves it here; its author can restore it for 20 days, then it is gone for good ------
+
+// A song the logged-in account owns, in the trash (`trashed`) or not. Someone else's private song is a 404, like
+// everywhere else; seed and anonymous songs (no owner account) cannot be deleted.
+async function ownSongState(req, trashed) {
+  const usuario = requireUsuario(req);
+  const state = await getCancionState(req.params.id);
+  const mine = state?.usuario_id === usuario.id;
+  if (!state || Boolean(state.borrada_at) !== trashed || (!mine && !state.publica)) {
+    throw notFound(trashed ? `Cancion not in the trash: ${req.params.id}` : `Cancion not found: ${req.params.id}`);
+  }
+  if (!mine) throw new HttpError(403, 'Only the author can delete this song');
+  return state;
+}
+
+// GET /canciones/papelera  -> the logged-in account's deleted songs, newest first, each with `borrada` and `se_borra`
+router.get('/papelera', async (req, res) => {
+  const usuario = requireUsuario(req);
+  await purgeExpiredCanciones({ force: true });
+  res.json(await listPapelera(usuario.id));
+});
+
+// DELETE /canciones/papelera/:id  -> removes a song in the trash for good (cannot be undone)
+router.delete('/papelera/:id', async (req, res) => {
+  await ownSongState(req, true);
+  await purgeCancion(req.params.id);
+  res.status(204).end();
+});
+
+// POST /canciones/:id/restaurar  -> takes a song out of the trash and returns it
+router.post('/:id/restaurar', async (req, res) => {
+  await ownSongState(req, true);
+  res.json(await restoreCancion(req.params.id));
+});
+
+// DELETE /canciones/:id  -> moves the song to the trash (only its author's account)
+router.delete('/:id', async (req, res) => {
+  await ownSongState(req, false);
+  await trashCancion(req.params.id);
+  res.status(204).end();
 });
 
 // POST /canciones   body: Cancion without id (+ optional "mensaje"; "parent_id" and "parent_version" when it is a

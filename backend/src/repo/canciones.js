@@ -18,6 +18,11 @@ function assemble(cancionRows, pistaRows, bloqueRows) {
       parent_id: row.parent_id ?? null,
       parent_version: row.parent_version == null ? null : Number(row.parent_version),
       version: row.version == null ? 0 : Number(row.version),
+      // Only songs in the trash: when they were deleted and when they are removed for good.
+      ...(row.borrada_at && {
+        borrada: new Date(row.borrada_at).toISOString(),
+        se_borra: new Date(new Date(row.borrada_at).getTime() + TRASH_DAYS * 86400e3).toISOString(),
+      }),
       pistas: [],
     });
   }
@@ -37,21 +42,27 @@ function assemble(cancionRows, pistaRows, bloqueRows) {
 }
 
 // One song by id (any visibility: the route decides who may see it), or a list: public songs, or the songs by
-// `autor`, private ones included only when `withPrivate` (the author is the one asking).
-async function loadCanciones({ id, autor, withPrivate = false } = {}) {
-  const filter = id ? 'WHERE cancion_id = $1' : '';
-  const args = id ? [id] : [];
-  const where = id ? 'WHERE id = $1' : autor ? 'WHERE autor = $1 AND (publica OR $2)' : 'WHERE publica';
+// `autor`, private ones included only when `withPrivate` (the author is the one asking). Songs in the trash are
+// left out of all of these; `trashOf` (an account id) lists only that account's songs in the trash.
+async function loadCanciones({ id, autor, withPrivate = false, trashOf = null } = {}) {
+  const [where, args] = id
+    ? ['WHERE id = $1 AND borrada_at IS NULL', [id]]
+    : trashOf
+      ? ['WHERE usuario_id = $1 AND borrada_at IS NOT NULL', [trashOf]]
+      : autor
+        ? ['WHERE autor = $1 AND (publica OR $2) AND borrada_at IS NULL', [autor, withPrivate]]
+        : ['WHERE publica AND borrada_at IS NULL', []];
+  const ofSongs = `WHERE cancion_id IN (SELECT id FROM canciones ${where})`;
   const [canciones, pistas, bloques] = await Promise.all([
     db.query(
-      `SELECT id, nombre, autor, tempo, publica, descripcion, parent_id, parent_version,
+      `SELECT id, nombre, autor, tempo, publica, descripcion, parent_id, parent_version, borrada_at,
               (SELECT MAX(numero) FROM versiones v WHERE v.cancion_id = canciones.id) AS version
-       FROM canciones ${where} ORDER BY id`,
-      id ? [id] : autor ? [autor, withPrivate] : [],
+       FROM canciones ${where} ORDER BY ${trashOf ? 'borrada_at DESC' : 'id'}`,
+      args,
     ),
-    db.query(`SELECT cancion_id, posicion, instrumento FROM pistas ${filter} ORDER BY cancion_id, posicion`, args),
+    db.query(`SELECT cancion_id, posicion, instrumento FROM pistas ${ofSongs} ORDER BY cancion_id, posicion`, args),
     db.query(
-      `SELECT cancion_id, pista_posicion, pieza_id, compas FROM bloques ${filter}
+      `SELECT cancion_id, pista_posicion, pieza_id, compas FROM bloques ${ofSongs}
        ORDER BY cancion_id, pista_posicion, compas, id`,
       args,
     ),
@@ -68,10 +79,53 @@ export async function getCancion(id) {
   return cancion ?? null;
 }
 
-// Owner of a song: { usuario_id (null when unowned), autor }, or null if the song does not exist.
+// Owner of a song: { usuario_id (null when unowned), autor }, or null if the song does not exist or is in the trash.
 export async function getCancionOwner(id) {
-  const result = await db.query('SELECT usuario_id, autor FROM canciones WHERE id = $1', [id]);
+  const result = await db.query('SELECT usuario_id, autor FROM canciones WHERE id = $1 AND borrada_at IS NULL', [id]);
   return result.rows[0] ?? null;
+}
+
+// --- Trash ----------------------------------------------------------------------------------------------
+
+export const TRASH_DAYS = 20;
+
+// Owner, visibility and trash state of a song, in the trash or not: { usuario_id, autor, publica, borrada_at }.
+export async function getCancionState(id) {
+  const result = await db.query('SELECT usuario_id, autor, publica, borrada_at FROM canciones WHERE id = $1', [id]);
+  return result.rows[0] ?? null;
+}
+
+// Songs in the trash of an account, most recently deleted first (each with `borrada` and `se_borra`).
+export async function listPapelera(usuarioId) {
+  return loadCanciones({ trashOf: usuarioId });
+}
+
+export async function trashCancion(id) {
+  await db.query('UPDATE canciones SET borrada_at = now() WHERE id = $1 AND borrada_at IS NULL', [id]);
+}
+
+export async function restoreCancion(id) {
+  await db.query('UPDATE canciones SET borrada_at = NULL, updated_at = now() WHERE id = $1', [id]);
+  return getCancion(id);
+}
+
+// Removes a song for good: its tracks, blocks and versions go with it (ON DELETE CASCADE). Projects forked from it
+// stay, as originals. Its pieces stay too: they are reusable and other songs or forks may use them.
+export async function purgeCancion(id) {
+  await db.transaction(async (tx) => {
+    await tx.query('UPDATE canciones SET parent_id = NULL, parent_version = NULL WHERE parent_id = $1', [id]);
+    await tx.query('DELETE FROM canciones WHERE id = $1', [id]);
+  });
+}
+
+// Removes the songs that have been in the trash for more than TRASH_DAYS. There is no cron (Vercel functions), so
+// the routes call it: at most once an hour per server instance, unless `force`.
+let lastPurge = 0;
+export async function purgeExpiredCanciones({ force = false } = {}) {
+  if (!force && Date.now() - lastPurge < 3600e3) return;
+  lastPurge = Date.now();
+  const expired = await db.query(`SELECT id FROM canciones WHERE borrada_at < now() - interval '${TRASH_DAYS} days'`);
+  for (const { id } of expired.rows) await purgeCancion(id);
 }
 
 // The project a song was forked from and the projects forked from it (any visibility: the route filters).
@@ -80,7 +134,7 @@ export async function getRelatedCanciones(id) {
     `SELECT c.id, c.nombre, c.autor, c.publica, c.parent_id, c.parent_version, c.updated_at,
             (SELECT MAX(numero) FROM versiones v WHERE v.cancion_id = c.id) AS version
      FROM canciones c
-     WHERE c.parent_id = $1 OR c.id = (SELECT parent_id FROM canciones WHERE id = $1)
+     WHERE (c.parent_id = $1 OR c.id = (SELECT parent_id FROM canciones WHERE id = $1)) AND c.borrada_at IS NULL
      ORDER BY c.updated_at DESC`,
     [id],
   );
@@ -176,7 +230,7 @@ export async function saveCancion(id, cancion, viewerId = null) {
 // Edges go from parent (desde) to fork (hacia).
 export async function getArbol(cancionId) {
   const [cancionResult, nodesResult] = await Promise.all([
-    db.query('SELECT id, nombre, autor FROM canciones WHERE id = $1', [cancionId]),
+    db.query('SELECT id, nombre, autor FROM canciones WHERE id = $1 AND borrada_at IS NULL', [cancionId]),
     db.query(
       `WITH RECURSIVE
          usadas(id) AS (SELECT DISTINCT pieza_id FROM bloques WHERE cancion_id = $1),

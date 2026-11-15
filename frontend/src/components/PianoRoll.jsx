@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { GitCompare, GitFork, Magnet, Minus, Play, Plus, Redo2, Save, Square, Undo2, ZoomIn, ZoomOut } from 'lucide-react'
+import { GitCompare, GitFork, Magnet, Minus, Pencil, Play, Plus, Redo2, Save, Square, Undo2, ZoomIn, ZoomOut } from 'lucide-react'
 import { useWidth } from '../useWidth.js'
 import { instrumentFor, previewNote } from '../audio.js'
 import { typeLabel } from './Browser.jsx'
@@ -28,7 +28,45 @@ const isBlack = (t) => NAMES[t % 12].includes('#')
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 
 // handle: the ↕ control that resizes the piano roll against the Playlist (App.jsx, usePaneSplit.js), first in the title bar.
-export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, onChange, onBars, onFork, onSave, onToggleDiff, onPreview, previewing, playhead, handle }) {
+/**
+ * The piece's name in the title bar: a text field its author can rename it in (Enter or click away saves, Esc cancels).
+ * Keyed by piece id + name, so it starts over when another piece opens or the new name is saved.
+ */
+function PieceName({ piece, onRename }) {
+  const [text, setText] = useState(piece.nombre)
+  const cancel = useRef(false)
+  if (!isMine(piece.autor) || !onRename) return <span className="dim">· {piece.nombre}</span>
+  const commit = () => {
+    const name = text.trim()
+    if (cancel.current || !name || name === piece.nombre) {
+      cancel.current = false
+      return setText(piece.nombre)
+    }
+    Promise.resolve(onRename(name)).then((ok) => ok || setText(piece.nombre)) // not saved: back to the stored name
+  }
+  return (
+    <label className="roll-rename" title="Rename this piece (Enter to save)">
+      <input
+        className="roll-name"
+        value={text}
+        maxLength={80}
+        aria-label="Piece name"
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur()
+          else if (e.key === 'Escape') {
+            cancel.current = true
+            e.currentTarget.blur()
+          }
+        }}
+      />
+      <Pencil size={11} aria-hidden="true" />
+    </label>
+  )
+}
+
+export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, onChange, onBars, onFork, onSave, onRename, onToggleDiff, onPreview, previewing, playhead, handle }) {
   const [measure, width] = useWidth()
   const [zoom, setZoom] = useState(1)
   const scroller = useRef(null)
@@ -300,8 +338,8 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
     <section className="panel roll" onContextMenu={(e) => e.preventDefault()}>
       <h2 className="title roll-title">
         {handle}
-        <span>
-          Piano roll <span className="dim">· {piece.nombre}</span>
+        <span className="roll-heading">
+          Piano roll <PieceName key={`${piece.id}/${piece.nombre}`} piece={piece} onRename={onRename} />
         </span>
         <span className="credit">
           <span className="code">{piece.id}</span> {typeLabel(piece.tipo)} by <b>{piece.autor}</b> · {piece.licencia}

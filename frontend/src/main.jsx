@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import { api, currentUser } from './api.js'
 import App from './App.jsx'
+import { confirmLeave } from './leave.js'
 import { Landing } from './Landing.jsx'
 import { Profile } from './Profile.jsx'
 import { cacheProfile } from './profile.js'
@@ -31,7 +32,12 @@ const decode = (s) => {
 function Root() {
   const [hash, setHash] = useState(location.hash)
   useEffect(() => {
-    const onHash = () => setHash(location.hash)
+    const onHash = (e) => {
+      // Leaving a project with unsaved changes (a link, Back / Forward): ask, and on "stay" put its address back.
+      const project = (url) => new URL(url).hash.match(/^#\/project\/([\w-]+)/)?.[1]
+      if (project(e.oldURL) && project(e.oldURL) !== project(e.newURL) && !confirmLeave()) return history.pushState(null, '', e.oldURL)
+      setHash(location.hash)
+    }
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])

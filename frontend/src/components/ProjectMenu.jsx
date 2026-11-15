@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, Check, Copy, Ellipsis, GitBranch, Globe, History, Lock, Shield } from 'lucide-react'
+import { ArrowLeft, Check, Copy, Ellipsis, GitBranch, Globe, History, Lock, Shield, Trash2 } from 'lucide-react'
 import { api } from '../api.js'
 
 /** Link that opens a project page (hash routes, so it works on any host). */
@@ -10,12 +10,13 @@ const projectUrl = (id) => `${location.origin}${location.pathname}#/project/${id
  *   Privacy  switch public / private and share the project's link (this component).
  *   Tree     opens the project with the Tree tab of its history window (onTree prop; disabled without it).
  *   History  opens the project with its version history (onHistory prop; disabled without it).
+ *   Delete   asks "Are you sure?" and moves the project to the trash (onDelete prop, called once it is there).
  *
- * Props: project (Cancion), onChange(patch) after the visibility is saved, onTree?(), onHistory?().
+ * Props: project (Cancion), onChange(patch) after the visibility is saved, onTree?(), onHistory?(), onDelete?().
  */
-export function ProjectMenu({ project, onChange, onTree, onHistory }) {
+export function ProjectMenu({ project, onChange, onTree, onHistory, onDelete }) {
   const [open, setOpen] = useState(false)
-  const [view, setView] = useState('menu') // 'menu' | 'privacy'
+  const [view, setView] = useState('menu') // 'menu' | 'privacy' | 'delete'
   const ref = useRef(null)
 
   // Close on a click outside or Escape.
@@ -42,7 +43,11 @@ export function ProjectMenu({ project, onChange, onTree, onHistory }) {
         <Ellipsis size={16} aria-hidden="true" />
       </button>
       {open && (
-        <div className="pmenu-pop panel" role={view === 'menu' ? 'menu' : 'dialog'} aria-label={view === 'menu' ? 'Project options' : 'Privacy'}>
+        <div
+          className="pmenu-pop panel"
+          role={view === 'menu' ? 'menu' : view === 'delete' ? 'alertdialog' : 'dialog'}
+          aria-label={view === 'menu' ? 'Project options' : view === 'delete' ? 'Delete project' : 'Privacy'}
+        >
           {view === 'menu' ? (
             <>
               <button role="menuitem" className="pmenu-item" autoFocus onClick={() => setView('privacy')}>
@@ -54,11 +59,69 @@ export function ProjectMenu({ project, onChange, onTree, onHistory }) {
               <button role="menuitem" className="pmenu-item" disabled={!onHistory} onClick={() => (setOpen(false), onHistory())} title={onHistory ? undefined : 'Coming soon'}>
                 <History size={14} aria-hidden="true" /> History {!onHistory && <span className="soon">soon</span>}
               </button>
+              {onDelete && (
+                <button role="menuitem" className="pmenu-item danger" onClick={() => setView('delete')}>
+                  <Trash2 size={14} aria-hidden="true" /> Delete
+                </button>
+              )}
             </>
+          ) : view === 'delete' ? (
+            <ConfirmDelete
+              project={project}
+              onBack={() => setView('menu')}
+              onDeleted={() => {
+                setOpen(false)
+                onDelete()
+              }}
+            />
           ) : (
             <Privacy project={project} onChange={onChange} onBack={() => setView('menu')} />
           )}
         </div>
+      )}
+    </div>
+  )
+}
+
+/** "Are you sure?" step before a project goes to the trash (restorable for 20 days from My projects). */
+function ConfirmDelete({ project, onBack, onDeleted }) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+  const remove = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      await api.deleteProject(project.id)
+      onDeleted()
+    } catch (e) {
+      setError(e.message || String(e))
+      setBusy(false)
+    }
+  }
+  return (
+    <div className="pmenu-privacy">
+      <div className="pmenu-head">
+        <button className="icon small" onClick={onBack} aria-label="Back to options">
+          <ArrowLeft size={13} />
+        </button>
+        <span>Delete project</span>
+      </div>
+      <p className="pmenu-ask">
+        Are you sure you want to delete <b>{project.nombre}</b>?
+      </p>
+      <p className="fine">It moves to the trash. You can restore it from My projects for 20 days; after that it is deleted forever.</p>
+      <div className="pmenu-confirm">
+        <button className="tbtn" onClick={onBack} disabled={busy} autoFocus>
+          Cancel
+        </button>
+        <button className="tbtn danger" onClick={remove} disabled={busy}>
+          <Trash2 size={13} aria-hidden="true" /> {busy ? 'Deleting…' : 'Delete'}
+        </button>
+      </div>
+      {error && (
+        <p className="auth-error" role="alert">
+          {error}
+        </p>
       )}
     </div>
   )

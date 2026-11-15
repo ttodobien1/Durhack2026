@@ -76,6 +76,7 @@ const db = new Map(SEED.map((p) => [p.id, structuredClone(p)]))
 let nextId = 100
 
 const notFound = (id) => Object.assign(new Error(`Piece ${id} not found`), { status: 404 })
+const projectNotFound = (id) => Object.assign(new Error(`Project ${id} not found`), { status: 404 })
 const get = (id) => {
   const p = db.get(id)
   if (!p) throw notFound(id)
@@ -143,7 +144,29 @@ export const mock = {
     return {}
   },
   // Same rule as the backend: public songs, or every song by `autor` (private ones included).
-  projects: (autor) => structuredClone(PROJECTS.filter((p) => (autor ? p.autor === autor : p.publica !== false))),
+  // Projects in the trash (`borrada` set) are left out, like on the backend.
+  projects: (autor) => structuredClone(PROJECTS.filter((p) => !p.borrada && (autor ? p.autor === autor : p.publica !== false))),
+  trash: (autor) => structuredClone(PROJECTS.filter((p) => p.borrada && p.autor === autor)),
+  trashProject(id) {
+    const p = PROJECTS.find((x) => x.id === id && !x.borrada)
+    if (!p) throw projectNotFound(id)
+    p.borrada = new Date().toISOString()
+    p.se_borra = new Date(Date.now() + 20 * 86400e3).toISOString()
+    return {}
+  },
+  restoreProject(id) {
+    const p = PROJECTS.find((x) => x.id === id && x.borrada)
+    if (!p) throw projectNotFound(id)
+    delete p.borrada
+    delete p.se_borra
+    return structuredClone(p)
+  },
+  purgeProject(id) {
+    const i = PROJECTS.findIndex((x) => x.id === id && x.borrada)
+    if (i < 0) throw projectNotFound(id)
+    PROJECTS.splice(i, 1)
+    return {}
+  },
   saveProject(song) {
     const saved = { ...structuredClone(song), id: song.id ?? `c-${nextId++}`, actualizado: new Date().toISOString(), etiquetas: song.etiquetas ?? [] }
     const i = PROJECTS.findIndex((x) => x.id === saved.id)
@@ -152,8 +175,8 @@ export const mock = {
     return structuredClone(saved)
   },
   project(id) {
-    const p = PROJECTS.find((x) => x.id === id)
-    if (!p) throw Object.assign(new Error(`Project ${id} not found`), { status: 404 })
+    const p = PROJECTS.find((x) => x.id === id && !x.borrada)
+    if (!p) throw projectNotFound(id)
     return structuredClone(p)
   },
   search({ q = '', tipo = '', tonalidad = '', estilo = '' } = {}) {
@@ -177,11 +200,12 @@ export const mock = {
     db.set(copy.id, copy)
     return structuredClone(copy)
   },
-  update(id, { notas, compases }) {
+  update(id, { notas, compases, nombre }) {
     const p = db.get(id)
     if (!p) throw notFound(id)
-    p.notas = structuredClone(notas)
+    if (notas) p.notas = structuredClone(notas)
     if (compases) p.compases = compases
+    if (nombre) p.nombre = nombre
     return structuredClone(p)
   },
   diff(id, otherId) {

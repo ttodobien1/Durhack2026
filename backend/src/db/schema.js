@@ -103,6 +103,10 @@ ALTER TABLE canciones ADD COLUMN IF NOT EXISTS parent_id TEXT REFERENCES cancion
 ALTER TABLE canciones ADD COLUMN IF NOT EXISTS parent_version INTEGER;
 CREATE INDEX IF NOT EXISTS idx_canciones_parent ON canciones (parent_id);
 
+-- Trash: deleting a song only sets borrada_at. It disappears from every list and route, its author can restore it
+-- from the trash for 20 days, and after that it is removed for good (repo/canciones.js, purgeExpiredCanciones).
+ALTER TABLE canciones ADD COLUMN IF NOT EXISTS borrada_at TIMESTAMPTZ;
+
 -- Versions of a song (v1, v2...), like commits: a full snapshot each time it is saved, with the notes of
 -- every piece it used at that moment, so any two versions can be compared later.
 CREATE TABLE IF NOT EXISTS versiones (

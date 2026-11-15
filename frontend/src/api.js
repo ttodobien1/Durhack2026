@@ -114,6 +114,12 @@ export const api = {
     id && id !== 'c-new'
       ? call(`/canciones/${id}`, { method: 'PUT', body: { ...song, mensaje } }, () => mock.saveProject({ id, ...song }))
       : call('/canciones', { method: 'POST', body: { ...song, mensaje } }, () => mock.saveProject(song)),
+  // Trash (cambios.md §13): deleting moves a project to the trash; its author can restore it for 20 days, then the
+  // server deletes it for good. Each project in `trash()` carries `borrada` and `se_borra` (ISO dates).
+  deleteProject: (id) => call(`/canciones/${id}`, { method: 'DELETE' }, () => mock.trashProject(id)),
+  trash: () => call('/canciones/papelera', undefined, () => mock.trash(ME)),
+  restoreProject: (id) => call(`/canciones/${id}/restaurar`, { method: 'POST' }, () => mock.restoreProject(id)),
+  purgeProject: (id) => call(`/canciones/papelera/${id}`, { method: 'DELETE' }, () => mock.purgeProject(id)),
 
   // Project history (cambios.md §9): versions, diff between versions, forks, merge and credits.
   // They need the backend: offline (mock) they resolve to null and the History window says so.
@@ -151,6 +157,11 @@ export const api = {
   saveNotes: (id, notas, compases) => {
     pieceCache.delete(id)
     return call(`/piezas/${id}`, { method: 'PUT', body: { notas, compases } }, () => mock.update(id, { notas, compases }))
+  },
+  // Only the author of a piece can rename it (PUT /piezas/:id with just `nombre`; notes, author and lineage stay).
+  renamePiece: (id, nombre) => {
+    pieceCache.delete(id)
+    return call(`/piezas/${id}`, { method: 'PUT', body: { nombre } }, () => mock.update(id, { nombre }))
   },
   // Changed piece first, original second: `nuevas` are notes only in `id`.
   diff: (id, original) => call(`/piezas/${id}/diff/${original}`, undefined, () => mock.diff(id, original)),

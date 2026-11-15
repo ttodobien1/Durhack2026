@@ -67,6 +67,10 @@ Errors always come back as `{ "error": "message" }` with the matching HTTP statu
 | GET | `/canciones/:id` | One song. *Extra* |
 | POST | `/canciones` | Create a song (contract 4.2 without `id`, plus optional `publica`, default `true`, `descripcion`, up to 300 characters, and `mensaje`). Every `pieza_id` must exist. With `parent_id` (+ optional `parent_version`) it is a fork of that project. Records v1. *Extra* |
 | PUT | `/canciones/:id` | Replace name, tempo, visibility (`publica`), tracks and blocks; optional `mensaje`. Records a new version when the music changed. `descripcion` is replaced when sent (`""` clears it) and kept when left out. *Extra* |
+| DELETE | `/canciones/:id` | Move the song to the trash (only its owner account; `204`). It disappears from every list and route. Seed and anonymous songs cannot be deleted. *Extra* |
+| GET | `/canciones/papelera` | The logged-in account's songs in the trash, newest first, each with `borrada` and `se_borra` (ISO dates; 20 days apart). *Extra* |
+| POST | `/canciones/:id/restaurar` | Take a song out of the trash; returns it. *Extra* |
+| DELETE | `/canciones/papelera/:id` | Delete a song in the trash for good (`204`): its tracks and versions go with it; projects forked from it stay, as originals. *Extra* |
 | GET | `/canciones/:id/arbol` | `{ nodos, aristas }` plus `cancion` and `resumen` (see below) |
 | POST | `/copiloto` | `{ "mensaje", "cancion": Cancion \| null }` → `{ "texto", "piezas_sugeridas" }` |
 
@@ -164,7 +168,7 @@ request if tables or columns are missing, so deploys never need a manual migrati
 
 - `piezas` (`publica`: false while only its author sees it): one row per piece. `estilo` and `notas` are JSONB columns (GIN index on `estilo`); `parent_id`
   references another piece (fork). `busqueda` is normalized text used by `?q=`. `usuario_id`: owner account.
-- `canciones`: name, author, tempo, `usuario_id` (owner account), `publica` (visibility like a GitHub repo: a private song is listed and opened only by its author's account), `descripcion` (optional, shown on project cards).
+- `canciones`: name, author, tempo, `usuario_id` (owner account), `publica` (visibility like a GitHub repo: a private song is listed and opened only by its author's account), `descripcion` (optional, shown on project cards), `borrada_at` (set while the song is in the trash; after 20 days the server deletes the row, lazily, from `GET /canciones` and `GET /canciones/papelera`, since Vercel has no cron).
 - `pistas`: tracks of a song (`cancion_id`, `posicion`, `instrumento`).
 - `bloques`: a piece placed on a track at bar `compas`.
 - `usuarios`: accounts (`nombre`, `email`, `password_hash`, `perfil` JSONB).

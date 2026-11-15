@@ -14,6 +14,7 @@ import { usePlayhead } from './usePlayhead.js'
 import { usePaneSplit } from './usePaneSplit.js'
 import { isMine, loadUser, recordContribution, useUser } from './profile.js'
 import { AuthDialog, Avatar, StemmaMark } from './Site.jsx'
+import { confirmLeave, leaveLink, useLeaveGuard } from './leave.js'
 
 
 const FILL_BARS = 8 // a piece added from the Browser repeats across the first 8 bars
@@ -199,6 +200,8 @@ export default function App({ projectId = 'new' }) {
   const [savingSong, setSavingSong] = useState(false)
   const [saveAs, setSaveAs] = useState(null) // null | { saved: null | Cancion } while the Save as window is open
   const songMine = song.id === 'c-new' || isMine(song.autor) // a new project is yours even if you logged in after starting it
+  // Unsaved project changes or piano roll edits: leaving the page (tab, Back, links, My projects) asks first.
+  useLeaveGuard((songDirty && song.pistas.length > 0) || Boolean(draft || draftBars))
 
   /** Saves with optional name/visibility changes (and `mensaje`, what changed). Throws on failure; returns the saved project. */
   const writeProject = async ({ mensaje, ...changes } = {}) => {
@@ -258,7 +261,7 @@ export default function App({ projectId = 'new' }) {
 
   const goMyProjects = () => {
     if (!signedIn('Log in to see your projects.', goMyProjects)) return
-    if (songDirty && song.pistas.length && !window.confirm('This project has unsaved changes. Leave without saving?')) return
+    if (!confirmLeave()) return
     location.hash = `#/u/${encodeURIComponent(loadUser().name)}?tab=projects`
   }
 
@@ -357,6 +360,19 @@ export default function App({ projectId = 'new' }) {
       if (bars !== selected.compases) ripple(selected.id, bars)
       setDraft(null)
       setDraftBars(null)
+      return true
+    } catch (e) {
+      fail(e)
+      return false
+    }
+  }
+
+  // Rename the selected piece (only its author; the title of the piano roll is editable for them). Returns true if saved.
+  const renamePiece = async (nombre) => {
+    if (!signedIn('Log in to rename this piece.', () => renamePiece(nombre))) return false
+    try {
+      const saved = await api.renamePiece(selected.id, nombre)
+      setPieces((p) => ({ ...p, [selected.id]: { ...p[selected.id], nombre: saved.nombre ?? nombre } }))
       return true
     } catch (e) {
       fail(e)
@@ -481,7 +497,7 @@ export default function App({ projectId = 'new' }) {
   return (
     <div className="app">
       <header className="toolbar">
-        <a className="brand" href="#/" title="Back to Stemma home">
+        <a className="brand" href="#/" onClick={leaveLink} title="Back to Stemma home">
           <StemmaMark />
           <span>Stemma</span>
         </a>
@@ -562,7 +578,7 @@ export default function App({ projectId = 'new' }) {
           <GitBranch size={14} /> History{song.version > 0 && <span className="ver-chip">v{song.version}</span>}
         </button>
         {user ? (
-          <a className="user-link" href={`#/u/${encodeURIComponent(user.name)}`} title="Your profile">
+          <a className="user-link" href={`#/u/${encodeURIComponent(user.name)}`} onClick={leaveLink} title="Your profile">
             <Avatar name={user.name} size={22} />
             <span>{user.name}</span>
           </a>
@@ -587,6 +603,7 @@ export default function App({ projectId = 'new' }) {
       )}
 
       <Browser
+        pieces={pieces}
         onResults={remember}
         onSelect={select}
         onAdd={addToSong}
@@ -629,6 +646,7 @@ export default function App({ projectId = 'new' }) {
           onChange={setDraft}
           onFork={fork}
           onSave={save}
+          onRename={renamePiece}
           onToggleDiff={toggleDiff}
           onPreview={() => previewPiece(selected, notes, bars)}
           previewing={playing === selected?.id}

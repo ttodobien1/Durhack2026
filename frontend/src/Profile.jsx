@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, BookOpen, Disc3, GitFork, Link, Lock, MapPin, Music2, Pencil, Play, Search, Square, Upload } from 'lucide-react'
+import { ArrowRight, BookOpen, Disc3, GitFork, Link, Lock, MapPin, Music2, Pencil, Play, RotateCcw, Search, Square, Trash2, Upload } from 'lucide-react'
 import { api, ME } from './api.js'
 import * as audio from './audio.js'
 import { Arrangement, withMeta } from './projectMeta.jsx'
@@ -67,6 +67,41 @@ export function Profile({ name }) {
       audio.stop()
     }
   }, [name, own])
+
+  // Your deleted projects (only on your own profile): restorable for 20 days, then the server removes them.
+  const [trash, setTrash] = useState([])
+  useEffect(() => {
+    if (!own || !user) return
+    let live = true
+    api.trash().then(
+      (list) => live && setTrash(list),
+      () => live && setTrash([]),
+    )
+    return () => {
+      live = false
+    }
+  }, [name, own, user])
+
+  const removeProject = (p) => {
+    setData((d) => ({ ...d, projects: d.projects.filter((x) => x.id !== p.id) }))
+    setTrash((t) => [{ ...p, borrada: new Date().toISOString(), se_borra: new Date(Date.now() + 20 * 86400e3).toISOString() }, ...t])
+  }
+  const restoreProject = async (id) => {
+    const song = await api.restoreProject(id)
+    // Its pieces may not be loaded yet (it was already in the trash when the page opened): fetch them for the card.
+    const used = [...new Set(song.pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id)))].filter((pid) => !data.byId[pid])
+    const found = await Promise.all(used.map((pid) => api.getPiece(pid).catch(() => null)))
+    setTrash((t) => t.filter((x) => x.id !== id))
+    setData((d) => {
+      const byId = { ...d.byId }
+      for (const p of found) if (p) byId[p.id] = p
+      return { ...d, byId, projects: [withMeta(song, byId), ...d.projects] }
+    })
+  }
+  const purgeProject = async (id) => {
+    await api.purgeProject(id)
+    setTrash((t) => t.filter((x) => x.id !== id))
+  }
 
   const preview = (p) => {
     if (playing === p.id) {
@@ -198,8 +233,10 @@ export function Profile({ name }) {
               name={name}
               own={own}
               onUpdate={(id, patch) => setData((d) => ({ ...d, projects: d.projects.map((p) => (p.id === id ? { ...p, ...patch } : p)) }))}
+              onDelete={removeProject}
             />
           )}
+          {data && !data.error && tab === 'projects' && own && user && trash.length > 0 && <Trash items={trash} onRestore={restoreProject} onPurge={purgeProject} />}
           {data && !data.error && tab === 'pieces' && <PieceList pieces={pieces} playing={playing} onPreview={preview} name={name} own={own} />}
         </section>
       </main>
@@ -330,7 +367,7 @@ export function Heatmap({ counts }) {
   )
 }
 
-function ProjectList({ projects, byId, name, own, onUpdate }) {
+function ProjectList({ projects, byId, name, own, onUpdate, onDelete }) {
   const [q, setQ] = useState('')
   const text = q.trim().toLowerCase()
   const shown = projects.filter((p) => !text || `${p.nombre} ${p.descripcion} ${p.etiquetas.join(' ')}`.toLowerCase().includes(text))
@@ -367,13 +404,14 @@ function ProjectList({ projects, byId, name, own, onUpdate }) {
                 <a className="tbtn" href={`#/project/${p.id}`}>
                   Open <ArrowRight size={13} />
                 </a>
-                {/* Options (Privacy / Tree / History) only for your own projects */}
+                {/* Options (Privacy / Tree / History / Delete) only for your own projects */}
                 {own && (
                   <ProjectMenu
                     project={p}
                     onChange={(patch) => onUpdate(p.id, patch)}
                     onTree={() => (location.hash = `#/project/${p.id}?history=tree`)}
                     onHistory={() => (location.hash = `#/project/${p.id}?history=versions`)}
+                    onDelete={() => onDelete(p)}
                   />
                 )}
               </div>
@@ -382,6 +420,78 @@ function ProjectList({ projects, byId, name, own, onUpdate }) {
         ))}
       </ul>
     </>
+  )
+}
+
+const shortDate = new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' })
+const daysLeft = (iso) => {
+  const days = Math.max(0, Math.ceil((new Date(iso) - Date.now()) / 86400e3))
+  return days === 0 ? 'today' : `in ${days} ${days === 1 ? 'day' : 'days'}`
+}
+
+/** Your deleted projects: restore one, or delete it forever right away (after an "are you sure?" step). */
+function Trash({ items, onRestore, onPurge }) {
+  const [asking, setAsking] = useState(null) // id of the project waiting for "Delete forever?"
+  const [busy, setBusy] = useState(null)
+  const [error, setError] = useState(null)
+  const run = async (id, action) => {
+    setBusy(id)
+    setError(null)
+    try {
+      await action(id)
+    } catch (e) {
+      setError(e.message || String(e))
+    } finally {
+      setBusy(null)
+      setAsking(null)
+    }
+  }
+  return (
+    <section className="trash">
+      <h2>
+        <Trash2 size={15} aria-hidden="true" /> Trash <span className="count">{items.length}</span>
+      </h2>
+      <p className="trash-note">Deleted projects stay here for 20 days, then they are deleted forever.</p>
+      <ul className="p-list">
+        {items.map((p) => (
+          <li key={p.id} className="trash-row">
+            <div className="trash-main">
+              <span className="trash-name">{p.nombre}</span> <Visibility song={p} />
+              <div className="trash-meta">
+                Deleted {shortDate.format(new Date(p.borrada))} · deleted forever {daysLeft(p.se_borra)}
+              </div>
+            </div>
+            <div className="trash-actions">
+              {asking === p.id ? (
+                <>
+                  <span className="trash-ask">Delete forever? This cannot be undone.</span>
+                  <button className="tbtn" onClick={() => setAsking(null)} disabled={busy === p.id} autoFocus>
+                    Cancel
+                  </button>
+                  <button className="tbtn danger" onClick={() => run(p.id, onPurge)} disabled={busy === p.id}>
+                    <Trash2 size={13} aria-hidden="true" /> {busy === p.id ? 'Deleting…' : 'Delete forever'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button className="tbtn" onClick={() => run(p.id, onRestore)} disabled={busy === p.id}>
+                    <RotateCcw size={13} aria-hidden="true" /> {busy === p.id ? 'Restoring…' : 'Restore'}
+                  </button>
+                  <button className="tbtn" onClick={() => setAsking(p.id)} disabled={busy === p.id} aria-label={`Delete ${p.nombre} forever`}>
+                    <Trash2 size={13} aria-hidden="true" /> Delete forever
+                  </button>
+                </>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+      {error && (
+        <p className="auth-error" role="alert">
+          {error}
+        </p>
+      )}
+    </section>
   )
 }
 
