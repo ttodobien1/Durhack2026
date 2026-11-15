@@ -7,6 +7,7 @@ import { Avatar, SiteBar } from './Site.jsx'
 import { ACCENTS, authorsFor, contributions, loadProfile, syncProfile, useUser } from './profile.js'
 import { renderMarkdown } from './markdown.js'
 import { typeLabel } from './components/Browser.jsx'
+import { ProjectMenu } from './components/ProjectMenu.jsx'
 import './profile.css'
 
 /** Website as typed in settings, made safe to link: only http(s). */
@@ -178,7 +179,15 @@ export function Profile({ name }) {
             </>
           )}
 
-          {data && !data.error && tab === 'projects' && <ProjectList projects={projects} byId={data.byId} name={name} own={own} />}
+          {data && !data.error && tab === 'projects' && (
+            <ProjectList
+              projects={projects}
+              byId={data.byId}
+              name={name}
+              own={own}
+              onUpdate={(id, patch) => setData((d) => ({ ...d, projects: d.projects.map((p) => (p.id === id ? { ...p, ...patch } : p)) }))}
+            />
+          )}
           {data && !data.error && tab === 'pieces' && <PieceList pieces={pieces} forksOf={data.forksOf} playing={playing} onPreview={preview} name={name} own={own} />}
         </section>
       </main>
@@ -307,7 +316,7 @@ export function Heatmap({ counts }) {
   )
 }
 
-function ProjectList({ projects, byId, name, own }) {
+function ProjectList({ projects, byId, name, own, onUpdate }) {
   const [q, setQ] = useState('')
   const text = q.trim().toLowerCase()
   const shown = projects.filter((p) => !text || `${p.nombre} ${p.descripcion} ${p.etiquetas.join(' ')}`.toLowerCase().includes(text))
@@ -344,6 +353,8 @@ function ProjectList({ projects, byId, name, own }) {
                 <a className="tbtn" href={`#/project/${p.id}`}>
                   Open <ArrowRight size={13} />
                 </a>
+                {/* Options (Privacy / Tree / History) only for your own projects */}
+                {own && <ProjectMenu project={p} onChange={(patch) => onUpdate(p.id, patch)} />}
               </div>
             </div>
           </li>
