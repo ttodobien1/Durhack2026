@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { FolderOpen, Globe, GitBranch, Lock, Pause, Play, Save, Square, Volume2, VolumeX } from 'lucide-react'
+import { ChevronsUpDown, FolderOpen, Globe, GitBranch, Lock, Pause, Play, Save, Square, Volume2, VolumeX } from 'lucide-react'
 import { api, isMock, ME } from './api.js'
 import * as audio from './audio.js'
 import { Browser } from './components/Browser.jsx'
@@ -11,6 +11,7 @@ import { History } from './components/History.jsx'
 import { NewPieceDialog } from './components/NewPieceDialog.jsx'
 import { SaveDialog } from './components/SaveDialog.jsx'
 import { usePlayhead } from './usePlayhead.js'
+import { usePaneSplit } from './usePaneSplit.js'
 import { isMine, loadUser, recordContribution, useUser } from './profile.js'
 import { AuthDialog, Avatar, StemmaMark } from './Site.jsx'
 
@@ -469,6 +470,13 @@ export default function App({ projectId = 'new' }) {
   )
 
   const songPos = playing && playing !== 'song' ? null : beat // song playhead, hidden while a piece previews
+  // Playlist / piano roll split: the ↕ handle in the piano roll's title bar moves it (usePaneSplit.js).
+  const pane = usePaneSplit()
+  const paneHandle = (
+    <span className={`pane-handle ${pane.maximized ? 'max' : ''}`} {...pane.handleProps}>
+      <ChevronsUpDown size={14} aria-hidden="true" />
+    </span>
+  )
 
   return (
     <div className="app">
@@ -580,7 +588,7 @@ export default function App({ projectId = 'new' }) {
 
       <Browser onResults={remember} onSelect={select} onAdd={addToSong} onPreview={previewPiece} playing={playing} selectedId={selectedId} fail={fail} />
 
-      <main className="center">
+      <main className={`center ${pane.className}`} ref={pane.ref} style={pane.style}>
         <Playlist
           song={song}
           pieces={pieces}
@@ -598,7 +606,9 @@ export default function App({ projectId = 'new' }) {
           onNewPiece={startNewPiece}
           playhead={songPos}
         />
+        <div className="pane-strip" {...pane.stripProps} />
         <PianoRoll
+          handle={paneHandle}
           piece={selected}
           parent={selected?.parent_id ? pieces[selected.parent_id] : null}
           notes={notes}

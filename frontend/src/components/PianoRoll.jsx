@@ -27,7 +27,8 @@ export const noteName = (t) => `${NAMES[t % 12]}${Math.floor(t / 12) - 1}`
 const isBlack = (t) => NAMES[t % 12].includes('#')
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 
-export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, onChange, onBars, onFork, onSave, onToggleDiff, onPreview, previewing, playhead }) {
+// handle: the ↕ control that resizes the piano roll against the Playlist (App.jsx, usePaneSplit.js), first in the title bar.
+export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, onChange, onBars, onFork, onSave, onToggleDiff, onPreview, previewing, playhead, handle }) {
   const [measure, width] = useWidth()
   const [zoom, setZoom] = useState(1)
   const scroller = useRef(null)
@@ -158,7 +159,10 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
   if (!piece)
     return (
       <section className="panel roll" onContextMenu={(e) => e.preventDefault()}>
-        <h2 className="title">Piano roll</h2>
+        <h2 className="title">
+          {handle}
+          Piano roll
+        </h2>
         <div className="empty roll-empty">Pick a piece in the Browser or Playlist to see its notes, then fork it to edit your own copy.</div>
       </section>
     )
@@ -295,6 +299,7 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
   return (
     <section className="panel roll" onContextMenu={(e) => e.preventDefault()}>
       <h2 className="title roll-title">
+        {handle}
         <span>
           Piano roll <span className="dim">· {piece.nombre}</span>
         </span>

@@ -21,6 +21,7 @@ node src/markdown.test.js
   - **Merge**: bring in the changes of a fork (or of the original) with conflicts to resolve and harmonic clash warnings.
   - **Credits**: who wrote each note of the song, forks included.
 - `#/u/<name>` profile (`src/Profile.jsx`): README, pinned projects, contribution graph, projects and pieces tabs.
+- Project page layout: the **↕** handle in the piano roll's title bar (or the strip between Playlist and piano roll) moves the split like VS Code's panel: up until the piano roll takes the column, down until only its title bar is left. Double-click (or Enter) toggles maximized / normal; arrow keys, Home and End also work. The size is remembered in this browser (`src/usePaneSplit.js`). Narrow screens keep the stacked layout.
 - Playlist: the **+** on a track, **+ New piece** in its title bar, or the **+ Add track** row under the tracks (pick an instrument first) opens `components/NewPieceDialog.jsx` and creates an empty piece of your own (`POST /piezas` with `publica: false`, private until it is in a public project) that opens in the piano roll. Editing a beat offers a basic drum kit to draw on.
 - `#/upload` split a MIDI song into loops (`src/split.js`, same rules as `data/scripts` 04/05/08) and publish the chosen ones with `POST /piezas`.
 - `#/settings` profile settings (`src/Settings.jsx`): name, bio, picture, accent colour, README, pins.
