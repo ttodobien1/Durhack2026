@@ -62,12 +62,8 @@ it needs the production database, the keys and one backfill.
    - The free tier allows about 100 texts a minute. The script waits on 429s by itself, so about 900 pieces take
      about 10 minutes.
    - Only public pieces are sent to Google.
-5. **Serverless caveat (Vercel):**
-   - New or edited pieces are re-embedded "in the background" (`embedLater`). On Vercel, work left running after the
-     response can be frozen, so some of those embeddings may be lost.
-   - The fix for the demo: run `npm run embed` again after uploading pieces (it only embeds what changed).
-   - Better, if you have time: wrap the call in `waitUntil` from `@vercel/functions`.
-   - Event logging is already awaited, so it is safe.
+5. **Serverless caveat (Vercel): done.** `embedLater` now hands its work to the request's `waitUntil` (`6b2bdce`),
+   and event logging is awaited. If an embedding is still missing, re-run `npm run embed`: it only embeds what changed.
 6. **Smoke test production:**
    ```bash
    API=https://<backend>.vercel.app
