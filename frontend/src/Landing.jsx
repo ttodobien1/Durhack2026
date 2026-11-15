@@ -4,6 +4,7 @@ import { api } from './api.js'
 import * as audio from './audio.js'
 import { diffNotes } from './diff.js'
 import { SiteBar } from './Site.jsx'
+import { Arrangement, withMeta } from './projectMeta.jsx'
 import { useUser } from './profile.js'
 import { MiniNotes } from './components/Playlist.jsx'
 import './landing.css'
@@ -32,22 +33,38 @@ export function Landing() {
   }, [user?.name])
 
   useEffect(() => {
-    api.projects().then(async (list) => {
-      const ids = [...new Set(list.flatMap((p) => p.pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id))))]
-      const loaded = await Promise.all(ids.map((id) => api.getPiece(id).catch(() => null)))
-      const byId = Object.fromEntries(loaded.filter(Boolean).map((p) => [p.id, p]))
-      setPieces(byId)
-      setProjects(list.filter((p) => !OWNERLESS.has(p.autor)).map((p) => withMeta(p, byId)))
-      if (location.hash === '#explore') requestAnimationFrame(() => document.getElementById('explore')?.scrollIntoView()) // arrived from another page
-      // Hero: the first real fork in the library whose parent we can show.
-      for (const tipo of ['acordes', 'melodia', 'bajo']) {
+    let live = true
+    // The list shows as soon as it arrives; each project's tags, description and thumbnail fill in as its pieces load.
+    api.projects().then(
+      (list) => {
+        const shown = list.filter((p) => !OWNERLESS.has(p.autor))
+        setProjects(shown)
+        if (location.hash === '#explore') requestAnimationFrame(() => document.getElementById('explore')?.scrollIntoView()) // arrived from another page
+        const ids = [...new Set(shown.flatMap((p) => p.pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id))))]
+        const loaded = ids.map((id) => api.getPiece(id).then((p) => (live && setPieces((s) => ({ ...s, [p.id]: p })), p), () => null))
+        Promise.all(loaded).then((list) => live && showFork(list.filter(Boolean)))
+      },
+      (e) => setProjects([]) || console.error(e),
+    )
+    // Hero: a real fork and its parent. Usually a project already uses one (one small request for the parent);
+    // only otherwise search the library, smallest piece types first.
+    async function showFork(used) {
+      const fork = used.find((p) => p.parent_id)
+      const parent = fork && (await api.getPiece(fork.parent_id).catch(() => null))
+      if (parent) return live && setChain([parent, fork])
+      for (const tipo of ['melodia', 'bajo', 'acordes']) {
         const found = await api.search({ tipo }).catch(() => [])
-        const fork = found.find((x) => x.parent_id && found.some((y) => y.id === x.parent_id))
-        if (fork) return setChain([found.find((y) => y.id === fork.parent_id), fork])
+        const f = found.find((x) => x.parent_id && found.some((y) => y.id === x.parent_id))
+        if (f) return live && setChain([found.find((y) => y.id === f.parent_id), f])
       }
-    }, (e) => setProjects([]) || console.error(e))
-    return () => audio.stop()
+    }
+    return () => {
+      live = false
+      audio.stop()
+    }
   }, [])
+
+  const explore = useMemo(() => projects && projects.map((p) => withMeta(p, pieces)), [projects, pieces])
 
   const preview = (project) => {
     if (playing === project.id) {
@@ -104,7 +121,7 @@ export function Landing() {
           ))}
         </ol>
 
-        <Explore projects={projects} pieces={pieces} playing={playing} onPreview={preview} />
+        <Explore projects={explore} pieces={pieces} playing={playing} onPreview={preview} />
       </main>
 
       <footer className="site-foot">
@@ -153,17 +170,6 @@ function YourProjects({ name, projects }) {
   )
 }
 
-/** Songs from the backend carry only contract fields: derive tags and a description from their pieces. */
-export function withMeta(p, pieces) {
-  const used = [...new Set(p.pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id)))].map((id) => pieces[id]).filter(Boolean)
-  const tags = [...new Set(used.flatMap((x) => [...(x.estilo ?? []), x.tonalidad && `${x.tonalidad.toLowerCase()}`]).filter(Boolean))]
-  const names = used.map((x) => x.nombre)
-  return {
-    ...p,
-    etiquetas: p.etiquetas?.length ? p.etiquetas : tags,
-    descripcion: p.descripcion ?? (names.length ? `Built from ${names.slice(0, 3).join(', ')}${names.length > 3 ? ` and ${names.length - 3} more` : ''}.` : 'An empty project.'),
-  }
-}
 
 /** A real lineage from the library ending in an example fork by you, with its actual diff counts. */
 function LineageDemo({ chain }) {
@@ -315,18 +321,3 @@ function Explore({ projects, pieces, playing, onPreview }) {
   )
 }
 
-export function Arrangement({ song, pieces }) {
-  const bars = Math.max(8, ...song.pistas.flatMap((t) => t.bloques.map((b) => b.compas + (pieces[b.pieza_id]?.compases ?? 0))))
-  return (
-    <div className="arr" aria-hidden="true">
-      {song.pistas.map((t, i) => (
-        <div key={i} className="arr-lane">
-          {t.bloques.map((b, j) => {
-            const p = pieces[b.pieza_id]
-            return p && <i key={j} className={`t-${p.tipo}`} style={{ left: `${(b.compas / bars) * 100}%`, width: `calc(${(p.compases / bars) * 100}% - 2px)` }} />
-          })}
-        </div>
-      ))}
-    </div>
-  )
-}

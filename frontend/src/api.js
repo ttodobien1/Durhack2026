@@ -42,6 +42,8 @@ function setSession(next) {
   for (const fn of listeners) fn(currentUser())
 }
 
+// shortcut: another person's edit to a piece shows up here after a reload; fine for single-session demos.
+const pieceCache = new Map() // piece id -> Promise<Pieza>
 let usingMock = false
 export const isMock = () => usingMock
 
@@ -117,9 +119,16 @@ export const api = {
   },
   // New original piece (the upload page): POST /piezas, which already exists in the backend.
   createPiece: (pieza) => call('/piezas', { method: 'POST', body: pieza }, () => mock.create(pieza)),
-  getPiece: (id) => call(`/piezas/${id}`, undefined, () => mock.get(id)),
+  // Cached for the visit: the landing, profile and project pages ask for the same pieces again and again.
+  getPiece: (id) => {
+    if (!pieceCache.has(id)) pieceCache.set(id, call(`/piezas/${id}`, undefined, () => mock.get(id)).catch((e) => (pieceCache.delete(id), Promise.reject(e))))
+    return pieceCache.get(id).then((p) => structuredClone(p)) // callers may change their copy
+  },
   fork: (id, autor) => call(`/piezas/${id}/fork`, { method: 'POST', body: { autor } }, () => mock.fork(id, { autor })),
-  saveNotes: (id, notas, compases) => call(`/piezas/${id}`, { method: 'PUT', body: { notas, compases } }, () => mock.update(id, { notas, compases })),
+  saveNotes: (id, notas, compases) => {
+    pieceCache.delete(id)
+    return call(`/piezas/${id}`, { method: 'PUT', body: { notas, compases } }, () => mock.update(id, { notas, compases }))
+  },
   // Changed piece first, original second: `nuevas` are notes only in `id`.
   diff: (id, original) => call(`/piezas/${id}/diff/${original}`, undefined, () => mock.diff(id, original)),
   copilot: (mensaje, cancion) =>

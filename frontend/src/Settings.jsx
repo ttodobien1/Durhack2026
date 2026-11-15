@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowRight, Check, Trash2, Upload, User } from 'lucide-react'
 import { api } from './api.js'
 import { AuthDialog, Avatar, SiteBar } from './Site.jsx'
-import { ACCENTS, authorsFor, loadProfile, saveProfile, syncProfile, useUser } from './profile.js'
+import { ACCENTS, authorsFor, fetchProfile, loadProfile, saveProfile, useUser } from './profile.js'
 import { renderMarkdown } from './markdown.js'
 import './profile.css'
 
@@ -29,6 +29,7 @@ export function Settings() {
   const [user, setUser] = useUser()
   const name = user?.name
   const [form, setForm] = useState(() => name && loadProfile(name))
+  const touched = useRef(false) // set on the first edit, so the server copy arriving late cannot overwrite it
   const [projects, setProjects] = useState([])
   const [status, setStatus] = useState(null) // { ok, text }
   const [preview, setPreview] = useState(false)
@@ -36,12 +37,14 @@ export function Settings() {
 
   useEffect(() => {
     setForm(name && loadProfile(name))
+    touched.current = false
     if (!name) return
     // Your private projects are listed too: the backend includes them because you are the author asking.
     Promise.all(authorsFor(name).map((a) => api.projects(a))).then((lists) => setProjects(lists.flat()), () => setProjects([]))
     // The saved profile lives on the backend: load it before editing so saving never overwrites it with blanks.
     let live = true
-    syncProfile(name).then((changed) => live && changed && setForm(loadProfile(name)))
+    // Never replace what you already started typing.
+    fetchProfile(name).then((remote) => live && remote && !touched.current && setForm(remote))
     return () => {
       live = false
     }
@@ -72,6 +75,7 @@ export function Settings() {
     )
 
   const update = (patch) => {
+    touched.current = true
     setForm({ ...form, ...patch })
     setStatus(null)
   }

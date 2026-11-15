@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { LogOut, Settings, X } from 'lucide-react'
 import { api } from './api.js'
-import { StemmaMark } from './App.jsx'
 import { cacheProfile, loadProfile } from './profile.js'
 import './landing.css'
 
@@ -150,5 +149,16 @@ export function AuthDialog({ mode, onMode, onClose, onDone, reason }) {
         </div>
       </form>
     </div>
+  )
+}
+
+export function StemmaMark() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+      <path d="M5 3v8a4 4 0 0 0 4 4h2M5 11a4 4 0 0 1 4-4h4" fill="none" stroke="currentColor" strokeWidth="2" />
+      <circle cx="5" cy="3" r="2" fill="currentColor" />
+      <circle cx="15" cy="7" r="2.5" fill="var(--orange)" />
+      <circle cx="13" cy="15" r="2.5" fill="var(--note)" />
+    </svg>
   )
 }

@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { ArrowRight, BookOpen, Disc3, GitFork, Link, Lock, MapPin, Music2, Pencil, Play, Search, Square, Upload } from 'lucide-react'
 import { api, ME } from './api.js'
 import * as audio from './audio.js'
-import { Arrangement, withMeta } from './Landing.jsx'
+import { Arrangement, withMeta } from './projectMeta.jsx'
 import { Avatar, SiteBar } from './Site.jsx'
-import { ACCENTS, authorsFor, contributions, loadProfile, syncProfile, useUser } from './profile.js'
+import { ACCENTS, authorsFor, contributions, fetchProfile, loadProfile, useUser } from './profile.js'
 import { renderMarkdown } from './markdown.js'
 import { typeLabel } from './components/Browser.jsx'
 import './profile.css'
@@ -15,47 +15,53 @@ export const safeUrl = (url) => (/^https?:\/\//i.test(url) ? url : `https://${ur
 export function Profile({ name }) {
   const [user, setUser] = useUser()
   const own = (user?.name ?? ME) === name
-  const profile = loadProfile(name)
+  // Shown at once from this browser's copy, then replaced by the backend's version (the source of truth).
+  const [profile, setProfile] = useState(() => loadProfile(name))
   const [tab, setTab] = useState('overview')
-  const [data, setData] = useState(null) // { pieces, projects, byId, forksOf, usedBy } | { error }
+  const [data, setData] = useState(null) // { pieces, projects, byId, usedBy } | { error }
   const [playing, setPlaying] = useState(null)
 
   useEffect(() => {
-    const authors = authorsFor(name)
-    // Everyone sees public projects; on your own profile your private ones are added, like GitHub.
-    const ownSongs = own ? Promise.all(authors.map((a) => api.projects(a))).then((lists) => lists.flat()) : []
-    Promise.all([api.search({}), api.projects(), ownSongs]).then(
-      async ([all, publicSongs, mine]) => {
-        const songs = [...new Map([...publicSongs, ...mine].map((s) => [s.id, s])).values()]
-        const byId = Object.fromEntries(all.map((p) => [p.id, p]))
-        const missing = [...new Set(songs.flatMap((s) => s.pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id))))].filter((id) => !byId[id])
-        for (const p of await Promise.all(missing.map((id) => api.getPiece(id).catch(() => null)))) if (p) byId[p.id] = p
-        const pieces = Object.values(byId).filter((p) => authors.includes(p.autor))
-        const ids = new Set(pieces.map((p) => p.id))
-        const forksOf = {}
-        for (const p of Object.values(byId)) if (p.parent_id) forksOf[p.parent_id] = (forksOf[p.parent_id] ?? 0) + 1
-        setData({
-          pieces,
-          byId,
-          forksOf,
-          projects: songs.filter((s) => authors.includes(s.autor)).map((s) => withMeta(s, byId)),
-          usedBy: songs.filter((s) => !authors.includes(s.autor) && s.pistas.some((t) => t.bloques.some((b) => ids.has(b.pieza_id)))).length,
-        })
-      },
-      (e) => setData({ error: e.message }),
-    )
-    return () => audio.stop()
-  }, [name, own])
-
-  // The profile (bio, README, picture...) lives on the backend: refresh the browser copy, then re-render.
-  const [, setProfileVersion] = useState(0)
-  useEffect(() => {
     let live = true
-    syncProfile(name).then((changed) => live && changed && setProfileVersion((v) => v + 1))
+    fetchProfile(name).then((remote) => live && remote && setProfile(remote))
     return () => {
       live = false
     }
   }, [name])
+
+  // Only this person's pieces and projects: never the whole library (hundreds of pieces with all their notes).
+  useEffect(() => {
+    const authors = authorsFor(name)
+    let live = true
+    const unique = (list) => [...new Map(list.map((x) => [x.id, x])).values()]
+    // Everyone sees public projects; on your own profile your private ones are added, like GitHub.
+    const ownSongs = own ? Promise.all(authors.map((a) => api.projects(a))).then((lists) => lists.flat()) : []
+    const theirPieces = Promise.all(authors.map((a) => api.search({ autor: a }))).then((lists) => lists.flat().filter((p) => authors.includes(p.autor)))
+    Promise.all([theirPieces, api.projects(), ownSongs]).then(
+      async ([found, publicSongs, mine]) => {
+        const pieces = unique(found)
+        const songs = unique([...publicSongs, ...mine])
+        const projects = songs.filter((s) => authors.includes(s.autor))
+        const byId = Object.fromEntries(pieces.map((p) => [p.id, p]))
+        // Pieces their projects use (for descriptions and thumbnails); each is fetched once per visit (api.js cache).
+        const used = [...new Set(projects.flatMap((s) => s.pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id))))].filter((id) => !byId[id])
+        for (const p of await Promise.all(used.map((id) => api.getPiece(id).catch(() => null)))) if (p) byId[p.id] = p
+        const ids = new Set(pieces.map((p) => p.id))
+        if (!live) return
+        setData({
+          pieces,
+          byId,
+          projects: projects.map((s) => withMeta(s, byId)),
+          usedBy: songs.filter((s) => !authors.includes(s.autor) && s.pistas.some((t) => t.bloques.some((b) => ids.has(b.pieza_id)))).length,
+        })
+      },
+      (e) => live && setData({ error: e.message }),
+    )
+    return () => {
+      live = false
+      audio.stop()
+    }
+  }, [name, own])
 
   const preview = (p) => {
     if (playing === p.id) {
@@ -138,10 +144,11 @@ export function Profile({ name }) {
             ))}
           </nav>
 
-          {!data && <p className="p-empty">Loading {name}’s profile…</p>}
-          {data?.error && <p className="p-empty">Could not load this profile: {data.error}</p>}
+          {data?.error && <p className="p-empty">Could not load {name}’s projects and pieces: {data.error}</p>}
+          {!data && tab !== 'overview' && <p className="p-empty">Loading…</p>}
 
-          {data && !data.error && tab === 'overview' && (
+          {/* The README does not wait for projects and pieces: it is ready as soon as the profile is. */}
+          {tab === 'overview' && (
             <>
               {profile.readme ? (
                 <article className="panel readme">
@@ -169,13 +176,18 @@ export function Profile({ name }) {
                   </div>
                 )
               )}
-              <Pinned profile={profile} projects={projects} pieces={pieces} data={data} />
-              <Heatmap counts={counts} />
+              {data && !data.error && (
+                <>
+                  <Pinned profile={profile} projects={projects} pieces={pieces} data={data} />
+                  <Heatmap counts={counts} />
+                </>
+              )}
+              {!data && <p className="p-empty">Loading projects and pieces…</p>}
             </>
           )}
 
           {data && !data.error && tab === 'projects' && <ProjectList projects={projects} byId={data.byId} name={name} own={own} />}
-          {data && !data.error && tab === 'pieces' && <PieceList pieces={pieces} forksOf={data.forksOf} playing={playing} onPreview={preview} name={name} own={own} />}
+          {data && !data.error && tab === 'pieces' && <PieceList pieces={pieces} playing={playing} onPreview={preview} name={name} own={own} />}
         </section>
       </main>
     </div>
@@ -201,11 +213,11 @@ const pieceCount = (song) => new Set(song.pistas.flatMap((t) => t.bloques.map((b
 function Pinned({ profile, projects, pieces, data }) {
   const pinned = profile.pinned.map((id) => projects.find((p) => p.id === id)).filter(Boolean)
   const cards = pinned.length ? pinned : [...projects].sort((a, b) => pieceCount(b) - pieceCount(a)).slice(0, 6)
-  const popularPieces = cards.length ? [] : [...pieces].sort((a, b) => (data.forksOf[b.id] ?? 0) - (data.forksOf[a.id] ?? 0)).slice(0, 6)
+  const popularPieces = cards.length ? [] : pieces.slice(0, 6)
   if (!cards.length && !popularPieces.length) return null
   return (
     <section className="pinned">
-      <h2>{pinned.length ? 'Pinned' : cards.length ? 'Popular projects' : 'Popular pieces'}</h2>
+      <h2>{pinned.length ? 'Pinned' : cards.length ? 'Popular projects' : 'Pieces'}</h2>
       <ul>
         {cards.map((p) => (
           <li key={p.id} className="pin-card">
@@ -233,9 +245,11 @@ function Pinned({ profile, projects, pieces, data }) {
             </p>
             <div className={`pin-meta t-${p.tipo}`}>
               <i className="dot" aria-hidden="true" /> {p.licencia}
-              <span>
-                <GitFork size={13} aria-hidden="true" /> {data.forksOf[p.id] ?? 0}
-              </span>
+              {p.parent_id && (
+                <span>
+                  <GitFork size={13} aria-hidden="true" /> fork of {p.parent_id}
+                </span>
+              )}
             </div>
           </li>
         ))}
@@ -349,7 +363,7 @@ function ProjectList({ projects, byId, name, own }) {
   )
 }
 
-function PieceList({ pieces, forksOf, playing, onPreview, name, own }) {
+function PieceList({ pieces, playing, onPreview, name, own }) {
   const upload = own && (
     <a className="tbtn p-upload" href="#/upload">
       <Upload size={13} aria-hidden="true" /> Publish pieces from a MIDI song
@@ -383,7 +397,6 @@ function PieceList({ pieces, forksOf, playing, onPreview, name, own }) {
                   · <GitFork size={12} aria-hidden="true" /> forked from <span className="code">{p.parent_id}</span>
                 </>
               )}
-              {forksOf[p.id] > 0 && ` · forked ${forksOf[p.id]} ${forksOf[p.id] === 1 ? 'time' : 'times'}`}
             </div>
           </div>
         </li>

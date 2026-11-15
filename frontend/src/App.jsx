@@ -9,7 +9,7 @@ import { Copilot } from './components/Copilot.jsx'
 import { OriginTree } from './components/OriginTree.jsx'
 import { usePlayhead } from './usePlayhead.js'
 import { isMine, loadUser, recordContribution, useUser } from './profile.js'
-import { AuthDialog, Avatar } from './Site.jsx'
+import { AuthDialog, Avatar, StemmaMark } from './Site.jsx'
 
 
 const FILL_BARS = 8 // a piece added from the Browser repeats across the first 8 bars
@@ -472,16 +472,5 @@ export default function App({ projectId = 'new' }) {
 
       {treeOpen && <OriginTree song={song} loadPiece={loadPiece} onClose={() => setTreeOpen(false)} />}
     </div>
-  )
-}
-
-export function StemmaMark() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
-      <path d="M5 3v8a4 4 0 0 0 4 4h2M5 11a4 4 0 0 1 4-4h4" fill="none" stroke="currentColor" strokeWidth="2" />
-      <circle cx="5" cy="3" r="2" fill="currentColor" />
-      <circle cx="15" cy="7" r="2.5" fill="var(--orange)" />
-      <circle cx="13" cy="15" r="2.5" fill="var(--note)" />
-    </svg>
   )
 }

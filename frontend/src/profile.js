@@ -41,17 +41,20 @@ export async function saveProfile(name, profile) {
   cacheProfile(name, profile)
 }
 
-/** Downloads a user's public profile into the browser copy. Resolves true if it changed what loadProfile returns. */
-export async function syncProfile(name) {
+/**
+ * A user's profile from the backend (the source of truth), or null when there is none to show: no account, offline,
+ * or an empty server profile (then the browser copy, e.g. written before accounts existed, is kept). The browser
+ * copy is refreshed best-effort; a full storage never hides the server's version.
+ */
+export async function fetchProfile(name) {
   const remote = await api.getUser(name)
-  if (!remote?.perfil) return false
-  const before = JSON.stringify(loadProfile(name))
+  if (!remote?.perfil || !Object.keys(remote.perfil).length) return null
   try {
     cacheProfile(name, remote.perfil)
   } catch {
-    return false // storage full: keep showing the old copy
+    /* storage full: callers use the returned profile directly */
   }
-  return JSON.stringify(loadProfile(name)) !== before
+  return { ...emptyProfile, ...remote.perfil }
 }
 
 /** Made by the person using the app: ME is their username, or "you" (unsaved work) when signed out. */
