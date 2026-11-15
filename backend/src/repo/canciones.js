@@ -100,8 +100,16 @@ export async function listPapelera(usuarioId) {
   return loadCanciones({ trashOf: usuarioId });
 }
 
-export async function trashCancion(id) {
-  await db.query('UPDATE canciones SET borrada_at = now() WHERE id = $1 AND borrada_at IS NULL', [id]);
+// Moves a song to the trash. A song with no owner account (saved before accounts, or signed out) becomes the
+// deleting account's, so it shows in that account's trash; one authored "you" (signed out) is credited to it too.
+export async function trashCancion(id, usuario) {
+  await db.query(
+    `UPDATE canciones SET borrada_at = now(),
+       autor = CASE WHEN usuario_id IS NULL AND autor = 'you' THEN $3 ELSE autor END,
+       usuario_id = COALESCE(usuario_id, $2)
+     WHERE id = $1 AND borrada_at IS NULL`,
+    [id, usuario.id, usuario.nombre],
+  );
 }
 
 export async function restoreCancion(id) {

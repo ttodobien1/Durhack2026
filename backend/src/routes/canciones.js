@@ -62,18 +62,24 @@ router.get('/', async (req, res) => {
   res.json(await listCanciones(autor, Boolean(autor) && autor === req.usuario?.nombre));
 });
 
-// --- Trash: deleting a song moves it here; its author can restore it for 20 days, then it is gone for good ------
+// --- Trash: deleting a project (a song) moves it here; its author can restore it for 20 days, then it is gone -----
 
-// A song the logged-in account owns, in the trash (`trashed`) or not. Someone else's private song is a 404, like
-// everywhere else; seed and anonymous songs (no owner account) cannot be deleted.
+// Projects saved before accounts existed, or while signed out (autor "you"), have no owner account. My projects
+// lists them as yours when they carry your username or "you" (frontend profile.js, authorsFor), so you can delete
+// them too: trashing one makes it yours (trashCancion), so it shows in your trash and only you can restore it.
+const SIGNED_OUT_AUTOR = 'you';
+const isUnownedYours = (state, usuario) => !state.usuario_id && [usuario.nombre, SIGNED_OUT_AUTOR].includes(state.autor);
+
+// A project the logged-in account may delete, in the trash (`trashed`) or not. Someone else's private project is a
+// 404, like everywhere else.
 async function ownSongState(req, trashed) {
   const usuario = requireUsuario(req);
   const state = await getCancionState(req.params.id);
-  const mine = state?.usuario_id === usuario.id;
+  const mine = Boolean(state) && (state.usuario_id === usuario.id || isUnownedYours(state, usuario));
   if (!state || Boolean(state.borrada_at) !== trashed || (!mine && !state.publica)) {
-    throw notFound(trashed ? `Cancion not in the trash: ${req.params.id}` : `Cancion not found: ${req.params.id}`);
+    throw notFound(trashed ? `Project not in your trash: ${req.params.id}` : `Project not found: ${req.params.id}`);
   }
-  if (!mine) throw new HttpError(403, 'Only the author can delete this song');
+  if (!mine) throw new HttpError(403, `Only the author can delete this project (it is ${state.autor}'s)`);
   return state;
 }
 
@@ -97,10 +103,10 @@ router.post('/:id/restaurar', async (req, res) => {
   res.json(await restoreCancion(req.params.id));
 });
 
-// DELETE /canciones/:id  -> moves the song to the trash (only its author's account)
+// DELETE /canciones/:id  -> moves the project to the trash (its owner account, or its author if it has no owner)
 router.delete('/:id', async (req, res) => {
   await ownSongState(req, false);
-  await trashCancion(req.params.id);
+  await trashCancion(req.params.id, req.usuario);
   res.status(204).end();
 });
 

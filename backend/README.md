@@ -67,7 +67,7 @@ Errors always come back as `{ "error": "message" }` with the matching HTTP statu
 | GET | `/canciones/:id` | One song. *Extra* |
 | POST | `/canciones` | Create a song (contract 4.2 without `id`, plus optional `publica`, default `true`, `descripcion`, up to 300 characters, and `mensaje`). Every `pieza_id` must exist. With `parent_id` (+ optional `parent_version`) it is a fork of that project. Records v1. *Extra* |
 | PUT | `/canciones/:id` | Replace name, tempo, visibility (`publica`), tracks and blocks; optional `mensaje`. Records a new version when the music changed. `descripcion` is replaced when sent (`""` clears it) and kept when left out. *Extra* |
-| DELETE | `/canciones/:id` | Move the song to the trash (only its owner account; `204`). It disappears from every list and route. Seed and anonymous songs cannot be deleted. *Extra* |
+| DELETE | `/canciones/:id` | Move the song (project) to the trash (`204`). It disappears from every list and route. Allowed for its owner account and, for songs with no owner (saved before accounts existed or signed out), for the account whose username is the song's `autor` or when `autor` is `"you"`; trashing such a song makes that account its owner (and its author, if it was `"you"`). *Extra* |
 | GET | `/canciones/papelera` | The logged-in account's songs in the trash, newest first, each with `borrada` and `se_borra` (ISO dates; 20 days apart). *Extra* |
 | POST | `/canciones/:id/restaurar` | Take a song out of the trash; returns it. *Extra* |
 | DELETE | `/canciones/papelera/:id` | Delete a song in the trash for good (`204`): its tracks and versions go with it; projects forked from it stay, as originals. *Extra* |

@@ -253,7 +253,11 @@ repositorio:
   ahí se puede restaurar durante 20 días o borrarlo para siempre (con otra confirmación). A los 20 días el servidor lo
   borra solo. Las piezas del proyecto no se borran (son reutilizables); los proyectos que eran fork de él quedan como
   originales.
-- Rutas nuevas (solo la cuenta dueña; las canciones semilla y anónimas no se pueden borrar):
+- Quién puede borrar un proyecto: la cuenta dueña y, en los proyectos sin cuenta dueña (guardados antes de que
+  existieran las cuentas o sin sesión), la cuenta cuyo nombre de usuario es el `autor`, o cualquiera si el autor es
+  `"you"` (My projects ya los muestra como tuyos). Al borrar uno de esos, pasa a ser de tu cuenta (y a tu nombre, si
+  era `"you"`), para que aparezca en tu papelera y solo tú puedas restaurarlo. Los de otra persona dan 403.
+- Rutas nuevas (en el backend, un proyecto es una canción):
 
 | Método | Ruta | Qué hace |
 | --- | --- | --- |
