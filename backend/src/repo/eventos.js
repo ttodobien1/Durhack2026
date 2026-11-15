@@ -5,9 +5,12 @@
 import { db } from '../db/client.js';
 import { features } from '../db/features.js';
 
-/** Record one event. Fire-and-forget: logging never fails the request that caused it. */
+/**
+ * Record one event. Never rejects: logging never fails the request that caused it. Callers await it, because on
+ * Vercel (serverless) work left running after the response is sent can be frozen and lost.
+ */
 export function logEvent({ tipo, pieza_id = null, cancion_id = null, autor = null }) {
-  db.query('INSERT INTO eventos (tipo, pieza_id, cancion_id, autor) VALUES ($1, $2, $3, $4)', [tipo, pieza_id, cancion_id, autor]).catch((err) =>
+  return db.query('INSERT INTO eventos (tipo, pieza_id, cancion_id, autor) VALUES ($1, $2, $3, $4)', [tipo, pieza_id, cancion_id, autor]).catch((err) =>
     console.warn(`event ${tipo} not logged: ${err.message}`),
   );
 }

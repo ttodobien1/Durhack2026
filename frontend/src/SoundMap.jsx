@@ -91,6 +91,7 @@ export function SoundMap() {
     const piece = await api.getPiece(sel.id)
     const instrument = audio.instrumentFor(piece.tipo)
     audio.play({ events: piece.notas.map((n) => ({ ...n, instrument })), bpm: piece.tempo, lengthBeats: piece.compases * 4, loop: false, from: 0, onEnd: () => setPlaying(false) })
+    api.logPlay({ pieza_ids: [piece.id] })
     setPlaying(true)
   }
 

@@ -706,8 +706,19 @@ function CreditsTab({ song }) {
   if (cr.error) return <Failed error={cr.error} />
   if (!c) return <Loading />
   const writers = c.autores.filter((a) => a.notas > 0)
+  const plays = c.reproducciones_hoy ?? null // undefined from a server without the events table
+  const mine = writers.find((a) => isMine(a.autor))
   return (
     <div className="hist-pane">
+      {plays != null && (
+        <p className="credits-ledger">
+          {plays === 0
+            ? 'Nobody has played this song today yet. Each play counts every note for its author.'
+            : mine
+              ? <>Your notes were played <b>{(mine.notas_reproducidas_hoy ?? 0).toLocaleString()}</b> times today, in {plural(plays, 'play')} of this song.</>
+              : <>Played <b>{plural(plays, 'time')}</b> today: <b>{(c.total_notas * plays).toLocaleString()}</b> notes reached listeners, each credited to its author.</>}
+        </p>
+      )}
       <p className="credits-lead">
         This song plays <b>{c.total_notas}</b> notes written by <b>{plural(writers.length, 'author')}</b>. Each note is credited to whoever wrote
         it first: forking a piece keeps the original author’s notes theirs, and only what you add or move becomes yours.
@@ -731,6 +742,7 @@ function CreditsTab({ song }) {
                 </a>
                 <span className="dim">
                   {a.notas ? `${plural(a.notas, 'note')} · ${a.porcentaje}%` : 'no notes playing'}
+                  {a.notas_reproducidas_hoy > 0 && ` · ${a.notas_reproducidas_hoy.toLocaleString()} played today`}
                   {a.versiones > 0 && ` · saved ${plural(a.versiones, 'version')}`}
                   {a.merges > 0 && `, ${plural(a.merges, 'merge')}`}
                 </span>

@@ -139,6 +139,7 @@ export function Profile({ name }) {
     }
     const instrument = audio.instrumentFor(p.tipo)
     audio.play({ events: p.notas.map((n) => ({ ...n, instrument })), bpm: p.tempo, lengthBeats: p.compases * 4, loop: false, from: 0, onEnd: () => setPlaying(null) })
+    api.logPlay({ pieza_ids: [p.id] })
     setPlaying(p.id)
   }
 

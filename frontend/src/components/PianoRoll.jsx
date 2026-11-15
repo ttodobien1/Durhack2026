@@ -8,6 +8,7 @@ import { api } from '../api.js'
 import { colorMap } from '../authorColors.js'
 import './history.css'
 import { SimilarPieces } from './SimilarPieces.jsx'
+import { ActivitySpark } from './ActivitySpark.jsx'
 
 const ROW = 14
 const KEYS = 64
@@ -411,6 +412,7 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable: canEdit
         </span>
         <span className="credit">
           <span className="code">{piece.id}</span> {typeLabel(piece.tipo)} by <b>{piece.autor}</b> · {piece.licencia}
+          {piece.id && <ActivitySpark pieceId={piece.id} />}
           {parent && (
             <>
               {' '}

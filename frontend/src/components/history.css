@@ -114,6 +114,8 @@
 
 /* Credits */
 .credits-lead { margin: 0 0 10px; font-size: 13px; }
+.credits-ledger { margin: 0 0 10px; padding: 7px 10px; border-left: 3px solid var(--orange); border-radius: 2px; background: var(--well-2); font-size: 13px; }
+.credits-ledger b { color: var(--orange); }
 .share-bar { display: flex; height: 10px; margin-bottom: 14px; border-radius: 2em; overflow: hidden; background: var(--black-row); }
 .share-bar span { min-width: 3px; }
 .contributors { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }

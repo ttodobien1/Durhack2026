@@ -156,7 +156,17 @@ export const api = {
   createPiece: (pieza) => call('/piezas', { method: 'POST', body: pieza }, () => mock.create(pieza)),
   // Cached for the visit: the landing, profile and project pages ask for the same pieces again and again.
   // Musical fingerprints (backend lib/fingerprint.js). Offline (mock) there is nothing to compare with.
-  similar: (id) => call(`/piezas/${id}/parecidas?n=6`, undefined, () => []),
+  similar: (id, n = 6) => call(`/piezas/${id}/parecidas?n=${n}`, undefined, () => []),
+  // Plays and trends (cambios.md §18; a TimescaleDB hypertable on TigerData). Offline (mock) there is nothing to count.
+  /** Counts one play of a saved song ({ cancion_id }) or of pieces ({ pieza_ids }). Fire-and-forget: never throws. */
+  logPlay: (what) => {
+    if (usingMock) return
+    call('/eventos/reproduccion', { method: 'POST', body: what }, () => null).catch(() => {})
+  },
+  /** Public pieces most played and forked in the last 24 h: [{ ...Pieza, reproducciones, forks }]. Offline: []. */
+  trending: () => call('/piezas/tendencia', undefined, () => []).catch(() => []),
+  /** One piece's plays per hour over 24 h: { horas: [{ hora, reproducciones, forks }], total }. Offline: null. */
+  activity: (id) => call(`/piezas/${id}/actividad`, undefined, () => null).catch(() => null),
   /** "git blame" of one piece: { autores: [{ autor, notas, porcentaje }], notas: [{ ...nota, autor }] }. Offline: null. */
   blame: (id) => call(`/piezas/${id}/blame`, undefined, () => null),
   /** DJ Stemy explains a diff: { texto, hechos, fuente: "modelo" | "plantilla" }. Offline: null. */

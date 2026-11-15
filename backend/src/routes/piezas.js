@@ -128,7 +128,7 @@ router.post('/:id/fork', async (req, res) => {
   const nombre = typeof body.nombre === 'string' && body.nombre.trim() ? body.nombre.trim() : undefined;
   forgetFingerprints();
   const copy = await forkPieza(original, { autor, nombre, usuarioId: req.usuario?.id ?? null });
-  logEvent({ tipo: 'fork', pieza_id: original.id, autor });
+  await logEvent({ tipo: 'fork', pieza_id: original.id, autor });
   embedLater(copy.id);
   res.status(201).json(copy);
 });
@@ -152,7 +152,7 @@ router.put('/:id', async (req, res) => {
   }
   forgetFingerprints();
   const saved = Object.keys(changes).length ? await updatePieza(req.params.id, changes) : await getPieza(req.params.id);
-  if (changes.notas) logEvent({ tipo: 'guardado', pieza_id: req.params.id, autor: req.usuario?.nombre ?? null });
+  if (changes.notas) await logEvent({ tipo: 'guardado', pieza_id: req.params.id, autor: req.usuario?.nombre ?? null });
   embedLater(req.params.id); // re-embeds if its description changed; clears nothing (private pieces lose it in the repo)
   res.json(saved);
 });

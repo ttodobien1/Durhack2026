@@ -141,7 +141,14 @@ export default function App({ projectId = 'new' }) {
     audio.stop()
     setPlaying(null)
   }
-  const togglePlay = () => (playing === 'song' ? pause() : playSong())
+  // Each press of Play counts one play (Trending, Credits); reloading the loop after an edit does not.
+  const logSongPlay = () =>
+    api.logPlay(song.id !== 'c-new' ? { cancion_id: song.id } : { pieza_ids: [...new Set(song.pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id)))].slice(0, 50) })
+  const togglePlay = () => {
+    if (playing === 'song') return pause()
+    logSongPlay()
+    playSong()
+  }
   const seek = (b) => {
     if (playing && playing !== 'song') stop() // a piece preview owns the transport; take it back for the song
     audio.seek(Math.min(b, songBeats - 1))
@@ -157,6 +164,7 @@ export default function App({ projectId = 'new' }) {
       from: 0,
       onEnd: () => setPlaying(null),
     })
+    api.logPlay({ pieza_ids: [piece.id] })
     setPlaying(piece.id)
   }
 

@@ -125,6 +125,7 @@ export function Landing() {
     )
     const bars = Math.max(...project.pistas.flatMap((t) => t.bloques.map((b) => b.compas + (pieces[b.pieza_id]?.compases ?? 0))))
     audio.play({ events, bpm: project.tempo, lengthBeats: bars * 4, loop: false, from: 0, onEnd: () => setPlaying(null) })
+    api.logPlay({ cancion_id: project.id })
     setPlaying(project.id)
   }
   // One piece of the Library tab (same transport: starting one stops whatever was playing).
@@ -135,6 +136,7 @@ export function Landing() {
     }
     const instrument = audio.instrumentFor(piece.tipo)
     audio.play({ events: piece.notas.map((n) => ({ ...n, instrument })), bpm: piece.tempo || 96, lengthBeats: piece.compases * 4, loop: false, from: 0, onEnd: () => setPlaying(null) })
+    api.logPlay({ pieza_ids: [piece.id] })
     setPlaying(piece.id)
   }
 

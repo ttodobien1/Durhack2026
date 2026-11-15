@@ -458,3 +458,30 @@ el contrato no cambia.
   porcentajes y nombres. `colorMap` pasó de `History.jsx` a `frontend/src/authorColors.js`: el color de cada autor
   sale de su nombre, así es el mismo en Créditos y en el piano roll.
 
+
+## 18. Tiger Data (pgvector + hypertable) y búsqueda semántica con Gemini
+
+- **Backend** (Santiago, commit `fa1e114`):
+  - pgvector en TigerData y en PGlite:
+    - `piezas.huella`: la huella de 32 números.
+    - `piezas.embedding`: el embedding de Gemini, solo de piezas públicas.
+  - Parecidas con una consulta SQL indexada (HNSW).
+  - Tabla `eventos` de reproducciones, forks y guardados. En TigerData es hypertable, con el agregado continuo `eventos_hora`.
+  - Búsqueda híbrida en `GET /piezas?q=`: palabras + significado, unidas por *reciprocal rank fusion*. Si no hay clave, falla Gemini o tarda más de 1,5 s, queda solo por palabras.
+  - Rutas nuevas:
+    - `POST /eventos/reproduccion`
+    - `GET /piezas/tendencia`
+    - `GET /piezas/:id/actividad`
+    - `reproducciones_hoy` y `notas_reproducidas_hoy` en `GET /canciones/:id/creditos`.
+  - `npm run embed` hace el *backfill* de los embeddings.
+  - El contrato de `GET /piezas` no cambia; solo cambia el orden de los resultados.
+- **Ajuste (rol C):** los eventos de fork y guardado ahora se esperan con `await` antes de responder. En Vercel, lo que queda corriendo después de la respuesta se puede perder.
+- **Frontend (rol C):**
+  - Cada Play registra una reproducción: la canción guardada por `cancion_id` y las piezas por `pieza_ids`. Volver a cargar el loop al editar no cuenta.
+  - En la Library de la portada:
+    - Fila "Trending now", que se refresca cada 20 s.
+    - La búsqueda escrita (3 o más letras) también pregunta al servidor. Las piezas que no tienen ninguna de las palabras buscadas llevan la marca "by meaning".
+    - "More like this": la pieza elegida y las 23 que más se le parecen, con su %.
+  - En el encabezado del piano roll, un gráfico chico con las reproducciones por hora de las últimas 24 h.
+  - En History > Credits: "Your notes were played N times today".
+- **Pendiente para B (Chino):** activar las extensiones en Tiger, poner `GEMINI_API_KEY` en Vercel y correr `npm run embed`. Todo está en `BRIEF_B.md`.

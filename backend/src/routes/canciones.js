@@ -182,7 +182,7 @@ router.post('/', async (req, res) => {
   }
   const created = await createCancion(cancion, req.usuario?.id ?? null, fork);
   await recordVersion(created.id, { autor: cancion.autor, mensaje });
-  logEvent({ tipo: 'guardado', cancion_id: created.id, autor: cancion.autor });
+  await logEvent({ tipo: 'guardado', cancion_id: created.id, autor: cancion.autor });
   res.status(201).json(await getCancion(created.id));
 });
 
@@ -212,7 +212,7 @@ router.put('/:id', async (req, res) => {
   await ensureVersions(req.params.id); // songs from before versions existed keep their old state as v1
   await saveCancion(req.params.id, cancion, req.usuario?.id ?? null);
   await recordVersion(req.params.id, { autor: req.usuario?.nombre ?? owner.autor, mensaje });
-  logEvent({ tipo: 'guardado', cancion_id: req.params.id, autor: req.usuario?.nombre ?? owner.autor });
+  await logEvent({ tipo: 'guardado', cancion_id: req.params.id, autor: req.usuario?.nombre ?? owner.autor });
   res.json(await getCancion(req.params.id));
 });
 
