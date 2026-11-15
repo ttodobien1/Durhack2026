@@ -1,8 +1,18 @@
 // Humming -> notes, entirely in the browser (no audio ever leaves the page: only the resulting notes are sent).
 //   startHumRecorder()  records the microphone and reports the live level and pitch while you hum
 //   transcribe()        turns the recording into notes in contract 4.1 format (beats at the project tempo)
-// Pitch detection is YIN (de Cheveigné & Kawahara, 2002) on a downsampled signal; notes are split on silences,
-// "da-da" articulations and pitch changes, tuned to the singer's own pitch and snapped to a 16th-note grid.
+// Pitch detection is YIN (de Cheveigné & Kawahara, 2002) on a downsampled signal; the notes are then tuned to the
+// singer's own pitch and snapped to a 16th-note grid.
+//
+// The note tracker is deliberately calm, like the note stage of pYIN / Tony (an HMM with attack, stable and silent
+// states) and Spotify's Basic Pitch (separate onset and sustain thresholds, notes of at least ~128 ms):
+//   - hysteresis on pitch: a note goes on while the voice stays near its center; vibrato, wobbles and scoops do not
+//     end it. A new note needs a NEW pitch that is held for SETTLE_SECONDS; a slide between two notes is never held,
+//     so it is absorbed by the previous note instead of becoming notes of its own.
+//   - hysteresis on loudness: a note starts above a higher gate than the one it needs to keep going.
+//   - only a real "d" between two "da"s (a deep dip for DIP_SECONDS) or a real pause splits a note; a short pitch
+//     dropout inside a loud note is bridged.
+//   - notes shorter than the minimum are merged into the neighbour they touch, or dropped when isolated.
 
 const NAMES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
 export const noteName = (midi) => `${NAMES[((midi % 12) + 12) % 12]}${Math.floor(midi / 12) - 1}`
@@ -13,8 +23,21 @@ const MAX_HZ = 1000
 const HOP_SECONDS = 0.01
 const WINDOW_SECONDS = 0.045
 const GRID = 0.25 // beats: 16th notes
-const MIN_NOTE_SECONDS = 0.07
-const SHORT_SECONDS = 0.012
+const SHORT_SECONDS = 0.012 // window of the loudness used to spot the dip of a "d"
+
+// Note tracker (see the header).
+const SMOOTH_FRAMES = 7 // median filter on the pitch contour: 70 ms
+const ONSET_GRACE_SECONDS = 0.06 // the start of a note (a scoop up to the pitch) is never a pitch change
+const HOLD_SEMITONES = 0.8 // a note keeps going while the pitch stays this close to its center
+const SETTLE_SEMITONES = 0.5 // a new pitch is "held" while it stays this close to itself...
+const SETTLE_SECONDS = 0.09 // ...and it must be held this long to start a new note
+const BRIDGE_SECONDS = 0.08 // pitch dropouts shorter than this inside a loud note are bridged
+const DIP_RATIO = 0.3 // "da-da": loudness under 30% of the note's usual level...
+const DIP_SECONDS = 0.02 // ...for 20 ms re-articulates (splits) the note
+const ONSET_GATE = 1.6 // a note starts only this many times above the loudness gate (it then needs just the gate)
+const MIN_NOTE_SECONDS = 0.1 // an isolated note shorter than this is noise
+const MIN_TOUCHING_SECONDS = 0.13 // a note this short glued to another one is a slide: it joins its neighbour
+const TOUCH_SECONDS = 0.03 // closer than this, two notes are glued (no pause or "d" between them)
 
 const toMidi = (hz) => 69 + 12 * Math.log2(hz / 440)
 const median = (values) => {
@@ -92,19 +115,37 @@ function rms(data, start, size) {
   return Math.sqrt(sum / size)
 }
 
-/** Live reading of the last moment of sound: { level 0–1, midi | null }. */
+/** Live reading of the last moment of sound: { level 0–1, pitch (MIDI, float) | null }. */
 export function liveReading(samples, rate) {
   const { data, rate: r } = downsample(samples, rate)
   const size = Math.floor(WINDOW_SECONDS * r)
   const lagRoom = Math.ceil(r / MIN_HZ)
-  if (data.length < size + lagRoom) return { level: 0, midi: null }
+  if (data.length < size + lagRoom) return { level: 0, pitch: null }
   const start = data.length - size - lagRoom
   const level = rms(data, start, size + lagRoom)
-  const pitch = level > 0.01 ? yin(data, start, size, r) : null
-  return { level: Math.min(1, level * 6), midi: pitch ? Math.round(toMidi(pitch.hz)) : null }
+  const found = level > 0.01 ? yin(data, start, size, r) : null
+  return { level: Math.min(1, level * 6), pitch: found ? toMidi(found.hz) : null }
 }
 
-/** Pitch track: one frame every 10 ms with { time, rms, midi (float) | null }. */
+/**
+ * Steadies the live note name shown while recording: the median of the last readings, and the shown note only
+ * changes when the voice clearly moves to another one. Call it once per reading; returns a MIDI note or null.
+ */
+export function liveNoteTracker(size = 10) {
+  const recent = []
+  let shown = null
+  return (pitch) => {
+    recent.push(pitch)
+    if (recent.length > size) recent.shift()
+    const voiced = recent.filter((p) => p !== null)
+    if (voiced.length < recent.length * 0.6) return (shown = voiced.length ? shown : null)
+    const mid = median(voiced)
+    if (shown === null || Math.abs(mid - shown) > HOLD_SEMITONES) shown = Math.round(mid)
+    return shown
+  }
+}
+
+/** Pitch track: one frame every 10 ms with { time, rms, level, midi (float) | null }, plus the loudness gate. */
 function pitchTrack(samples, sampleRate) {
   const { data, rate } = downsample(samples, sampleRate)
   const size = Math.floor(WINDOW_SECONDS * rate)
@@ -117,7 +158,7 @@ function pitchTrack(samples, sampleRate) {
     const at = start + ((size - short) >> 1)
     frames.push({ time: start / rate, rms: rms(data, start, size), level: rms(data, at, short), start })
   }
-  if (!frames.length) return []
+  if (!frames.length) return { frames, gate: 0 }
   // Loudness gate relative to this recording: above the room noise, and not a whisper next to the loudest part.
   // Capped well below the peak, so humming with almost no pauses (no room noise to measure) still passes.
   const levels = frames.map((f) => f.rms)
@@ -127,69 +168,118 @@ function pitchTrack(samples, sampleRate) {
     const pitch = f.rms >= gate ? yin(data, f.start, size, rate) : null
     f.midi = pitch ? toMidi(pitch.hz) : null
   }
-  // Smooth with a 5-frame median and fix single octave jumps (a classic pitch-tracker error).
-  const smoothed = frames.map((f, i) => {
+  // Fix octave jumps (a classic pitch-tracker error), then a 70 ms median over the voiced neighbours: vibrato and
+  // jitter are flattened before any note decision is made.
+  const half = SMOOTH_FRAMES >> 1
+  const around = (i) => frames.slice(Math.max(0, i - half), i + half + 1).map((x) => x.midi).filter((m) => m !== null)
+  const unjumped = frames.map((f, i) => {
     if (f.midi === null) return null
-    const around = frames.slice(Math.max(0, i - 2), i + 3).map((x) => x.midi).filter((m) => m !== null)
-    const mid = median(around)
-    let m = f.midi
-    if (Math.abs(m - mid) > 9) m -= 12 * Math.round((m - mid) / 12)
-    return median([m, ...around.filter((x) => Math.abs(x - mid) <= 9)])
+    const mid = median(around(i))
+    return Math.abs(f.midi - mid) > 9 ? f.midi - 12 * Math.round((f.midi - mid) / 12) : f.midi
   })
+  frames.forEach((f, i) => (f.midi = unjumped[i]))
+  const smoothed = frames.map((f, i) => (f.midi === null ? null : median(around(i))))
   frames.forEach((f, i) => (f.midi = smoothed[i]))
-  return frames
+  return { frames, gate }
 }
 
-/** Splits the pitch track into notes: [{ start, end (seconds), midi (float), rms }]. */
-function segment(frames) {
+/** Splits the pitch track into notes: [{ start, end (seconds), midi (float), rms }]. See the header for the rules. */
+function segment({ frames, gate }) {
   const notes = []
-  let current = null
-  let gap = 0
-  let odd = [] // frames that left the current pitch, waiting to see if it is a real change
-  const finish = (endTime) => {
-    if (current && endTime - current.start >= MIN_NOTE_SECONDS && current.pitches.length >= 3) {
-      const settled = current.pitches.slice(Math.min(2, current.pitches.length >> 2)) // skip the attack glide
-      notes.push({ start: current.start, end: endTime, midi: median(settled), rms: current.peak })
+  let note = null // { start, end, pitches, levels, rms }
+  let candidate = null // { start, pitches }: a new pitch waiting to prove it is held
+  let gapFrames = 0 // unvoiced or quiet frames in a row inside the note
+  let quietFrames = 0 // of those, the quiet ones in a row ("d" of "da", or a pause)
+
+  const center = (n) => median(n.pitches.slice(Math.min(3, n.pitches.length >> 1)).slice(-30)) // follows slow drift
+  const usual = (n) => median(n.levels.slice(-30))
+  const close = () => {
+    if (note && note.pitches.length >= 3) {
+      // The note's pitch: the middle of it, without the scoop at the start or the fall at the end.
+      const p = note.pitches
+      const body = p.slice(Math.floor(p.length * 0.15), Math.max(Math.floor(p.length * 0.15) + 1, Math.ceil(p.length * 0.9)))
+      notes.push({ start: note.start, end: note.end, midi: median(body), rms: note.rms })
     }
-    current = null
-    odd = []
+    note = null
+    candidate = null
   }
+  const open = (start, pitches, f) => {
+    note = { start, end: f.time + HOP_SECONDS, pitches, levels: [f.level], rms: f.rms }
+  }
+
   for (const f of frames) {
-    // A dip in loudness inside a note ("da-da") counts as a gap, so repeated notes stay separate. A deep one splits
-    // the note even if it is very short.
-    const dip = current ? f.level / current.peakLevel : 1
-    const silent = f.midi === null || dip < 0.45
-    if (silent) {
-      gap++
-      if (current && (gap >= 2 || dip < 0.3)) finish(f.time - (gap - 1) * HOP_SECONDS)
-      continue
-    }
-    gap = 0
-    if (!current) {
-      current = { start: f.time, pitches: [f.midi], peak: f.rms, peakLevel: f.level }
-      continue
-    }
-    const ref = median(current.pitches.slice(-6))
-    if (Math.abs(f.midi - ref) > 0.75) {
-      odd.push(f)
-      if (odd.length >= 3) {
-        const moved = odd
-        finish(moved[0].time)
-        current = {
-          start: moved[0].time,
-          pitches: moved.map((x) => x.midi),
-          peak: Math.max(...moved.map((x) => x.rms)),
-          peakLevel: Math.max(...moved.map((x) => x.level)),
+    const quiet = note ? f.level < usual(note) * DIP_RATIO : false
+    if (f.midi === null || quiet) {
+      if (note) {
+        gapFrames++
+        quietFrames = quiet || f.rms < gate ? quietFrames + 1 : 0
+        // A pause or a "d" ends the note where the gap began; a short pitch dropout in a loud note is bridged.
+        if (quietFrames * HOP_SECONDS >= DIP_SECONDS || gapFrames * HOP_SECONDS >= BRIDGE_SECONDS) {
+          note.end = f.time - (gapFrames - 1) * HOP_SECONDS
+          close()
         }
       }
-    } else {
-      odd = []
-      current.pitches.push(f.midi)
-      current.peak = Math.max(current.peak, f.rms)
-      current.peakLevel = Math.max(current.peakLevel, f.level)
+      continue
+    }
+    gapFrames = 0
+    quietFrames = 0
+
+    if (!note) {
+      if (f.rms >= gate * ONSET_GATE) open(f.time, [f.midi], f)
+      continue
+    }
+    note.end = f.time + HOP_SECONDS
+    note.levels.push(f.level)
+    note.rms = Math.max(note.rms, f.rms)
+    if (f.time - note.start < ONSET_GRACE_SECONDS || Math.abs(f.midi - center(note)) <= HOLD_SEMITONES) {
+      note.pitches.push(f.midi)
+      candidate = null // a wobble that came back: still the same note
+      continue
+    }
+    // Away from the note: is it a new pitch being held, or just a slide / wobble?
+    if (candidate && Math.abs(f.midi - median(candidate.pitches)) <= SETTLE_SEMITONES) candidate.pitches.push(f.midi)
+    else candidate = { start: f.time, pitches: [f.midi] }
+    if (candidate.pitches.length * HOP_SECONDS >= SETTLE_SECONDS) {
+      const next = candidate
+      note.end = next.start
+      close()
+      open(next.start, next.pitches, f)
     }
   }
-  if (current) finish(frames[frames.length - 1].time + HOP_SECONDS)
+  close()
+  return tidy(notes)
+}
+
+/**
+ * Cleans the raw notes the way a person would: a very short note glued to a neighbour is part of a slide and joins
+ * the neighbour closest in pitch; a very short isolated note is noise and goes.
+ */
+function tidy(raw) {
+  const notes = raw.map((n) => ({ ...n }))
+  const length = (n) => n.end - n.start
+  let changed = true
+  while (changed) {
+    changed = false
+    for (let i = 0; i < notes.length; i++) {
+      const n = notes[i]
+      const prev = notes[i - 1]
+      const next = notes[i + 1]
+      const gluedPrev = prev && n.start - prev.end < TOUCH_SECONDS
+      const gluedNext = next && next.start - n.end < TOUCH_SECONDS
+      if ((gluedPrev || gluedNext) && length(n) < MIN_TOUCHING_SECONDS) {
+        const into =
+          gluedPrev && gluedNext ? (Math.abs(prev.midi - n.midi) <= Math.abs(next.midi - n.midi) ? prev : next) : gluedPrev ? prev : next
+        into.start = Math.min(into.start, n.start)
+        into.end = Math.max(into.end, n.end)
+        into.rms = Math.max(into.rms, n.rms)
+      } else if (!gluedPrev && !gluedNext && length(n) < MIN_NOTE_SECONDS) {
+        // isolated blip: dropped below
+      } else continue
+      notes.splice(i, 1)
+      changed = true
+      break
+    }
+  }
   return notes
 }
 
@@ -213,11 +303,12 @@ export function transcribe(samples, sampleRate, bpm = 96) {
   const tuning = Math.atan2(y, x) / (2 * Math.PI)
   const rounded = raw.map((n) => ({ ...n, tono: Math.round(n.midi - tuning) }))
 
-  // A pitch wobble can split one note in two with no gap: join them back.
+  // Two glued notes that round to the same pitch were one note with a wobble: join them back. Repeated notes that
+  // were articulated ("da-da", a pause) have a gap between them and stay separate.
   const joined = []
   for (const n of rounded) {
     const last = joined[joined.length - 1]
-    if (last && last.tono === n.tono && n.start - last.end < 0.015) last.end = n.end
+    if (last && last.tono === n.tono && n.start - last.end < TOUCH_SECONDS) last.end = n.end
     else joined.push({ ...n })
   }
 
@@ -311,10 +402,12 @@ export async function startHumRecorder({ onLive, maxSeconds = 15, onLimit } = {}
     }
     return out
   }
+  const liveNote = liveNoteTracker()
   const tick = () => {
     if (done) return
     const seconds = total / ctx.sampleRate
-    onLive?.({ ...liveReading(recent(), ctx.sampleRate), seconds })
+    const { level, pitch } = liveReading(recent(), ctx.sampleRate)
+    onLive?.({ level, midi: liveNote(pitch), seconds })
     if (seconds >= maxSeconds) onLimit?.()
     else raf = requestAnimationFrame(tick)
   }
