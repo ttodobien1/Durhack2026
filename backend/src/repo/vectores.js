@@ -76,9 +76,17 @@ export async function embedPublicPieces({ ids = null, log = () => {} } = {}) {
   return todo.length;
 }
 
+// On Vercel, work still running after the response can be frozen. The platform keeps the function alive for promises
+// handed to the request context's waitUntil (what `waitUntil` from @vercel/functions does, without its 25 packages).
+// Anywhere else (local Node) there is no such context and the promise simply runs on.
+function keepAlive(promise) {
+  const context = globalThis[Symbol.for('@vercel/request-context')]?.get?.();
+  context?.waitUntil?.(promise);
+}
+
 /** Re-embed one piece in the background after it is created or edited. Fail-soft: never fails the save. */
 export function embedLater(id) {
   if (!features.vectores || !process.env.GEMINI_API_KEY) return;
-  embedPublicPieces({ ids: [id] }).catch((err) => console.warn(`embedding of ${id} skipped: ${err.message}`));
+  keepAlive(embedPublicPieces({ ids: [id] }).catch((err) => console.warn(`embedding of ${id} skipped: ${err.message}`)));
 }
 
