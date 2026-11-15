@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ArrowRight, Lock, Play, Plus, Search, Square, X } from 'lucide-react'
+import { ArrowRight, Disc3, Library, Lock, Play, Plus, Search, Square, X } from 'lucide-react'
 import { api } from './api.js'
 import * as audio from './audio.js'
 import { diffNotes } from './diff.js'
@@ -8,6 +8,7 @@ import { Arrangement, withMeta } from './projectMeta.jsx'
 import { useUser } from './profile.js'
 import { MiniNotes } from './components/Playlist.jsx'
 import { FlowDemo } from './components/FlowDemos.jsx'
+import { PieceLibrary } from './components/PieceLibrary.jsx'
 import { exampleEdit } from './exampleEdit.js'
 import './landing.css'
 
@@ -96,6 +97,16 @@ export function Landing() {
     audio.play({ events, bpm: project.tempo, lengthBeats: bars * 4, loop: false, from: 0, onEnd: () => setPlaying(null) })
     setPlaying(project.id)
   }
+  // One piece of the Library tab (same transport: starting one stops whatever was playing).
+  const previewPiece = (piece) => {
+    if (playing === piece.id) {
+      audio.stop()
+      return setPlaying(null)
+    }
+    const instrument = audio.instrumentFor(piece.tipo)
+    audio.play({ events: piece.notas.map((n) => ({ ...n, instrument })), bpm: piece.tempo || 96, lengthBeats: piece.compases * 4, loop: false, from: 0, onEnd: () => setPlaying(null) })
+    setPlaying(piece.id)
+  }
 
   return (
     <div className="site">
@@ -139,7 +150,7 @@ export function Landing() {
           ))}
         </ol>
 
-        <Explore projects={explore} pieces={pieces} playing={playing} onPreview={preview} />
+        <Explore projects={explore} pieces={pieces} playing={playing} onPreview={preview} onPreviewPiece={previewPiece} onUser={setUser} />
       </main>
 
       <footer className="site-foot">
@@ -231,7 +242,9 @@ function LineageDemo({ chain }) {
   )
 }
 
-function Explore({ projects, pieces, playing, onPreview }) {
+// Two tabs: Public projects (the project list) and Library (every piece, PieceLibrary.jsx).
+function Explore({ projects, pieces, playing, onPreview, onPreviewPiece, onUser }) {
+  const [view, setView] = useState('projects') // 'projects' | 'library'
   const [q, setQ] = useState('')
   const [tags, setTags] = useState([])
   const [sort, setSort] = useState('updated')
@@ -256,81 +269,95 @@ function Explore({ projects, pieces, playing, onPreview }) {
 
   return (
     <section id="explore" className="explore panel">
-      <h2 className="title">
-        Public projects <span className="dim">· {projects ? `${shown.length} of ${projects.length}` : 'loading'}</span>
+      <h2 className="title explore-title">
+        <span className="explore-tabs" role="tablist" aria-label="Explore">
+          <button role="tab" aria-selected={view === 'projects'} className={view === 'projects' ? 'on' : ''} onClick={() => setView('projects')}>
+            <Disc3 size={14} aria-hidden="true" /> Public projects
+          </button>
+          <button role="tab" aria-selected={view === 'library'} className={view === 'library' ? 'on' : ''} onClick={() => setView('library')}>
+            <Library size={14} aria-hidden="true" /> Library
+          </button>
+        </span>
+        {view === 'projects' && <span className="dim">{projects ? `${shown.length} of ${projects.length}` : 'loading'}</span>}
       </h2>
-      <div className="explore-tools">
-        <label className="search">
-          <Search size={14} aria-hidden="true" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search projects, authors, tags" aria-label="Search projects" />
-        </label>
-        <label className="snap">
-          Sort
-          <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort projects">
-            <option value="updated">Recently updated</option>
-            <option value="pieces">Most pieces</option>
-          </select>
-        </label>
-      </div>
-      <div className="tag-bar" role="group" aria-label="Filter by tag">
-        {allTags.map(([t, n]) => (
-          <button key={t} className={`tag ${tags.includes(t) ? 'on' : ''}`} aria-pressed={tags.includes(t)} onClick={() => toggle(t)}>
-            {t} <span>{n}</span>
-          </button>
-        ))}
-        {tags.length > 0 && (
-          <button className="tag clear" onClick={() => setTags([])}>
-            <X size={11} /> Clear
-          </button>
-        )}
-      </div>
+      {view === 'library' ? (
+        <PieceLibrary playing={playing} onPreview={onPreviewPiece} onUser={onUser} />
+      ) : (
+        <>
+          <div className="explore-tools">
+            <label className="search">
+              <Search size={14} aria-hidden="true" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search projects, authors, tags" aria-label="Search projects" />
+            </label>
+            <label className="snap">
+              Sort
+              <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort projects">
+                <option value="updated">Recently updated</option>
+                <option value="pieces">Most pieces</option>
+              </select>
+            </label>
+          </div>
+          <div className="tag-bar" role="group" aria-label="Filter by tag">
+            {allTags.map(([t, n]) => (
+              <button key={t} className={`tag ${tags.includes(t) ? 'on' : ''}`} aria-pressed={tags.includes(t)} onClick={() => toggle(t)}>
+                {t} <span>{n}</span>
+              </button>
+            ))}
+            {tags.length > 0 && (
+              <button className="tag clear" onClick={() => setTags([])}>
+                <X size={11} /> Clear
+              </button>
+            )}
+          </div>
 
-      <ul className="projects">
-        {projects && shown.length === 0 && (
-          <li className="empty">
-            No projects match{text && ` “${q}”`}
-            {tags.length > 0 && ` with ${tags.join(' + ')}`}. Try fewer tags or another word.
-          </li>
-        )}
-        {shown.map((p) => {
-          const s = stats(p)
-          return (
-            <li key={p.id} className="proj">
-              <div className="proj-main">
-                <div className="proj-name">
-                  <a className="owner" href={`#/u/${encodeURIComponent(p.autor)}`}>
-                    {p.autor}
-                  </a>{' '}
-                  / <a href={`#/project/${p.id}`}>{p.nombre}</a>
-                </div>
-                <p>{p.descripcion}</p>
-                <div className="proj-tags">
-                  {p.etiquetas.map((t) => (
-                    <button key={t} className={`tag ${tags.includes(t) ? 'on' : ''}`} onClick={() => toggle(t)}>
-                      {t}
-                    </button>
-                  ))}
-                </div>
-                <div className="proj-meta">
-                  {p.tempo} BPM · {s.count} pieces · {s.authors} {s.authors === 1 ? 'author' : 'authors'} · {s.forked} forked
-                  {p.actualizado && ` · Updated ${updated(p.actualizado)}`}
-                </div>
-              </div>
-              <div className="proj-side">
-                <Arrangement song={p} pieces={pieces} />
-                <div className="proj-actions">
-                  <button className={`tbtn square ${playing === p.id ? 'on' : ''}`} onClick={() => onPreview(p)} aria-label={`${playing === p.id ? 'Stop' : 'Preview'} ${p.nombre}`}>
-                    {playing === p.id ? <Square size={13} /> : <Play size={14} />}
-                  </button>
-                  <a className="tbtn" href={`#/project/${p.id}`}>
-                    Open <ArrowRight size={13} />
-                  </a>
-                </div>
-              </div>
-            </li>
-          )
-        })}
-      </ul>
+          <ul className="projects">
+            {projects && shown.length === 0 && (
+              <li className="empty">
+                No projects match{text && ` “${q}”`}
+                {tags.length > 0 && ` with ${tags.join(' + ')}`}. Try fewer tags or another word.
+              </li>
+            )}
+            {shown.map((p) => {
+              const s = stats(p)
+              return (
+                <li key={p.id} className="proj">
+                  <div className="proj-main">
+                    <div className="proj-name">
+                      <a className="owner" href={`#/u/${encodeURIComponent(p.autor)}`}>
+                        {p.autor}
+                      </a>{' '}
+                      / <a href={`#/project/${p.id}`}>{p.nombre}</a>
+                    </div>
+                    <p>{p.descripcion}</p>
+                    <div className="proj-tags">
+                      {p.etiquetas.map((t) => (
+                        <button key={t} className={`tag ${tags.includes(t) ? 'on' : ''}`} onClick={() => toggle(t)}>
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="proj-meta">
+                      {p.tempo} BPM · {s.count} pieces · {s.authors} {s.authors === 1 ? 'author' : 'authors'} · {s.forked} forked
+                      {p.actualizado && ` · Updated ${updated(p.actualizado)}`}
+                    </div>
+                  </div>
+                  <div className="proj-side">
+                    <Arrangement song={p} pieces={pieces} />
+                    <div className="proj-actions">
+                      <button className={`tbtn square ${playing === p.id ? 'on' : ''}`} onClick={() => onPreview(p)} aria-label={`${playing === p.id ? 'Stop' : 'Preview'} ${p.nombre}`}>
+                        {playing === p.id ? <Square size={13} /> : <Play size={14} />}
+                      </button>
+                      <a className="tbtn" href={`#/project/${p.id}`}>
+                        Open <ArrowRight size={13} />
+                      </a>
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </>
+      )}
     </section>
   )
 }
