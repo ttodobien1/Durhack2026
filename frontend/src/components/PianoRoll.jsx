@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { GitCompare, GitFork, Globe, Lock, Magnet, MessageSquare, Minus, Pencil, Play, Plus, Redo2, Save, Square, TriangleAlert, Undo2, X, ZoomIn, ZoomOut } from 'lucide-react'
+import { GitCompare, GitFork, Globe, Lock, Magnet, MessageSquare, Minus, Pencil, Play, Plus, Redo2, Save, Sparkles, Square, TriangleAlert, Undo2, UserRoundSearch, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { useWidth } from '../useWidth.js'
 import { instrumentFor, previewNote } from '../audio.js'
 import { typeLabel } from './Browser.jsx'
 import { isMine } from '../profile.js'
+import { api } from '../api.js'
+import { colorMap } from '../authorColors.js'
+import './history.css'
 import { SimilarPieces } from './SimilarPieces.jsx'
 
 const ROW = 14
@@ -24,6 +27,9 @@ const DRUM_NAMES = {
   64: 'Conga low', 75: 'Clave', 22: 'Hat closed', 26: 'Hat open',
 }
 const DRUM_KIT = [36, 38, 39, 42, 45, 46, 49, 51] // kick, snare, clap, closed hat, tom, open hat, crash, ride
+// DJ Stemy's diff explanations for this visit, keyed by piece pair and notes (GET .../explicacion).
+const explanations = new Map()
+
 export const noteName = (t) => `${NAMES[t % 12]}${Math.floor(t / 12) - 1}`
 const isBlack = (t) => NAMES[t % 12].includes('#')
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
@@ -68,8 +74,14 @@ function PieceName({ piece, onRename }) {
 }
 
 // onVisibility(publica): the author switches who may use the piece; onComments(): opens the piece's comments.
-export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, onChange, onBars, onFork, onSave, onRename, onVisibility, onComments, onToggleDiff, onPreview, previewing, playhead, handle, onOpenPiece, onAddPiece, aviso, onDismissAviso }) {
+export function PianoRoll({ piece, parent, notes, bars, dirty, editable: canEdit, diff, onChange, onBars, onFork, onSave, onRename, onVisibility, onComments, onToggleDiff, onPreview, previewing, playhead, handle, onOpenPiece, onAddPiece, aviso, onDismissAviso }) {
   const [measure, width] = useWidth()
+  // "Who wrote this?": each note coloured by its author (GET /piezas/:id/blame). Read-only while it is on.
+  const [blameOn, setBlameOn] = useState(false)
+  const [blameData, setBlameData] = useState(null) // { autores, notas } | { error }
+  const editable = canEdit && !blameOn
+  // DJ Stemy's explanation of the diff, cached per piece pair and notes.
+  const [explain, setExplain] = useState(null) // { key, texto, fuente } | { key, loading } | { key, error }
   const [zoom, setZoom] = useState(1)
   const scroller = useRef(null)
   const zoomBy = (f) => setZoom((z) => Math.min(8, Math.max(0.5, z * f)))
@@ -90,6 +102,24 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
     return () => el.removeEventListener('wheel', onWheel)
   }, [piece?.id])
   const [sel, setSel] = useState([]) // selected note indices
+  useEffect(() => {
+    setBlameOn(false)
+    setBlameData(null)
+    setExplain(null)
+  }, [piece?.id])
+  useEffect(() => {
+    if (diff) setBlameOn(false) // the two modes are exclusive
+    else setExplain(null)
+  }, [diff])
+  useEffect(() => {
+    if (!blameOn || !piece) return
+    let live = true
+    setBlameData(null)
+    api.blame(piece.id).then((b) => live && setBlameData(b ?? { error: 'Blame needs the backend (it is offline).' }), (e) => live && setBlameData({ error: e.message }))
+    return () => {
+      live = false
+    }
+  }, [blameOn, piece?.id])
   const [hover, setHover] = useState(null) // { tono, beat }
   const [step, setStep] = useState(0.25) // snap in beats
   const [lastLen, setLastLen] = useState(0.5) // new notes copy the last touched length, like FL
@@ -324,6 +354,27 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
   const noteBox = (n) => ({ left: n.inicio * beatW, top: rowOf(n.tono) * ROW, width: n.duracion * beatW - 1 })
   const one = sel.length === 1 ? notes[sel[0]] : null
   const pitchLabel = (t) => (drums ? DRUM_NAMES[t] ?? t : noteName(t))
+  // Blame applies to the saved notes; unsaved notes have no author yet (the button is disabled while dirty).
+  const blamed = blameOn && blameData?.notas && blameData.notas.length === notes.length ? blameData : null
+  const authorColors = blamed ? colorMap(blamed.autores.map((a) => a.autor)) : null
+  const toggleBlame = () => {
+    if (diff) onToggleDiff()
+    setBlameOn((b) => !b)
+  }
+  const explainKey = diff && piece.parent_id ? `${piece.id}:${piece.parent_id}:${notes.length}:${notes.reduce((s, n) => s + n.tono * 7 + n.inicio * 13, 0)}` : null
+  const askExplain = () => {
+    if (!explainKey) return
+    if (explanations.has(explainKey)) return setExplain({ key: explainKey, ...explanations.get(explainKey) })
+    setExplain({ key: explainKey, loading: true })
+    api.explainDiff(piece.id, piece.parent_id).then(
+      (r) => {
+        if (!r) return setExplain({ key: explainKey, error: 'Explanations need the backend (it is offline).' })
+        explanations.set(explainKey, r)
+        setExplain({ key: explainKey, ...r })
+      },
+      (e) => setExplain({ key: explainKey, error: e.message }),
+    )
+  }
   const fmt = (b) => `${Math.floor(b / 4) + 1}.${Math.floor(b % 4) + 1}${b % 1 ? `.${Math.round((b % 1) * 4) + 1}` : ''}`
   const readout =
     sel.length > 1
@@ -401,10 +452,24 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
             <GitCompare size={13} /> {diff ? 'Exit diff' : 'What changed?'}
           </button>
         )}
+        <button
+          className={`tbtn ${blameOn ? 'on' : ''}`}
+          onClick={toggleBlame}
+          aria-pressed={blameOn}
+          disabled={dirty && !blameOn}
+          title={dirty ? 'Save first: unsaved notes have no author yet' : 'Colour each note by who wrote it, through the fork chain'}
+        >
+          <UserRoundSearch size={13} /> {blameOn ? 'Exit blame' : 'Who wrote this?'}
+        </button>
         {diff ? (
           <span className="legend">
             <i className="k-new" /> {diff.nuevas.length} new <i className="k-del" /> {diff.borradas.length} deleted <i className="k-mov" />{' '}
             {diff.movidas.length} moved <i className="k-same" /> {diff.iguales.length} same
+            {piece.parent_id && (
+              <button className="tbtn explain-btn" onClick={askExplain} disabled={explain?.loading}>
+                <Sparkles size={12} /> Explain
+              </button>
+            )}
           </span>
         ) : (
           editable && (
@@ -454,6 +519,35 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
         )}
       </div>
 
+      {diff && explain?.key === explainKey && (
+        <p className="roll-explain" aria-live="polite">
+          <span className="stemy-tag">DJ Stemy</span>
+          <span>{explain.loading ? 'Listening to both versions…' : explain.error ? `Could not explain this diff: ${explain.error}` : explain.texto}</span>
+        </p>
+      )}
+      {blameOn && (
+        <div className="roll-blame" aria-live="polite">
+          {!blameData && <span className="dim">Following the fork chain…</span>}
+          {blameData?.error && <span className="dim">{blameData.error}</span>}
+          {blamed && (
+            <>
+              <div className="share-bar" role="img" aria-label={blamed.autores.map((a) => `${a.autor} ${a.porcentaje}%`).join(', ')}>
+                {blamed.autores.map((a) => (
+                  <span key={a.autor} style={{ flexGrow: a.notas, background: authorColors.get(a.autor) }} title={`${a.autor}: ${a.porcentaje}%`} />
+                ))}
+              </div>
+              <ul className="blame-authors">
+                {blamed.autores.map((a) => (
+                  <li key={a.autor}>
+                    <i style={{ background: authorColors.get(a.autor) }} aria-hidden="true" />
+                    <b>{isMine(a.autor) ? 'you' : a.autor}</b> {a.porcentaje}% <span className="dim">({a.notas} {a.notas === 1 ? 'note' : 'notes'})</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
       {aviso && (
         <p className="roll-warn" role="status">
           <TriangleAlert size={14} aria-hidden="true" />
@@ -528,11 +622,19 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
                   </svg>
                 </>
               ) : (
-                notes.map((n, i) => (
-                  <div key={i} className={`note ${picked.has(i) ? 'sel' : ''}`} style={{ ...noteBox(n), opacity: 0.45 + n.velocidad * 0.55 }}>
-                    {!drums && n.duracion * beatW > 30 && <span>{noteName(n.tono)}</span>}
-                  </div>
-                ))
+                notes.map((n, i) => {
+                  const autor = blamed?.notas[i]?.autor
+                  return (
+                    <div
+                      key={i}
+                      className={`note ${picked.has(i) ? 'sel' : ''} ${autor ? 'blamed' : ''}`}
+                      style={{ ...noteBox(n), opacity: 0.45 + n.velocidad * 0.55, ...(autor && { '--who': authorColors.get(autor) }) }}
+                      title={autor ? `${pitchLabel(n.tono)} · bar ${Math.floor(n.inicio / 4) + 1} · beat ${Math.floor(n.inicio % 4) + 1} · by ${isMine(autor) ? 'you' : autor}` : undefined}
+                    >
+                      {!drums && n.duracion * beatW > 30 && <span>{noteName(n.tono)}</span>}
+                    </div>
+                  )
+                })
               )}
               {box && (
                 <div

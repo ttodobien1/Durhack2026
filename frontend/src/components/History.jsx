@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, ArrowRight, Check, CircleCheck, CircleX, GitBranch, GitCommitHorizontal, GitCompare, GitFork, GitMerge, GitPullRequestArrow, History as HistoryIcon, RotateCcw, TriangleAlert, Users, X } from 'lucide-react'
 import { api } from '../api.js'
+import { colorMap } from '../authorColors.js'
 import { isMine } from '../profile.js'
 import { Avatar } from '../Site.jsx'
 import { typeLabel } from './Browser.jsx'
@@ -33,14 +34,6 @@ function timeAgo(iso) {
 }
 const dayOf = (iso) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 
-// One color per author in a view; you are always orange.
-const PALETTE = ['#72a6d2', '#a98bd6', '#6cbca1', '#d2766e', '#e0c35a', '#5fc4d8', '#d68bb8', '#9fbf5a']
-function colorMap(autores) {
-  const map = new Map()
-  let k = 0
-  for (const a of autores) if (!map.has(a)) map.set(a, isMine(a) ? 'var(--orange)' : PALETTE[k++ % PALETTE.length])
-  return map
-}
 
 /** Runs `load` whenever `key` changes. Keeps the previous data while the next one loads. */
 function useLoad(load, key) {
