@@ -7,6 +7,8 @@ import './landing.css'
 /** Site header for the landing, profile and settings pages. `onUser(null)` signs out. */
 export function SiteBar({ user, onUser }) {
   const [auth, setAuth] = useState(null) // 'login' | 'signup' | null
+  const [thenProjects, setThenProjects] = useState(false) // My projects asked for a login first
+  const myProjects = (name) => (location.hash = `#/u/${encodeURIComponent(name)}?tab=projects`)
   return (
     <header className="toolbar site-bar">
       <a className="brand" href="#/">
@@ -17,6 +19,19 @@ export function SiteBar({ user, onUser }) {
         <a href="#explore">Explore</a>
         <a href="#/project/new">New project</a>
         <a href="#/upload">Upload</a>
+        {user ? (
+          <a href={`#/u/${encodeURIComponent(user.name)}?tab=projects`}>My projects</a>
+        ) : (
+          <button
+            className="site-link"
+            onClick={() => {
+              setThenProjects(true)
+              setAuth('login')
+            }}
+          >
+            My projects
+          </button>
+        )}
       </nav>
       <div className="spacer" />
       {user ? (
@@ -45,11 +60,17 @@ export function SiteBar({ user, onUser }) {
       {auth && (
         <AuthDialog
           mode={auth}
+          reason={thenProjects ? 'Log in to see your projects.' : undefined}
           onMode={setAuth}
-          onClose={() => setAuth(null)}
+          onClose={() => {
+            setAuth(null)
+            setThenProjects(false)
+          }}
           onDone={(u) => {
             onUser(u)
             setAuth(null)
+            if (thenProjects) myProjects(u.name)
+            setThenProjects(false)
           }}
         />
       )}

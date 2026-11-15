@@ -15,12 +15,13 @@ node src/markdown.test.js
 
 - `#/` landing (`src/Landing.jsx`): hero, public projects with search, tag filters and preview, Log in / Sign up.
 - `#/project/<id>` project page (`src/App.jsx`); `#/project/new` starts empty. The **History** button opens the project history window (`src/components/History.jsx`), with GitHub-style tabs:
-  - **Tree**: where every piece comes from (the origin tree).
+  - **Tree** (`components/VersionTree.jsx`, rows built by `src/versionTree.js`): every version is a row with all its pieces, linked to where each piece was before (same, edited, fork), library origins on top and the unsaved state ("Now") at the bottom. Nodes can be dragged (positions remembered in this browser); clicking a piece shows its change and lets you listen to it, restore it in the project, or continue working from it.
   - **Changes**: what a version changed, track by track and note by note (green new, red deleted, yellow moved), against the previous version or any other.
   - **Versions**: v1, v2… one per save, like commits, with an optional message from the Save window; any version can be opened in the editor.
   - **Merge**: bring in the changes of a fork (or of the original) with conflicts to resolve and harmonic clash warnings.
   - **Credits**: who wrote each note of the song, forks included.
 - `#/u/<name>` profile (`src/Profile.jsx`): README, pinned projects, contribution graph, projects and pieces tabs.
+- Playlist: the **+** on a track (or **+ New piece** in its title bar) opens `components/NewPieceDialog.jsx` and creates an empty piece of your own (`POST /piezas` with `publica: false`, private until it is in a public project) that opens in the piano roll. Editing a beat offers a basic drum kit to draw on.
 - `#/upload` split a MIDI song into loops (`src/split.js`, same rules as `data/scripts` 04/05/08) and publish the chosen ones with `POST /piezas`.
 - `#/settings` profile settings (`src/Settings.jsx`): name, bio, picture, accent colour, README, pins.
 
@@ -40,7 +41,7 @@ Log in / Sign up use real accounts on the backend (`/auth/registro`, `/auth/logi
 
 ## For the tree view (role C)
 
-`src/components/OriginTree.jsx` is a placeholder. Keep its props (`song`, `loadPiece`, `onClose`) and restyle or replace the React Flow view freely. `TreeView` (same file) is the tree without the window, used by the Tree tab of the project history.
+The Tree tab of the project history is now `src/components/VersionTree.jsx` (one row per version, see above); it reuses the `tree-node` styles. `src/components/OriginTree.jsx` (the first origin tree) is no longer used by the app and is kept for reference.
 
 ## Layout
 
@@ -52,4 +53,6 @@ Log in / Sign up use real accounts on the backend (`/auth/registro`, `/auth/logi
 | `components/PianoRoll.jsx` | Note editor + diff view |
 | `components/Copilot.jsx` | Chat to `/copiloto`, suggestion chips, credits |
 | `components/History.jsx` | Project history window: Tree, Changes, Versions, Merge, Credits (styles in `history.css`) |
+| `components/VersionTree.jsx` | Tree tab: versions as rows of pieces, draggable, restore / continue working (`versionTree.js` builds the rows) |
+| `components/NewPieceDialog.jsx` | New piece window for the "+" buttons of the Playlist |
 | `audio.js` | Tone.js playback in beats (sampled piano, synth bass/lead, synthesized clave/congas/bell) |

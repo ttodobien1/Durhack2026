@@ -80,7 +80,7 @@ router.put('/:id', async (req, res) => {
   const mensaje = validateMensaje(req.body?.mensaje);
   if (!cancion.publica && !owner.usuario_id) throw badRequest('Only songs owned by an account can be private');
   await ensureVersions(req.params.id); // songs from before versions existed keep their old state as v1
-  await saveCancion(req.params.id, cancion);
+  await saveCancion(req.params.id, cancion, req.usuario?.id ?? null);
   await recordVersion(req.params.id, { autor: req.usuario?.nombre ?? owner.autor, mensaje });
   res.json(await getCancion(req.params.id));
 });
@@ -93,14 +93,20 @@ router.get('/:id/arbol', async (req, res) => {
 
 // --- History: versions, diff, forks, merge, credits (cambios.md §9) -------------------------------------
 
-// GET /canciones/:id/versiones  -> { cancion, origen, versiones: [{ numero, autor, mensaje, fecha, merge, resumen, piezas }] }
+// GET /canciones/:id/versiones[?snapshots=1]  -> { cancion, origen, versiones: [{ numero, autor, mensaje, fecha, merge, resumen, piezas }] }
+// With snapshots=1 each version (the newest 40) and the fork point of `origen` carry their full snapshot: the
+// frontend draws the version tree from them.
 router.get('/:id/versiones', async (req, res) => {
   const { cancion, parent } = await withVisibleOrigin(req, await visibleCancion(req));
-  const versiones = await versionHistory(cancion);
+  const snapshots = req.query.snapshots === '1' || req.query.snapshots === 'true';
+  const versiones = await versionHistory(cancion, snapshots ? { snapshots, limit: 40 } : {});
+  const forkPoint = parent && snapshots ? await getVersion(parent.id, cancion.parent_version) : null;
   res.json({
     cancion: { id: cancion.id, nombre: cancion.nombre, autor: cancion.autor, version: versiones[0]?.numero ?? 0 },
     // the project this one was forked from (null for originals, or when that project is private)
-    origen: parent ? { id: parent.id, nombre: parent.nombre, autor: parent.autor, version: cancion.parent_version } : null,
+    origen: parent
+      ? { id: parent.id, nombre: parent.nombre, autor: parent.autor, version: cancion.parent_version, ...(forkPoint && { snapshot: forkPoint.snapshot, fecha: forkPoint.fecha }) }
+      : null,
     versiones,
   });
 });
@@ -151,7 +157,7 @@ router.post('/:id/merge/:otra', async (req, res) => {
   assertOwner(req, owner.usuario_id, 'song');
   const { cancion, otra, preview } = await mergePreview(req);
   const mensaje = validateMensaje(req.body?.mensaje) || `Merged ${otra.id} v${preview.suyo.version} by ${otra.autor}`;
-  await saveCancion(cancion.id, { ...cancion, tempo: preview.resultado.tempo, pistas: preview.resultado.pistas });
+  await saveCancion(cancion.id, { ...cancion, tempo: preview.resultado.tempo, pistas: preview.resultado.pistas }, req.usuario?.id ?? null);
   const version = await recordVersion(cancion.id, {
     autor: req.usuario?.nombre ?? cancion.autor,
     mensaje,

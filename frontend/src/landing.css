@@ -96,3 +96,5 @@
 .save-next { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .save-next .tbtn { justify-content: center; }
 @media (max-width: 480px) { .save-next { grid-template-columns: 1fr; } }
+.site-nav .site-link { padding: 6px 10px; border: 0; border-radius: 2px; background: none; color: var(--text); font: inherit; }
+.site-nav .site-link:hover { background: var(--title-b); }

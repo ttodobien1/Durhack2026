@@ -117,7 +117,8 @@ export const api = {
 
   // Project history (cambios.md §9): versions, diff between versions, forks, merge and credits.
   // They need the backend: offline (mock) they resolve to null and the History window says so.
-  versions: (id) => call(`/canciones/${id}/versiones`, undefined, () => null),
+  // `snapshots`: every version (newest 40) with its full snapshot, for the version tree.
+  versions: (id, snapshots = false) => call(`/canciones/${id}/versiones${snapshots ? '?snapshots=1' : ''}`, undefined, () => null),
   version: (id, n) => call(`/canciones/${id}/versiones/${n}`, undefined, () => null),
   versionDiff: (id, n, contra) => call(`/canciones/${id}/versiones/${n}/diff${contra ? `?contra=${contra}` : ''}`, undefined, () => null),
   related: (id) => call(`/canciones/${id}/forks`, undefined, () => null),
@@ -131,7 +132,8 @@ export const api = {
     const qs = new URLSearchParams(Object.entries(filters).filter(([, v]) => v)).toString()
     return call(`/piezas?${qs}`, undefined, () => mock.search(filters))
   },
-  // New original piece (the upload page): POST /piezas, which already exists in the backend.
+  // New original piece: POST /piezas. The upload page publishes; the editor's "+" sends publica: false (private until
+  // the piece is saved in a public project, cambios.md §10).
   createPiece: (pieza) => call('/piezas', { method: 'POST', body: pieza }, () => mock.create(pieza)),
   // Cached for the visit: the landing, profile and project pages ask for the same pieces again and again.
   getPiece: (id) => {

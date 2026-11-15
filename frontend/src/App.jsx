@@ -4,9 +4,11 @@ import { api, isMock, ME } from './api.js'
 import * as audio from './audio.js'
 import { Browser } from './components/Browser.jsx'
 import { Playlist } from './components/Playlist.jsx'
+import { LANE_NAMES } from './lanes.js'
 import { PianoRoll } from './components/PianoRoll.jsx'
 import { Copilot } from './components/Copilot.jsx'
 import { History } from './components/History.jsx'
+import { NewPieceDialog } from './components/NewPieceDialog.jsx'
 import { SaveDialog } from './components/SaveDialog.jsx'
 import { usePlayhead } from './usePlayhead.js'
 import { isMine, loadUser, recordContribution, useUser } from './profile.js'
@@ -372,6 +374,92 @@ export default function App({ projectId = 'new' }) {
     }
   }
 
+  // New pieces of your own ("+" on a track or on the Playlist title bar) -------------------------
+  const [newPiece, setNewPiece] = useState(null) // { lane: index | null, tipo, name } while the New piece window is open
+  const TIPO_OF_LANE = { bateria: 'ritmo', drums: 'ritmo', piano: 'acordes', rhodes: 'acordes', pad: 'acordes', bajo: 'bajo', bass: 'bajo', bajo_electrico: 'bajo', bajo_synth: 'bajo', melodia: 'melodia', lead: 'melodia', vibrafono: 'melodia' }
+  const startNewPiece = (lane = null) => {
+    if (!signedIn('Log in to compose your own pieces.', () => startNewPiece(lane))) return
+    const track = lane == null ? null : song.pistas[lane]
+    const tipo = track ? (pieces[track.bloques[0]?.pieza_id]?.tipo ?? TIPO_OF_LANE[track.instrumento] ?? 'acordes') : null
+    setNewPiece({ lane, tipo, name: track ? (LANE_NAMES[track.instrumento] ?? track.instrumento).toLowerCase() : null })
+  }
+  const createPiece = async ({ nombre, tipo, compases, tonalidad }) => {
+    const piece = await api.createPiece({
+      nombre,
+      tipo,
+      compases,
+      tonalidad,
+      tempo: song.tempo,
+      estilo: ['rap'],
+      licencia: 'CC BY 4.0',
+      fuente: 'Created in Stemma',
+      notas: [],
+      publica: false, // private until it is saved in a public project
+    })
+    remember([piece])
+    recordContribution()
+    const { lane } = newPiece
+    setSong((s) => {
+      if (lane == null || !s.pistas[lane]) return { ...s, pistas: [...s.pistas, { instrumento: audio.instrumentFor(tipo), bloques: [{ pieza_id: piece.id, compas: 0 }] }] }
+      // On an existing track: right after its last block.
+      const end = Math.max(0, ...s.pistas[lane].bloques.map((b) => b.compas + (pieces[b.pieza_id]?.compases ?? 1)))
+      return { ...s, pistas: s.pistas.map((t, i) => (i === lane ? { ...t, bloques: [...t.bloques, { pieza_id: piece.id, compas: end }] } : t)) }
+    })
+    setSelectedId(piece.id)
+    setDraft(null)
+    setDraftBars(null)
+    setDiff(null)
+    setNewPiece(null)
+    setNotice(`Created ${piece.nombre} (${piece.id}). Draw its notes in the piano roll and press Save. Only you see it until you save it in a public project.`)
+  }
+
+  // Version tree: bring a piece back as it was in an older version, or keep working from that point ---------
+  // info: the piece as it was there (id, notas, compases...) + successors (ids of its later states in the tree).
+  const restorePiece = async (info, { edit = false } = {}) => {
+    try {
+      const live = await loadPiece(info.id)
+      const sameNotes = JSON.stringify(live.notas) === JSON.stringify(info.notas) && live.compases === info.compases
+      const yours = isMine(live.autor)
+      let target = live
+      let restoreNotes = false // the old notes go into the piano roll as unsaved edits of your own piece
+      if (!sameNotes && yours) restoreNotes = true
+      else if (!sameNotes || (edit && !yours)) {
+        // Someone else's piece: your own fork of it, with the notes it had there.
+        if (!signedIn(`Log in to ${edit ? 'keep working on' : 'bring back'} this piece as your own fork.`, () => restorePiece(info, { edit }))) return
+        const copy = await api.fork(info.id, loadUser().name)
+        target = sameNotes ? copy : { ...copy, ...(await api.saveNotes(copy.id, info.notas, info.compases)), notas: info.notas, compases: info.compases }
+        recordContribution()
+      }
+      remember([target])
+      // Where it goes: in place of the piece that stands there now (itself or a later state), else on a new track.
+      const used = new Set(song.pistas.flatMap((t) => t.bloques.map((b) => b.pieza_id)))
+      const current = used.has(info.id) ? info.id : info.successors.find((id) => used.has(id))
+      if (!current) addToSong(target)
+      else if (current !== target.id)
+        setSong((s) => ({ ...s, pistas: s.pistas.map((t) => ({ ...t, bloques: t.bloques.map((b) => (b.pieza_id === current ? { ...b, pieza_id: target.id } : b)) })) }))
+      setSelectedId(target.id)
+      setDiff(null)
+      setDraft(restoreNotes ? info.notas : null)
+      setDraftBars(restoreNotes && info.compases !== live.compases ? info.compases : null)
+      if (edit) setHistoryTab(null)
+      const where = `as it was in ${info.where}`
+      setNotice(
+        restoreNotes
+          ? `${target.nombre} is back ${where}, as unsaved edits: press Save in the piano roll to keep them, then save the project.`
+          : target.id !== info.id
+            ? `${target.nombre} is your own fork of ${info.id} ${where}${edit ? ': keep working on it in the piano roll.' : '. Save the project to keep it.'}`
+            : `${target.nombre} is back in the project ${where}. Save the project to keep it.`,
+      )
+    } catch (e) {
+      fail(e)
+    }
+  }
+  // Unsaved piano roll edits, so the tree's "Now" row shows what you hear.
+  const drafts = useMemo(
+    () => (selectedId && (draft || draftBars) ? { [selectedId]: { notas: draft ?? selected?.notas ?? [], compases: draftBars ?? selected?.compases ?? 1 } } : {}),
+    [selectedId, draft, draftBars, selected],
+  )
+
   const songPos = playing && playing !== 'song' ? null : beat // song playhead, hidden while a piece previews
 
   return (
@@ -499,6 +587,7 @@ export default function App({ projectId = 'new' }) {
           onMix={setLaneMix}
           onSeek={seek}
           onStarter={() => setAsk({ at: Date.now() })}
+          onNewPiece={startNewPiece}
           playhead={songPos}
         />
         <PianoRoll
@@ -536,6 +625,8 @@ export default function App({ projectId = 'new' }) {
         />
       )}
 
+      {newPiece && <NewPieceDialog tipo={newPiece.tipo} lane={newPiece.name} onCreate={createPiece} onClose={() => setNewPiece(null)} />}
+
       {saveAs && (
         <SaveDialog
           song={song}
@@ -561,6 +652,11 @@ export default function App({ projectId = 'new' }) {
           canEdit={songMine && Boolean(user)}
           onOpenVersion={openVersion}
           onMerged={takeMerge}
+          pieces={pieces}
+          drafts={drafts}
+          playing={playing}
+          onPreview={(p) => previewPiece(p, p.notas, p.compases)}
+          onRestorePiece={restorePiece}
         />
       )}
     </div>

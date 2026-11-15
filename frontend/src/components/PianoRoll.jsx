@@ -22,6 +22,7 @@ const DRUM_NAMES = {
   52: 'China', 53: 'Ride bell', 55: 'Splash', 56: 'Cowbell', 57: 'Crash 2', 59: 'Ride 2', 62: 'Conga slap', 63: 'Conga open',
   64: 'Conga low', 75: 'Clave', 22: 'Hat closed', 26: 'Hat open',
 }
+const DRUM_KIT = [36, 38, 39, 42, 45, 46, 49, 51] // kick, snare, clap, closed hat, tom, open hat, crash, ride
 export const noteName = (t) => `${NAMES[t % 12]}${Math.floor(t / 12) - 1}`
 const isBlack = (t) => NAMES[t % 12].includes('#')
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
@@ -97,7 +98,8 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
   const all = diff ? [...diff.iguales, ...diff.nuevas, ...diff.borradas, ...diff.movidas.flatMap((m) => [m.antes, m.despues])] : notes
   const pitches = all.map((n) => n.tono)
   let rows
-  if (drums) rows = [...new Set(pitches)].sort((a, b) => b - a)
+  // Editing a beat also offers a basic kit, so an empty piece can be drawn and a missing sound added.
+  if (drums) rows = [...new Set([...pitches, ...(editable && !diff ? DRUM_KIT : [])])].sort((a, b) => b - a)
   else {
     let lo = Math.min(...pitches, 60) - 3
     let hi = Math.max(...pitches, 60) + 3

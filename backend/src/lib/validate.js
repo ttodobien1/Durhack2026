@@ -79,6 +79,7 @@ export function validateNewPieza(body) {
     compases: validateCompases(body.compases),
     parent_id: body.parent_id === undefined || body.parent_id === null ? null : requiredString(body.parent_id, 'parent_id'),
     notas: validateNotas(body.notas ?? []),
+    publica: validatePublica(body.publica), // false: only its author sees it until it is in a public project
   };
 }
 

@@ -93,6 +93,11 @@ CREATE INDEX IF NOT EXISTS idx_sesiones_usuario ON sesiones (usuario_id);
 ALTER TABLE piezas    ADD COLUMN IF NOT EXISTS usuario_id TEXT REFERENCES usuarios(id);
 ALTER TABLE canciones ADD COLUMN IF NOT EXISTS usuario_id TEXT REFERENCES usuarios(id);
 
+-- Piece visibility: a piece created in the editor ("+" on a track) starts private, seen only by its author, and
+-- becomes public as soon as it is saved in a public project. Everything else (seed data, uploads, forks of public
+-- pieces) is public.
+ALTER TABLE piezas ADD COLUMN IF NOT EXISTS publica BOOLEAN NOT NULL DEFAULT true;
+
 -- Project lineage: a song saved as a copy of another one is a fork of it, made from its version parent_version.
 ALTER TABLE canciones ADD COLUMN IF NOT EXISTS parent_id TEXT REFERENCES canciones(id);
 ALTER TABLE canciones ADD COLUMN IF NOT EXISTS parent_version INTEGER;

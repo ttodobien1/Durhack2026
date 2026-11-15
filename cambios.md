@@ -131,7 +131,7 @@ repositorio:
 
 | Pestaña | Qué muestra |
 | --- | --- |
-| Tree | El árbol de origen de las piezas (el mismo de antes) |
+| Tree | El árbol por versiones (ver §10) |
 | Changes | Qué cambió una versión: pistas nuevas, borradas o cambiadas, y nota por nota en cada pieza (verde nueva, rojo borrada, amarillo movida). Se puede comparar contra cualquier versión anterior |
 | Versions | v1, v2, v3… una por cada guardado, como commits, con mensaje (se escribe en la ventana de guardar o se genera solo) |
 | Merge | Traer los cambios de un fork (o del original), con conflictos para resolver y aviso de choques armónicos |
@@ -170,3 +170,37 @@ repositorio:
 - Las canciones traen además `version`, `parent_id` y `parent_version`. `POST`/`PUT /canciones` aceptan `mensaje`
   opcional.
 - Sin backend (datos de prueba) solo funciona la pestaña Tree.
+
+## 10. Crear piezas propias, árbol por versiones y "My projects"
+
+- **Crear piezas ("+")**: cada pista de la Playlist tiene un botón **+**, y la barra de la Playlist tiene
+  **+ New piece** (pista nueva). Abre una ventana para elegir nombre, tipo, compases y tonalidad. La pieza se crea
+  vacía y se abre en el piano roll para dibujar las notas.
+  - En una pista existente, el tipo sale de esa pista y la pieza queda después del último bloque.
+  - Al editar una batería, el piano roll muestra además un kit básico (bombo, caja, palmas, hi-hats, tom, platillos),
+    para poder dibujar una batería vacía o agregar un sonido que no estaba.
+- **Piezas privadas hasta publicarlas**: las piezas creadas con "+" las ve solo su autor (columna nueva
+  `piezas.publica`). Se vuelven públicas, junto con las piezas de las que vienen, cuando se guardan en un proyecto
+  público. Desde ahí cualquiera las encuentra, las escucha y les hace fork.
+  - Nadie más puede usar ni ver una pieza privada (404).
+  - Lo demás sigue público como antes: semillas, Upload y forks de piezas públicas.
+  - `POST /piezas` acepta `"publica": false` (con sesión) y las piezas traen el campo `publica`.
+- **Tree por versiones** (`frontend/src/components/VersionTree.jsx`, lógica en `frontend/src/versionTree.js`):
+  - **Filas:** cada versión del proyecto es una fila con todas sus piezas, hayan cambiado o no. Las filas van
+    conectadas por una línea horizontal y unidas entre sí por la columna de versiones.
+  - **Arriba:** las piezas de la librería de las que vienen y, en los forks, el proyecto original en el punto del fork.
+  - **Abajo:** "Now", los cambios sin guardar.
+  - **Conexiones:** cada pieza se conecta con la fila donde estaba antes. Gris punteado si quedó igual, amarillo si se
+    editó, naranja si un fork tomó su lugar. Una pieza mantiene su columna, y un fork que reemplaza a su original toma
+    la columna del original.
+  - **Clic en una pieza:** muestra qué cambió ahí (mini piano roll con el diff), permite **escucharla** y tiene dos
+    botones:
+    - **Restore in project:** vuelve a poner la pieza como estaba ahí. Si es tuya, las notas viejas quedan como
+      cambios sin guardar en el piano roll. Si es de otra persona, se crea tu fork con esas notas. Reemplaza a la
+      pieza que hoy ocupa su lugar.
+    - **Continue working from here:** lo mismo, pero además la abre en el piano roll para seguir trabajando (como tu
+      fork si no es tuya).
+  - **Nodos que se mueven:** se pueden arrastrar, y su posición se recuerda en ese navegador. "Reset layout" los
+    vuelve a su lugar.
+  - `GET /canciones/:id/versiones?snapshots=1` trae la foto de cada versión (las 40 más nuevas) y la del punto del fork.
+- **"My projects" en el menú del sitio**, al lado de Upload: lleva a tus proyectos (pide iniciar sesión si hace falta).

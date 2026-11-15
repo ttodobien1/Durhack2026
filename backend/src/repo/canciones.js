@@ -1,7 +1,7 @@
 import { db } from '../db/client.js';
 import { badRequest } from '../lib/errors.js';
 import { insertWithNewId } from '../lib/ids.js';
-import { existingPiezaIds } from './piezas.js';
+import { existingPiezaIds, publishPiezas } from './piezas.js';
 
 // Builds Cancion objects (contract 4.2) from the three tables.
 function assemble(cancionRows, pistaRows, bloqueRows) {
@@ -100,11 +100,18 @@ export async function getRelatedCanciones(id) {
   };
 }
 
-async function assertPiezasExist(cancion) {
+// Every piece must exist and be visible to whoever saves the song (someone else's private piece is "unknown").
+async function assertPiezasExist(cancion, viewerId) {
   const ids = cancion.pistas.flatMap((pista) => pista.bloques.map((bloque) => bloque.pieza_id));
-  const found = await existingPiezaIds(ids);
+  const found = await existingPiezaIds(ids, viewerId);
   const missing = [...new Set(ids.filter((id) => !found.has(id)))];
   if (missing.length) throw badRequest(`Unknown pieza_id: ${missing.join(', ')}`);
+}
+
+// A public song makes the pieces it uses public (cambios.md §10).
+async function publishIfPublic(cancion) {
+  if (cancion.publica === false) return;
+  await publishPiezas(cancion.pistas.flatMap((pista) => pista.bloques.map((bloque) => bloque.pieza_id)));
 }
 
 // (Re)writes the tracks and blocks of a song inside a transaction.
@@ -131,7 +138,7 @@ async function writeTracks(tx, id, cancion) {
 // Creates a song with a new sequential id, owned by `usuarioId` (null = anonymous). Returns the stored Cancion.
 // `fork` = { parent_id, parent_version } when the song is a copy of another project.
 export async function createCancion(cancion, usuarioId = null, fork = null) {
-  await assertPiezasExist(cancion);
+  await assertPiezasExist(cancion, usuarioId);
   const id = await insertWithNewId('canciones', 'c', (newId) =>
     db.transaction(async (tx) => {
       await tx.query(
@@ -142,12 +149,14 @@ export async function createCancion(cancion, usuarioId = null, fork = null) {
       await writeTracks(tx, newId, cancion);
     }),
   );
+  await publishIfPublic(cancion);
   return getCancion(id);
 }
 
-// Inserts or fully replaces a song keeping its id (PUT and seed). Returns the stored Cancion.
-export async function saveCancion(id, cancion) {
-  await assertPiezasExist(cancion);
+// Inserts or fully replaces a song keeping its id (PUT, merge and seed). `viewerId`: the account saving it.
+// Returns the stored Cancion.
+export async function saveCancion(id, cancion, viewerId = null) {
+  await assertPiezasExist(cancion, viewerId);
   await db.transaction(async (tx) => {
     await tx.query(
       `INSERT INTO canciones (id, nombre, autor, tempo, publica, descripcion) VALUES ($1, $2, $3, $4, $5, NULLIF($6, ''))
@@ -159,6 +168,7 @@ export async function saveCancion(id, cancion) {
     );
     await writeTracks(tx, id, cancion);
   });
+  await publishIfPublic(cancion);
   return getCancion(id);
 }
 

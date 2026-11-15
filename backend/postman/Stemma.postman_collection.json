@@ -419,6 +419,43 @@
             "method": "GET",
             "url": "{{baseUrl}}/piezas?tipo=guitarra"
           }
+        },
+        {
+          "name": "Create a private piece (only you see it until it is in a public song)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('private', () => pm.expect(pm.response.json().publica).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/piezas",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"My beat\",\n  \"tipo\": \"ritmo\",\n  \"compases\": 2,\n  \"notas\": [\n    {\n      \"tono\": 36,\n      \"inicio\": 0,\n      \"duracion\": 0.5,\n      \"velocidad\": 0.9\n    },\n    {\n      \"tono\": 38,\n      \"inicio\": 1,\n      \"duracion\": 0.5,\n      \"velocidad\": 0.8\n    }\n  ],\n  \"publica\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
         }
       ]
     },
@@ -570,6 +607,14 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/canciones/{{forkCancionId}}/versiones"
+          }
+        },
+        {
+          "name": "Versions with snapshots (version tree)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/canciones/{{forkCancionId}}/versiones?snapshots=1"
           }
         },
         {

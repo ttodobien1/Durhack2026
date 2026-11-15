@@ -133,16 +133,18 @@ export async function versionDiff(cancion, numero, contra) {
   };
 }
 
-// Version list with a change summary per version (newest first).
-export async function versionHistory(cancion) {
+// Version list with a change summary per version (newest first). `snapshots` keeps each full snapshot (for
+// the version tree), limited to the newest `limit` versions.
+export async function versionHistory(cancion, { snapshots = false, limit = 200 } = {}) {
   await ensureVersions(cancion.id);
-  const versions = await listVersions(cancion.id);
+  const versions = await listVersions(cancion.id, limit);
   const forkPoint = cancion.parent_id && cancion.parent_version ? await getVersion(cancion.parent_id, cancion.parent_version) : null;
   return versions.map((version, k) => {
     const before = versions[k + 1]?.snapshot ?? (version.numero === 1 ? forkPoint?.snapshot : null) ?? null;
     const { resumen, piezas } = diffCanciones(before, version.snapshot);
     return {
       ...versionInfo(version),
+      ...(snapshots && { snapshot: version.snapshot }),
       resumen,
       // pieces this version touched, for the "who changed what" line of each version
       piezas: piezas.map(({ id, nombre, autor, tipo, estado }) => ({ id, nombre, autor, tipo, estado })),

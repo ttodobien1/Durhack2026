@@ -3,17 +3,13 @@ import { Plus, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { useWidth } from '../useWidth.js'
 import { isMine } from '../profile.js'
 import { STARTER } from './Copilot.jsx'
+import { LANE_NAMES } from '../lanes.js'
 
 const MIN_BARS = 16 // the arrangement always shows at least this many bars, plus 4 empty ones after the last clip
 const HEAD = 150
 const LANE_H = 52
 const RULER_H = 20
 
-export const LANE_NAMES = {
-  bateria: 'Drums', drums: 'Drums', piano: 'Piano', bajo: 'Bass', bass: 'Bass', melodia: 'Lead', lead: 'Lead',
-  // Sampled instruments from audio.js (FluidR3_GM, see public/samples/CREDITS.md)
-  rhodes: 'Rhodes', bajo_electrico: 'Electric bass', bajo_synth: 'Synth bass', pad: 'Pad', vibrafono: 'Vibraphone',
-}
 
 /** True when a block of `len` bars at `compas` would overlap a block in the lane other than those `skip(j)` accepts. */
 export function overlaps(bloques, pieces, compas, len, skip = () => false) {
@@ -23,7 +19,8 @@ export function overlaps(bloques, pieces, compas, len, skip = () => false) {
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 const keyOf = (lane, compas) => `${lane}:${compas}` // a block is unique by lane + start bar (lanes never overlap)
 
-export function Playlist({ song, pieces, selectedId, songBars, mix, onMix, onSelect, onRemoveLane, onMoveBlocks, onAddBlock, onRemoveBlocks, onSeek, onStarter, playhead }) {
+// onNewPiece(lane | null): the "+" buttons create a piece of your own on that track (null: on a new track).
+export function Playlist({ song, pieces, selectedId, songBars, mix, onMix, onSelect, onRemoveLane, onMoveBlocks, onAddBlock, onRemoveBlocks, onSeek, onStarter, onNewPiece, playhead }) {
   const [measure, width] = useWidth()
   const [drag, setDrag] = useState(null) // { items: [{ lane, j, compas, len, pieza_id }], click, x0, y0, dBar, dLane, copy, moved }
   const [box, setBox] = useState(null) // marquee in playlist-body content pixels: { x0, y0, x1, y1, moved, add }
@@ -179,6 +176,9 @@ export function Playlist({ song, pieces, selectedId, songBars, mix, onMix, onSel
           <button className="icon small wide" onClick={() => setRoom(VIEW_BARS + 4)} title="Make the arrangement 4 bars longer">
             <Plus size={12} /> 4 bars
           </button>
+          <button className="icon small wide" onClick={() => onNewPiece(null)} title="Compose a new piece of your own on a new track">
+            <Plus size={12} /> New piece
+          </button>
         </span>
       </h2>
       <div className="playlist-body" ref={setBody} tabIndex={-1}>
@@ -206,6 +206,10 @@ export function Playlist({ song, pieces, selectedId, songBars, mix, onMix, onSel
             <button className="tbtn accent" onClick={onStarter}>
               Try: “{STARTER}”
             </button>
+            <p className="lanes-or">or</p>
+            <button className="tbtn" onClick={() => onNewPiece(null)}>
+              <Plus size={13} aria-hidden="true" /> Compose your own piece
+            </button>
           </div>
         )}
 
@@ -221,9 +225,14 @@ export function Playlist({ song, pieces, selectedId, songBars, mix, onMix, onSel
                 <span className="lane-name" title={first?.nombre}>
                   <b>{name}</b> {first?.nombre ?? 'Empty'}
                 </span>
-                <button className="icon small" onClick={() => onRemoveLane(i)} aria-label={`Remove track ${first?.nombre ?? i + 1}`}>
-                  <X size={12} />
-                </button>
+                <span className="lane-tools">
+                  <button className="icon small add" onClick={() => onNewPiece(i)} aria-label={`New piece on the ${name} track`} title={`Compose a new piece on this ${name} track`}>
+                    <Plus size={12} />
+                  </button>
+                  <button className="icon small" onClick={() => onRemoveLane(i)} aria-label={`Remove track ${first?.nombre ?? i + 1}`}>
+                    <X size={12} />
+                  </button>
+                </span>
                 <input
                   className="fader"
                   type="range"

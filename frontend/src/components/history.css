@@ -145,3 +145,58 @@
 .ver-chip { padding: 0 5px; border-radius: 2em; background: rgb(0 0 0 / 0.25); color: var(--orange); font: 600 10.5px/16px var(--mono); }
 .error.notice { background: #2c4a2a; border-color: #142411; color: #dff5d6; }
 .error.notice button { border-color: #dff5d6; }
+
+/* Version tree (VersionTree.jsx): rows of pieces per version, draggable nodes, side panel */
+.vt { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.vt-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; padding: 7px 12px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.vt-summary { flex: 1 1 420px; margin: 0; font-size: 12.5px; }
+.vt-legend { display: inline-flex; align-items: center; gap: 5px; color: var(--dim); font-size: 11px; }
+.vt-legend .lk { display: inline-block; width: 18px; height: 0; margin-left: 6px; border-top: 2px solid; }
+.lk.e-same { border-top: 2px dotted #77838a; }
+.lk.e-edited { border-color: var(--mov); }
+.lk.e-fork { border-color: var(--orange); }
+.vt-main { position: relative; display: flex; flex: 1; min-height: 0; }
+.vt-main .tree-canvas { flex: 1; }
+.vt-stage { width: 172px; display: grid; gap: 1px; padding: 6px 9px; border: 1px solid var(--line); border-left: 3px solid var(--bevel); border-radius: 3px; background: #262c30; box-shadow: 0 3px 10px rgb(0 0 0 / 0.35); cursor: grab; }
+.vt-stage.k-version, .vt-stage.k-merge { border-left-color: var(--orange); }
+.vt-stage.k-merge { border-left-color: var(--t-bajo); }
+.vt-stage.k-working { border-left-color: var(--new); border-style: dashed solid dashed solid; }
+.vt-stage.k-origin { border-left-color: var(--t-acordes); }
+.vt-stage-tag { display: inline-flex; align-items: center; gap: 4px; color: var(--orange); font: 700 12px var(--mono); }
+.vt-stage.k-library .vt-stage-tag { color: var(--t-acordes); }
+.vt-stage.k-working .vt-stage-tag { color: var(--new); }
+.vt-stage-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; }
+.vt-stage-meta { color: var(--dim); font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vt-piece { cursor: grab; }
+.vt-piece.picked { outline: 2px solid #fff; outline-offset: 1px; }
+.vt-piece.e-same { opacity: 0.78; }
+.vt-estado { margin-left: auto; padding: 0 5px; border-radius: 2px; background: rgb(0 0 0 / 0.25); font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.03em; }
+.vt-piece .react-flow__handle, .vt-stage .react-flow__handle { width: 6px; height: 6px; min-width: 0; min-height: 0; border: 0; background: #77838a; opacity: 0.6; }
+.react-flow__edge.vt-rail .react-flow__edge-path { stroke: #59646b; stroke-width: 2.5; }
+.react-flow__edge.vt-rail.k-working .react-flow__edge-path { stroke: #3f7a3a; stroke-dasharray: 6 4; }
+.react-flow__edge.vt-spine .react-flow__edge-path { stroke: #6b777e; stroke-width: 2; }
+.react-flow__edge.vt-link .react-flow__edge-path { stroke-width: 2; }
+.react-flow__edge.vt-link.e-same .react-flow__edge-path { stroke: #77838a; stroke-dasharray: 2 4; stroke-width: 1.5; }
+.react-flow__edge.vt-link.e-edited .react-flow__edge-path { stroke: var(--mov); }
+.react-flow__edge.vt-link.e-fork .react-flow__edge-path { stroke: var(--orange); }
+.vt-panel { position: relative; flex: none; width: 320px; max-width: 100%; display: grid; align-content: start; gap: 8px; padding: 12px 14px; overflow-y: auto; border-left: 1px solid var(--line); background: var(--panel); }
+.vt-panel h3 { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 0; padding-right: 24px; font-size: 13.5px; }
+.vt-panel p { margin: 0; }
+.vt-close { position: absolute; top: 8px; right: 8px; }
+.vt-story { line-height: 1.5; }
+.vt-actions { display: grid; gap: 6px; }
+.vt-actions .tbtn { justify-content: center; height: 30px; }
+@media (max-width: 700px) {
+  .vt-panel { position: absolute; inset: auto 0 0 0; width: 100%; max-height: 60%; border-left: 0; border-top: 1px solid var(--line); z-index: 6; }
+}
+
+/* New piece window (NewPieceDialog.jsx) and the "+" buttons on the Playlist */
+.window.new-piece { width: min(460px, 100%); }
+.new-piece .seg button { padding: 7px 0; font-size: 12px; }
+.new-piece-row { display: flex; gap: 12px; align-items: end; }
+.new-piece-row > fieldset { flex: 1; min-width: 0; }
+.new-piece-row select { height: 32px; padding: 0 8px; background: var(--well); border: 1px solid var(--line); border-radius: 2px; color: var(--text); font: inherit; }
+.new-piece .fine svg { vertical-align: -1px; }
+.lane-tools { display: inline-flex; align-items: center; }
+.lane-tools .icon.small.add { color: var(--note); }
+.lanes-empty .lanes-or { margin: 8px 0; color: var(--dim); }

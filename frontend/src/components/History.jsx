@@ -1,5 +1,5 @@
 // Project history window: the GitHub-style tabs of a project.
-//   Tree      where every piece of the song comes from (OriginTree's TreeView)
+//   Tree      every version as a row of its pieces, linked where a piece changed, plus their library origins (VersionTree)
 //   Changes   what a version changed: tracks, and note by note for every piece (green new, red deleted, yellow moved)
 //   Versions  v1, v2... one per save, like commits; any of them can be compared or opened in the editor
 //   Merge     bring in the changes of a fork (or of the original), resolving conflicts
@@ -11,8 +11,10 @@ import { api } from '../api.js'
 import { isMine } from '../profile.js'
 import { Avatar } from '../Site.jsx'
 import { typeLabel } from './Browser.jsx'
-import { LANE_NAMES } from './Playlist.jsx'
-import { TreeView } from './OriginTree.jsx'
+import { LANE_NAMES } from '../lanes.js'
+import { MiniRoll } from './MiniRoll.jsx'
+import { diffRoll } from '../rolls.js'
+import { VersionTree } from './VersionTree.jsx'
 import './history.css'
 
 const who = (autor) => (isMine(autor) ? 'you' : autor)
@@ -64,10 +66,12 @@ const Failed = ({ error }) => (
 )
 
 /**
- * Props: song (current project), tab + onTab, onClose, loadPiece (for the tree), dirty (unsaved edits),
- * canEdit (the signed-in user may save this project), onOpenVersion(numero), onMerged({ cancion, version }).
+ * Props: song (current project), tab + onTab, onClose, dirty (unsaved edits), canEdit (the signed-in user may save
+ * this project), onOpenVersion(numero), onMerged({ cancion, version }).
+ * For the Tree tab: loadPiece, pieces (editor cache), drafts ({ id: { notas, compases } } unsaved piano roll edits),
+ * playing + onPreview(piece) to listen, onRestorePiece(info, { edit }) to bring a piece back or keep working on it.
  */
-export function History({ song, tab, onTab, onClose, loadPiece, dirty, canEdit, onOpenVersion, onMerged }) {
+export function History({ song, tab, onTab, onClose, loadPiece, dirty, canEdit, onOpenVersion, onMerged, pieces, drafts, playing, onPreview, onRestorePiece }) {
   const saved = Boolean(song.id) && song.id !== 'c-new'
   const hist = useLoad(() => (saved ? api.versions(song.id) : Promise.resolve(null)), `${song.id}:${song.version ?? 0}`)
   const [compare, setCompare] = useState(null) // { hasta, contra } chosen in the Changes tab
@@ -87,7 +91,7 @@ export function History({ song, tab, onTab, onClose, loadPiece, dirty, canEdit, 
   }
 
   const tabs = [
-    ['tree', 'Tree', GitBranch, null, 'Where every piece of the song comes from'],
+    ['tree', 'Tree', GitBranch, null, 'Every version with its pieces, and where each piece comes from'],
     ['changes', 'Changes', GitCompare, null, 'What a version changed, track by track and note by note'],
     ['versions', 'Versions', HistoryIcon, versions.length || null, 'Every saved version, like commits'],
     ['merge', 'Merge', GitMerge, null, 'Bring in the changes of a fork or of the original'],
@@ -95,7 +99,20 @@ export function History({ song, tab, onTab, onClose, loadPiece, dirty, canEdit, 
   ]
 
   let body
-  if (tab === 'tree') body = <TreeView song={song} loadPiece={loadPiece} />
+  if (tab === 'tree')
+    body = (
+      <VersionTree
+        song={song}
+        saved={saved && !offline}
+        loadPiece={loadPiece}
+        pieces={pieces}
+        drafts={drafts}
+        playing={playing}
+        onPreview={onPreview}
+        onRestore={onRestorePiece}
+        onShowChanges={(n) => showChanges(n)}
+      />
+    )
   else if (!saved)
     body = (
       <p className="hist-empty">
@@ -319,14 +336,8 @@ export function DiffView({ diff, empty = 'No musical changes.' }) {
 const PIECE_STATE = { editada: ['Edited', 'mov'], reemplazada: ['Fork', 'mov'], agregada: ['Added', 'add'], quitada: ['Removed', 'del'] }
 
 function PieceDiff({ change }) {
-  const { nuevas, borradas, movidas, iguales } = change.notas
-  const notes = [
-    ...iguales.map((n) => ({ ...n, cls: 'same' })),
-    ...borradas.map((n) => ({ ...n, cls: 'del' })),
-    ...movidas.map((m) => ({ ...m.antes, cls: 'from' })),
-    ...movidas.map((m) => ({ ...m.despues, cls: 'mov' })),
-    ...nuevas.map((n) => ({ ...n, cls: 'new' })),
-  ]
+  const { nuevas, borradas, movidas } = change.notas
+  const notes = diffRoll(change.notas)
   const beats = Math.max(change.compases, change.compases_antes ?? 0, change.reemplaza?.compases ?? 0) * 4
   const [label, cls] = PIECE_STATE[change.estado]
   return (
@@ -351,37 +362,6 @@ function PieceDiff({ change }) {
       </header>
       <MiniRoll notes={notes} beats={beats} />
     </article>
-  )
-}
-
-/** Read-only piano roll: notes colored by class (same/new/del/mov/from) or by `color`. */
-export function MiniRoll({ notes, beats }) {
-  if (!notes.length) return <div className="mini-roll none">No notes</div>
-  const lo = Math.min(...notes.map((n) => n.tono)) - 1
-  const hi = Math.max(...notes.map((n) => n.tono)) + 1
-  const rows = hi - lo + 1
-  const W = 800
-  const bw = W / Math.max(beats, 1)
-  const lines = []
-  for (let b = 4; b < beats; b += 4) lines.push(b)
-  return (
-    <svg className="mini-roll" viewBox={`0 0 ${W} ${rows * 10}`} preserveAspectRatio="none" style={{ height: Math.min(120, Math.max(44, rows * 5)) }} aria-hidden="true">
-      {lines.map((b) => (
-        <line key={b} x1={b * bw} x2={b * bw} y1="0" y2={rows * 10} vectorEffect="non-scaling-stroke" />
-      ))}
-      {notes.map((n, i) => (
-        <rect
-          key={i}
-          className={n.cls ? `mr-${n.cls}` : undefined}
-          x={n.inicio * bw}
-          y={(hi - n.tono) * 10 + 0.5}
-          width={Math.max(n.duracion * bw - 1.5, 2)}
-          height="9"
-          fill={n.color}
-          vectorEffect="non-scaling-stroke"
-        />
-      ))}
-    </svg>
   )
 }
 

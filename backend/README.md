@@ -58,7 +58,7 @@ Errors always come back as `{ "error": "message" }` with the matching HTTP statu
 | GET | `/health` | Database type and row counts (pieces, songs, accounts) |
 | GET | `/piezas?estilo=&tipo=&tonalidad=&q=&autor=` | All filters optional. `estilo` takes several tags (`rap,boombap`; `boom bap` and `lo-fi` also work), `tonalidad` accepts `Am` / `A minor` / `La menor`, `q` ignores case and accents |
 | GET | `/piezas/:id` | One piece |
-| POST | `/piezas` | Create an original piece (id is generated). *Extra* |
+| POST | `/piezas` | Create an original piece (id is generated). `"publica": false` (logged in) keeps it private until it is saved in a public project. *Extra* |
 | POST | `/piezas/:id/fork` | Body optional `{ "autor", "nombre" }`. Returns the new piece (`201`) with `parent_id` |
 | PUT | `/piezas/:id` | `{ "notas": [...] }` replaces the notes; also accepts `nombre`, `tonalidad`, `tempo`, `estilo`, `compases`. Lineage fields (`autor`, `tipo`, `licencia`, `parent_id`) cannot change |
 | GET | `/piezas/:id/diff/:otra` | `{ original, modificada, nuevas, borradas, movidas, iguales }`. `:id` is the modified piece; if one piece is an ancestor of the other, the ancestor is always the original, whatever the order |
@@ -95,7 +95,7 @@ someone else's project as a copy (`POST /canciones` with `parent_id`) records wh
 
 | Method | Route | Notes |
 | --- | --- | --- |
-| GET | `/canciones/:id/versiones` | `{ cancion, origen, versiones }`, newest first. Each version: `numero`, `autor`, `mensaje` (written in the Save window or generated, e.g. "Edited Montuno (fork), tempo 90 → 96 BPM"), `fecha`, `merge`, a change `resumen` and the `piezas` it touched |
+| GET | `/canciones/:id/versiones[?snapshots=1]` | `{ cancion, origen, versiones }`, newest first. With `snapshots=1`, the newest 40 versions and the fork point (`origen.snapshot`) carry their full snapshot (the frontend draws the version tree from them). Each version: `numero`, `autor`, `mensaje` (written in the Save window or generated, e.g. "Edited Montuno (fork), tempo 90 → 96 BPM"), `fecha`, `merge`, a change `resumen` and the `piezas` it touched |
 | GET | `/canciones/:id/versiones/:n` | One version with its full `snapshot` (to open it in the editor) |
 | GET | `/canciones/:id/versiones/:n/diff[?contra=m]` | What version n changed: against `m`, or by default the version before (for v1 of a fork, the original at the fork point). `{ desde, hasta, nombre, tempo, pistas, piezas, resumen }` |
 | GET | `/canciones/:id/forks` | `{ parent, forks }`: the project it was forked from and the projects forked from it |
@@ -148,6 +148,10 @@ Email + password accounts stored in the database (no third-party auth service).
 - **Signed out** works as before: `autor` comes from the body (`"anonymous"` if missing), except a registered
   username (`401`: log in to publish as them). Seed data and anonymous work have no owner and stay editable by anyone.
 - `PUT /canciones/:id` never changes a song's `autor`.
+- **Private pieces**: pieces created with `"publica": false` (the editor's "+") are only seen, searched, forked and
+  used in songs by their author (`404` / "Unknown pieza_id" for everyone else). Saving them in a public song makes
+  them public, with their ancestors. Seed data, uploads and forks of public pieces are public, as before. Pieces
+  carry `publica`.
 - No email verification or password reset (they would need an email-sending service).
 
 ## Database schema
@@ -155,7 +159,7 @@ Email + password accounts stored in the database (no third-party auth service).
 `src/db/schema.js` (idempotent SQL; `npm run db:init` applies it, and the server applies it by itself on the first
 request if tables or columns are missing, so deploys never need a manual migration):
 
-- `piezas`: one row per piece. `estilo` and `notas` are JSONB columns (GIN index on `estilo`); `parent_id`
+- `piezas` (`publica`: false while only its author sees it): one row per piece. `estilo` and `notas` are JSONB columns (GIN index on `estilo`); `parent_id`
   references another piece (fork). `busqueda` is normalized text used by `?q=`. `usuario_id`: owner account.
 - `canciones`: name, author, tempo, `usuario_id` (owner account), `publica` (visibility like a GitHub repo: a private song is listed and opened only by its author's account), `descripcion` (optional, shown on project cards).
 - `pistas`: tracks of a song (`cancion_id`, `posicion`, `instrumento`).
