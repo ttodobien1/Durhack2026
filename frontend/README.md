@@ -13,7 +13,7 @@ node src/markdown.test.js
 
 ## Pages
 
-- `#/` landing (`src/Landing.jsx`): hero, Log in / Sign up, and the Explore block with two tabs: **Public projects** (search, tag filters, preview) and **Library** (`src/components/PieceLibrary.jsx`): every piece with the Browser's tabs (All, Favorites, Rhythm, Chords, Bass, Melody), search, 24 per page, preview and the favorite star (add / remove) on each piece.
+- `#/` landing (`src/Landing.jsx`): the network animation (`components/HeroNetwork.jsx`, `background` mode) fills the whole page behind its content (a fixed canvas that never takes clicks; its captions stay in the hero), hero on a glass panel, Log in / Sign up, and the Explore block with two tabs: **Public projects** (search, tag filters, preview) and **Library** (`src/components/PieceLibrary.jsx`): every piece with the Browser's tabs (All, Favorites, Rhythm, Chords, Bass, Melody), search, 24 per page, preview and the favorite star (add / remove) on each piece.
 - `#/project/<id>` project page (`src/App.jsx`); `#/project/new` starts empty. The **History** button opens the project history window (`src/components/History.jsx`), with GitHub-style tabs:
   - **Tree** (`components/VersionTree.jsx`, rows built by `src/versionTree.js`): every version is a row with all its pieces, linked to where each piece was before (same, edited, fork), library origins on top and the unsaved state ("Now") at the bottom. Nodes can be dragged (positions remembered in this browser); clicking a piece shows its change and lets you listen to it, restore it in the project, or continue working from it.
   - **Changes**: what a version changed, track by track and note by note (green new, red deleted, yellow moved), against the previous version or any other.

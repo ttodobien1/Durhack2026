@@ -96,3 +96,20 @@
 @media (max-width: 480px) { .save-next { grid-template-columns: 1fr; } }
 .site-nav .site-link { padding: 6px 10px; border: 0; border-radius: 2px; background: none; color: var(--text); font: inherit; }
 .site-nav .site-link:hover { background: var(--title-b); }
+
+/* The hero animation as the background of the whole landing page (HeroNetwork background): a canvas fixed to the
+   window behind the page, which never takes clicks. The page content sits above it; the hero text gets a glass
+   panel so it stays easy to read. */
+.bg-net { position: fixed; inset: 0; z-index: 0; display: block; width: 100vw; height: 100vh; pointer-events: none; }
+.site { position: relative; z-index: 1; }
+.hero-copy { padding: 28px 30px; border: 1px solid rgb(255 255 255 / 0.06); border-radius: 4px; background: rgb(36 41 45 / 0.66); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); box-shadow: 0 12px 40px rgb(0 0 0 / 0.3); }
+.hero-live { display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; min-height: clamp(260px, 30vw, 420px); padding-bottom: 6px; pointer-events: none; }
+.hero-live .hero-net-cap { position: static; max-width: 24ch; margin: 0; font-size: clamp(18px, 1.9vw, 24px); line-height: 1.3; text-shadow: 0 2px 14px rgb(0 0 0 / 0.95), 0 0 2px rgb(0 0 0 / 0.8); }
+.hero-steps { display: flex; gap: 6px; }
+.hero-steps i { width: 28px; height: 3px; border-radius: 2px; background: rgb(255 255 255 / 0.25); transition: background 0.4s; }
+.hero-steps i.on { background: var(--orange); }
+.site-foot { position: relative; }
+@media (max-width: 900px) {
+  .hero-live { min-height: 140px; }
+  .hero-copy { padding: 20px; }
+}

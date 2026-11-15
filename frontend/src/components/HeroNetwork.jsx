@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 /*
  * Landing hero: music pieces are added one by one, each forked from an earlier one, growing to the right like
@@ -6,6 +7,10 @@ import { useEffect, useRef, useState } from 'react'
  * network, with lights (ideas) travelling along the links from node to node.
  *
  * Drawn on a canvas from a seeded generator: no network request, so it starts on the first frame.
+ *
+ * `background`: the canvas covers the whole landing page behind its content (fixed to the window, never takes
+ * clicks), the first pieces grow on the right, away from the hero text, and the network then spreads over the
+ * whole screen. The captions stay in the hero.
  */
 
 const COUNT = 150 // pieces in the full network
@@ -111,7 +116,7 @@ function glowSprite(color) {
   return c
 }
 
-export function HeroNetwork() {
+export function HeroNetwork({ background = false }) {
   const canvasRef = useRef(null)
   const [stage, setStage] = useState(0)
 
@@ -147,14 +152,31 @@ export function HeroNetwork() {
     let visible = true
     let shownStage = 0
 
+    // Largest clip size, and where the tree sits on screen (fx, fy: share of the width / height; pad: margin).
+    // As a background it starts small and on the right of the hero text, then spreads over the whole window.
+    const maxScale = () => (background ? Math.min(W * 0.12, 160) : W * 0.36) / BW
+    // 0 = clips, 1 = network, from the size of a clip on screen (relative to the window when it is the background).
+    const netFactor = (scale) => (background ? smooth(W * 0.09, W * 0.05, BW * scale) : smooth(80, 24, BW * scale))
+    // Wide screens: above the captions, right of the hero text. Narrow ones (stacked hero): under the hero text.
+    const focus = (nf) => {
+      if (!background) return { fx: 0.5, fy: 0.5, pad: 0.14 }
+      const early = 1 - nf
+      return W >= 900 ? { fx: 0.5 + 0.2 * early, fy: 0.5 - 0.14 * early, pad: 0.12 - 0.08 * nf } : { fx: 0.5, fy: 0.5 + 0.18 * early, pad: 0.12 - 0.08 * nf }
+    }
+
     const resize = () => {
       const box = canvas.getBoundingClientRect()
-      dpr = Math.min(window.devicePixelRatio || 1, 2)
+      dpr = Math.min(window.devicePixelRatio || 1, background ? 1.5 : 2)
       W = box.width
       H = box.height
       canvas.width = Math.round(W * dpr)
       canvas.height = Math.round(H * dpr)
-      if (!cam.s) cam.s = (W * 0.36) / BW
+      if (!cam.s) {
+        cam.s = maxScale()
+        const { fx, fy } = focus(0)
+        cam.x = BW / 2 - ((fx - 0.5) * W) / cam.s
+        cam.y = -((fy - 0.5) * H) / cam.s
+      }
     }
 
     // Where a link starts and ends: clip edges while they are clips, node centres once they are a network.
@@ -225,19 +247,23 @@ export function HeroNetwork() {
         y1 = Math.max(y1, n.y + BH / 2)
       }
       if (born) {
-        const pad = 0.14
+        const { fx, fy, pad } = focus(nf)
         const breathe = 1 + 0.025 * Math.sin(t * 0.25) * nf
-        const s = Math.min((W * (1 - 2 * pad)) / (x1 - x0), (H * (1 - 2 * pad - 0.06)) / (y1 - y0), (W * 0.36) / BW) * breathe
+        const roomW = W * 2 * Math.min(fx, 1 - fx) // the room around the focus point
+        const roomH = H * 2 * Math.min(fy, 1 - fy)
+        const s = Math.min((roomW * (1 - 2 * pad)) / (x1 - x0), (roomH * (1 - 2 * pad - 0.06)) / (y1 - y0), maxScale()) * breathe
         const ease = 1 - Math.exp(-dt * 1.6)
         cam.s += (s - cam.s) * ease
-        cam.x += ((x0 + x1) / 2 + Math.sin(t * 0.11) * 0.25 * nf - cam.x) * ease
-        cam.y += ((y0 + y1) / 2 - (H * 0.03) / cam.s + Math.cos(t * 0.09) * 0.2 * nf - cam.y) * ease
+        const tx = (x0 + x1) / 2 + Math.sin(t * 0.11) * 0.25 * nf - ((fx - 0.5) * W) / cam.s
+        const ty = (y0 + y1) / 2 - (H * 0.03) / cam.s + Math.cos(t * 0.09) * 0.2 * nf - ((fy - 0.5) * H) / cam.s
+        cam.x += (tx - cam.x) * ease
+        cam.y += (ty - cam.y) * ease
       }
     }
 
     const draw = () => {
       const s = cam.s
-      const nf = smooth(80, 24, BW * s) // 0 = clips, 1 = network
+      const nf = netFactor(s)
       const X = (x) => (x - cam.x) * s + W / 2
       const Y = (y) => (y - cam.y) * s + H / 2
       // As a network the nodes leave their columns and float a little, so it reads as neurons, not a grid.
@@ -357,7 +383,7 @@ export function HeroNetwork() {
     const loop = (now) => {
       const dt = Math.min(0.05, (now - last) / 1000)
       last = now
-      step(dt, smooth(80, 24, BW * cam.s))
+      step(dt, netFactor(cam.s))
       draw()
       raf = visible ? requestAnimationFrame(loop) : 0
     }
@@ -399,7 +425,25 @@ export function HeroNetwork() {
       sized.disconnect()
       seen.disconnect()
     }
-  }, [])
+  }, [background])
+
+  if (background) {
+    return (
+      <>
+        {createPortal(<canvas ref={canvasRef} className="bg-net" aria-hidden="true" />, document.body)}
+        <div className="hero-live" aria-live="polite">
+          <p key={stage} className="hero-net-cap">
+            {CAPTIONS[stage]}
+          </p>
+          <span className="hero-steps" aria-hidden="true">
+            {CAPTIONS.map((_, i) => (
+              <i key={i} className={i <= stage ? 'on' : ''} />
+            ))}
+          </span>
+        </div>
+      </>
+    )
+  }
 
   return (
     <figure className="hero-net panel">

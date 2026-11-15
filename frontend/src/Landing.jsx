@@ -129,7 +129,7 @@ export function Landing() {
             </div>
             <p className="fine">MIDI only. Every piece carries its author and license, and the copilot suggests pieces but never writes your song.</p>
           </div>
-          <HeroNetwork />
+          <HeroNetwork background />
         </section>
 
         {user && <YourProjects name={user.name} projects={mine} />}
