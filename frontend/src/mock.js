@@ -82,7 +82,7 @@ const get = (id) => {
   return structuredClone(p)
 }
 
-// Public projects for the landing page. Songs follow contract 4.2; descripcion/etiquetas/actualizado are landing-only extras.
+// Public projects for the landing page. Songs follow contract 4.2 plus publica/descripcion (stored by the backend); etiquetas/actualizado are mock-only extras.
 // shortcut: the contract has no route to list or load songs; ask role B for GET /canciones and GET /canciones/:id.
 const lane = (instrumento, pieza_id, compases, every, from = 0, to = 8) => {
   const bloques = []

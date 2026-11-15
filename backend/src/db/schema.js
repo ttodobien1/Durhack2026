@@ -42,6 +42,8 @@ CREATE TABLE IF NOT EXISTS canciones (
 -- Visibility, like a GitHub repo: a private song is listed and opened only by its author's account.
 -- An ALTER so databases created before the column existed get it too (see migrate.js).
 ALTER TABLE canciones ADD COLUMN IF NOT EXISTS publica BOOLEAN NOT NULL DEFAULT true;
+-- Short description shown on project cards (GitHub's repository description). NULL = none written.
+ALTER TABLE canciones ADD COLUMN IF NOT EXISTS descripcion TEXT;
 
 -- Tracks of a song, ordered by posicion (0, 1, 2...).
 CREATE TABLE IF NOT EXISTS pistas (

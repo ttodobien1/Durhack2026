@@ -98,6 +98,16 @@ export function validatePiezaUpdate(body) {
   return changes;
 }
 
+// Optional song description. null = not sent (a PUT keeps the stored one); "" clears it.
+const MAX_DESCRIPCION = 300;
+function validateDescripcion(value) {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== 'string') throw badRequest('"descripcion" must be a string');
+  const text = value.trim();
+  if (text.length > MAX_DESCRIPCION) throw badRequest(`"descripcion" must be at most ${MAX_DESCRIPCION} characters`);
+  return text;
+}
+
 // Optional song visibility: public unless the client sends false.
 function validatePublica(value) {
   if (value === undefined || value === null) return true;
@@ -172,6 +182,7 @@ export function validateCancion(body) {
     autor: requiredString(body.autor, 'autor'),
     tempo: validateTempo(body.tempo),
     publica: validatePublica(body.publica),
+    descripcion: validateDescripcion(body.descripcion),
     pistas: pistas.map((pista, i) => {
       if (!pista || typeof pista !== 'object') throw badRequest(`pistas[${i}] must be an object`);
       const bloques = pista.bloques ?? [];

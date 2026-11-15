@@ -9,7 +9,7 @@ export function withMeta(p, pieces) {
     ...p,
     etiquetas: p.etiquetas?.length ? p.etiquetas : tags,
     descripcion:
-      p.descripcion ??
+      p.descripcion || // written by the author; otherwise derived from the pieces
       (names.length
         ? `Built from ${names.slice(0, 3).join(', ')}${names.length > 3 ? ` and ${names.length - 3} more` : ''}.`
         : p.pistas.some((t) => t.bloques.length)

@@ -13,6 +13,7 @@ function assemble(cancionRows, pistaRows, bloqueRows) {
       autor: row.autor,
       tempo: Number(row.tempo),
       publica: row.publica,
+      descripcion: row.descripcion ?? null,
       pistas: [],
     });
   }
@@ -38,7 +39,7 @@ async function loadCanciones({ id, autor, withPrivate = false } = {}) {
   const args = id ? [id] : [];
   const where = id ? 'WHERE id = $1' : autor ? 'WHERE autor = $1 AND (publica OR $2)' : 'WHERE publica';
   const [canciones, pistas, bloques] = await Promise.all([
-    db.query(`SELECT id, nombre, autor, tempo, publica FROM canciones ${where} ORDER BY id`, id ? [id] : autor ? [autor, withPrivate] : []),
+    db.query(`SELECT id, nombre, autor, tempo, publica, descripcion FROM canciones ${where} ORDER BY id`, id ? [id] : autor ? [autor, withPrivate] : []),
     db.query(`SELECT cancion_id, posicion, instrumento FROM pistas ${filter} ORDER BY cancion_id, posicion`, args),
     db.query(
       `SELECT cancion_id, pista_posicion, pieza_id, compas FROM bloques ${filter}
@@ -97,13 +98,14 @@ export async function createCancion(cancion, usuarioId = null) {
   await assertPiezasExist(cancion);
   const id = await insertWithNewId('canciones', 'c', (newId) =>
     db.transaction(async (tx) => {
-      await tx.query('INSERT INTO canciones (id, nombre, autor, tempo, publica, usuario_id) VALUES ($1, $2, $3, $4, $5, $6)', [
+      await tx.query('INSERT INTO canciones (id, nombre, autor, tempo, publica, usuario_id, descripcion) VALUES ($1, $2, $3, $4, $5, $6, $7)', [
         newId,
         cancion.nombre,
         cancion.autor,
         cancion.tempo,
         cancion.publica ?? true,
         usuarioId,
+        cancion.descripcion || null,
       ]);
       await writeTracks(tx, newId, cancion);
     }),
@@ -116,10 +118,12 @@ export async function saveCancion(id, cancion) {
   await assertPiezasExist(cancion);
   await db.transaction(async (tx) => {
     await tx.query(
-      `INSERT INTO canciones (id, nombre, autor, tempo, publica) VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO canciones (id, nombre, autor, tempo, publica, descripcion) VALUES ($1, $2, $3, $4, $5, NULLIF($6, ''))
        ON CONFLICT (id) DO UPDATE SET nombre = EXCLUDED.nombre, autor = EXCLUDED.autor,
-         tempo = EXCLUDED.tempo, publica = EXCLUDED.publica, updated_at = now()`,
-      [id, cancion.nombre, cancion.autor, cancion.tempo, cancion.publica ?? true],
+         tempo = EXCLUDED.tempo, publica = EXCLUDED.publica, updated_at = now(),
+         -- not sent (NULL) keeps the stored description; "" clears it
+         descripcion = CASE WHEN $6::text IS NULL THEN canciones.descripcion ELSE NULLIF($6, '') END`,
+      [id, cancion.nombre, cancion.autor, cancion.tempo, cancion.publica ?? true, cancion.descripcion ?? null],
     );
     await writeTracks(tx, id, cancion);
   });

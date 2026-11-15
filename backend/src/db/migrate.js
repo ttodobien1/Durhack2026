@@ -11,6 +11,8 @@ const CHECK_SQL = `
                  WHERE table_schema = 'public' AND table_name = 'canciones' AND column_name = 'usuario_id')
      AND EXISTS (SELECT 1 FROM information_schema.columns
                  WHERE table_schema = 'public' AND table_name = 'canciones' AND column_name = 'publica')
+     AND EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_schema = 'public' AND table_name = 'canciones' AND column_name = 'descripcion')
      AS ready`;
 
 async function isReady() {

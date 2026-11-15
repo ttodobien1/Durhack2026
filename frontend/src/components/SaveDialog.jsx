@@ -7,11 +7,14 @@ import { Check, FolderOpen, Globe, Lock, X } from 'lucide-react'
  *
  * Props: song (current project), copy (true when saving someone else's project as your own copy),
  * saved (the project returned by the server once saved; switches to step 2),
- * onSave({ nombre, publica }) -> Promise, onClose(), onMyProjects().
+ * onSave({ nombre, publica, descripcion }) -> Promise, onClose(), onMyProjects().
  */
+const MAX_DESCRIPTION = 300 // same limit as the backend
+
 export function SaveDialog({ song, copy, saved, onSave, onClose, onMyProjects }) {
   const [nombre, setNombre] = useState(copy ? `${song.nombre} (copy)` : song.nombre)
   const [publica, setPublica] = useState(song.publica !== false)
+  const [descripcion, setDescripcion] = useState(song.descripcion ?? '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
 
@@ -28,7 +31,7 @@ export function SaveDialog({ song, copy, saved, onSave, onClose, onMyProjects })
     setBusy(true)
     setError(null)
     try {
-      await onSave({ nombre: clean, publica })
+      await onSave({ nombre: clean, publica, descripcion: descripcion.trim() })
     } catch (err) {
       setError(err.message || String(err))
     } finally {
@@ -91,6 +94,21 @@ export function SaveDialog({ song, copy, saved, onSave, onClose, onMyProjects })
           <label>
             Project name
             <input autoFocus value={nombre} onChange={(e) => (setNombre(e.target.value), setError(null))} maxLength={80} />
+          </label>
+          <label>
+            <span>
+              Description <span className="dim">(optional)</span>
+            </span>
+            <textarea
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+              maxLength={MAX_DESCRIPTION}
+              rows={3}
+              placeholder="What is this beat? Mood, style, what to fork."
+            />
+            <small className="fine">
+              Shown on the project card in Explore and on your profile. {MAX_DESCRIPTION - descripcion.length} characters left.
+            </small>
           </label>
           <fieldset className="save-vis">
             <legend>Who can see it?</legend>

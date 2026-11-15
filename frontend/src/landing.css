@@ -62,6 +62,10 @@
 .auth-body label { display: grid; gap: 4px; color: var(--dim); }
 .auth-body input { height: 32px; padding: 0 10px; background: var(--well); border: 1px solid var(--line); border-radius: 2px; color: var(--text); outline: none; }
 .auth-body input:focus { border-color: var(--orange); }
+.auth-body textarea { padding: 6px 10px; background: var(--well); border: 1px solid var(--line); border-radius: 2px; color: var(--text); font: 13px/1.45 var(--ui); resize: vertical; outline: none; }
+.auth-body textarea:focus { border-color: var(--orange); }
+.auth-body textarea::placeholder { color: #8d999f; }
+.auth-body label small { font-size: 11.5px; }
 .auth-error { margin: 0; color: #ffb3ad; }
 .link { padding: 0; background: none; border: 0; color: var(--orange); text-decoration: underline; text-underline-offset: 2px; }
 

@@ -65,8 +65,8 @@ Errors always come back as `{ "error": "message" }` with the matching HTTP statu
 | GET | `/piezas/:id/diff` | Same, against the piece's parent. *Extra* |
 | GET | `/canciones?autor=` | Public songs; with `autor`, every song by that author, private ones included. *Extra* |
 | GET | `/canciones/:id` | One song. *Extra* |
-| POST | `/canciones` | Create a song (contract 4.2 without `id`, plus optional `publica`, default `true`). Every `pieza_id` must exist. *Extra* |
-| PUT | `/canciones/:id` | Replace name, tempo, visibility (`publica`), tracks and blocks. *Extra* |
+| POST | `/canciones` | Create a song (contract 4.2 without `id`, plus optional `publica`, default `true`, and `descripcion`, up to 300 characters). Every `pieza_id` must exist. *Extra* |
+| PUT | `/canciones/:id` | Replace name, tempo, visibility (`publica`), tracks and blocks. `descripcion` is replaced when sent (`""` clears it) and kept when left out. *Extra* |
 | GET | `/canciones/:id/arbol` | `{ nodos, aristas }` plus `cancion` and `resumen` (see below) |
 | POST | `/copiloto` | `{ "mensaje", "cancion": Cancion \| null }` → `{ "texto", "piezas_sugeridas" }` |
 
@@ -115,7 +115,7 @@ request if tables or columns are missing, so deploys never need a manual migrati
 
 - `piezas`: one row per piece. `estilo` and `notas` are JSONB columns (GIN index on `estilo`); `parent_id`
   references another piece (fork). `busqueda` is normalized text used by `?q=`. `usuario_id`: owner account.
-- `canciones`: name, author, tempo, `usuario_id` (owner account), `publica` (visibility like a GitHub repo: a private song is listed and opened only by its author's account).
+- `canciones`: name, author, tempo, `usuario_id` (owner account), `publica` (visibility like a GitHub repo: a private song is listed and opened only by its author's account), `descripcion` (optional, shown on project cards).
 - `pistas`: tracks of a song (`cancion_id`, `posicion`, `instrumento`).
 - `bloques`: a piece placed on a track at bar `compas`.
 - `usuarios`: accounts (`nombre`, `email`, `password_hash`, `perfil` JSONB).
