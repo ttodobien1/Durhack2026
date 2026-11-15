@@ -106,6 +106,15 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
   }
   const rowOf = (t) => rows.indexOf(t)
   const shiftRow = (t, d) => rows[clamp(rowOf(t) - d, 0, rows.length - 1)] // d > 0 moves up
+  /** Limit a move of the `group` notes so the whole group stays inside the roll: chords keep their shape at the edges. */
+  const clampMove = (base, group, dBeat, dRow) => {
+    const g = group.map((i) => base[i])
+    const rs = g.map((n) => rowOf(n.tono))
+    return [
+      clamp(dBeat, -Math.min(...g.map((n) => n.inicio)), beats - Math.max(...g.map((n) => n.inicio + n.duracion))),
+      clamp(dRow, Math.max(...rs) - (rows.length - 1), Math.min(...rs)),
+    ]
+  }
   const beatW = Math.max(12, ((width - KEYS - 2) / Math.min(beats, 16)) * zoom) // zoom 1 fits up to 4 bars; longer pieces scroll sideways
 
   // Keyboard shortcuts while a piece you own is open.
@@ -134,8 +143,9 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
       } else if (e.key.startsWith('Arrow') && sel.length) {
         const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0
         const dy = e.key === 'ArrowUp' ? (e.shiftKey && !drums ? 12 : 1) : e.key === 'ArrowDown' ? (e.shiftKey && !drums ? -12 : -1) : 0
-        moveSel((n) => ({ ...n, inicio: clamp(n.inicio + dx, 0, beats - n.duracion), tono: dy ? shiftRow(n.tono, dy) : n.tono }))
-        if (dy && sel.length === 1) previewNote(instrument, shiftRow(notes[sel[0]].tono, dy))
+        const [bx, by] = clampMove(notes, sel, dx, dy)
+        moveSel((n) => ({ ...n, inicio: n.inicio + bx, tono: by ? shiftRow(n.tono, by) : n.tono }))
+        if (by && sel.length === 1) previewNote(instrument, shiftRow(notes[sel[0]].tono, by))
       } else return
       e.preventDefault()
     }
@@ -178,27 +188,28 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
       const edge = (n.inicio + n.duracion) * beatW - p.x < 7
       drag.current = { mode: edge ? 'resize' : 'move', start: p, base: notes, group, anchor: n }
     } else {
-      const n = { tono: p.tono, inicio: clamp(Math.floor(p.beat / step) * step, 0, beats - lastLen), duracion: Math.min(lastLen, beats), velocidad: 0.8 }
-      const base = [...notes, n]
-      edit(base)
-      setSel([notes.length])
-      drag.current = { mode: 'move', start: p, base, group: [notes.length], anchor: n, recorded: true }
-      previewNote(instrument, p.tono)
+      // Empty space: dragging draws a selection box (Shift adds to it); a plain click is handled in onUp.
+      drag.current = { mode: 'empty', start: p, add: e.shiftKey ? sel : [] }
     }
   }
 
   const onMove = (e) => {
     const p = at(e)
-    setHover(p)
+    // Only re-render when the readout would change (same row and grid step = same text).
+    setHover((h) => (h && h.tono === p.tono && Math.floor(h.beat / step) === Math.floor(p.beat / step) ? h : p))
     const d = drag.current
     if (!d) return
-    if (d.mode === 'box') return setBox((b) => ({ ...b, x1: p.x, y1: p.y }))
+    if (d.mode === 'empty') {
+      if (Math.abs(p.x - d.start.x) < 4 && Math.abs(p.y - d.start.y) < 4) return
+      d.mode = 'box'
+    }
+    if (d.mode === 'box') return setBox({ x0: d.start.x, y0: d.start.y, x1: p.x, y1: p.y })
     const group = new Set(d.group)
     const dBeat = snap(p.beat - d.start.beat)
     let next
     if (d.mode === 'move') {
-      const dRow = rowOf(d.start.tono) - rowOf(p.tono)
-      next = d.base.map((n, i) => (group.has(i) ? { ...n, inicio: clamp(n.inicio + dBeat, 0, beats - n.duracion), tono: shiftRow(n.tono, dRow) } : n))
+      const [b, r] = clampMove(d.base, d.group, dBeat, rowOf(d.start.tono) - rowOf(p.tono))
+      next = d.base.map((n, i) => (group.has(i) ? { ...n, inicio: n.inicio + b, tono: shiftRow(n.tono, r) } : n))
       const moved = next[d.group[0]]
       if (moved.tono !== notes[d.group[0]]?.tono) previewNote(instrument, moved.tono)
     } else {
@@ -214,6 +225,14 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
   const onUp = () => {
     const d = drag.current
     drag.current = null
+    if (d?.mode === 'empty') {
+      // A click on empty space: with a selection it only deselects; otherwise it adds a note there.
+      if (sel.length) return setSel([])
+      const p = d.start
+      const n = { tono: p.tono, inicio: clamp(Math.floor(p.beat / step) * step, 0, beats - lastLen), duracion: Math.min(lastLen, beats), velocidad: 0.8 }
+      edit([...notes, n])
+      return previewNote(instrument, p.tono)
+    }
     if (d?.mode !== 'box' || !box) return
     const [x0, x1] = [Math.min(box.x0, box.x1), Math.max(box.x0, box.x1)]
     const [y0, y1] = [Math.min(box.y0, box.y1), Math.max(box.y0, box.y1)]
@@ -353,9 +372,9 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
               </button>
               <span
                 className="hint"
-                title="Click: add · Drag: move · Drag end: resize · Shift-click: add to selection · Ctrl-drag: box select · Arrows: nudge (Shift = octave) · Ctrl+D: duplicate · Ctrl+A: select all · Delete / right-click: remove"
+                title="Click empty: add a note (or deselect) · Drag empty: box select (Shift adds) · Drag a note: move · Drag its end: resize · Shift-click: add to selection · Arrows: nudge (Shift = octave) · Ctrl+D: duplicate · Ctrl+A: select all · Delete / right-click: remove"
               >
-                Click to add · drag to move · Ctrl-drag to select · hover for more
+                Click to add · drag empty to select · drag notes to move · hover for more
               </span>
             </>
           )

@@ -84,7 +84,8 @@ const TOM_HZ = { 41: 90, 43: 110, 45: 130, 47: 160, 48: 190, 50: 220 }
 const lastStart = new Map()
 function slot(synth, time) {
   const prev = lastStart.get(synth)
-  time = Math.max(time, Tone.getContext().currentTime) // Tone clamps late starts to now; nudge from there
+  // A late hit is moved 5 ms ahead: Tone would otherwise clamp it to its own, later "now" and collide anyway.
+  time = Math.max(time, Tone.getContext().currentTime + 0.005)
   const t = prev !== undefined && time <= prev ? prev + 0.001 : time
   lastStart.set(synth, t)
   return t

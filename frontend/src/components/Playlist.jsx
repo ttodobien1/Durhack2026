@@ -82,6 +82,7 @@ export function Playlist({ song, pieces, selectedId, songBars, mix, onMix, onSel
     e.currentTarget.setPointerCapture(e.pointerId)
     const b = song.pistas[lane].bloques[j]
     const key = keyOf(lane, b.compas)
+    if (!sel.includes(key)) setSel([key]) // grabbing a clip outside the selection works on that clip alone
     const items = itemsOf(sel.includes(key) ? sel : [key])
     setDrag({ items, click: { key, pieza_id: b.pieza_id }, x0: e.clientX, y0: e.clientY, dBar: 0, dLane: 0, copy: e.ctrlKey || e.metaKey, moved: false })
   }
@@ -142,7 +143,7 @@ export function Playlist({ song, pieces, selectedId, songBars, mix, onMix, onSel
       )
       return setSel(box.add ? [...new Set([...sel, ...hit])] : hit)
     }
-    setSel([])
+    if (sel.length) return setSel([]) // a click with a selection only deselects; without one it paints
     const pista = song.pistas[i]
     const pieza_id = pista.bloques[0]?.pieza_id
     if (!pieza_id) return
@@ -167,7 +168,7 @@ export function Playlist({ song, pieces, selectedId, songBars, mix, onMix, onSel
     <section className="panel playlist" onContextMenu={(e) => e.preventDefault()} onKeyDown={onKeyDown}>
       <h2 className="title">
         Playlist <span className="dim">· {song.nombre}</span>
-        <span className="title-hint">Drag empty space to select · drag clips to move · Ctrl-drag to copy · click to paint · Del or right-click to delete · Ctrl+Z undo</span>
+        <span className="title-hint">Drag empty space to select · click it to paint (or deselect) · drag clips to move · Ctrl-drag to copy · Del or right-click to delete · Ctrl+Z undo</span>
         <span className="title-tools">
           <button className="icon small" onClick={() => zoomBy(1 / 1.25)} aria-label="Zoom out" title="Zoom out (Ctrl+wheel)">
             <ZoomOut size={13} />
