@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { GitCompare, GitFork, Globe, Lock, Magnet, MessageSquare, Minus, Pencil, Play, Plus, Redo2, Save, Square, Undo2, ZoomIn, ZoomOut } from 'lucide-react'
+import { GitCompare, GitFork, Globe, Lock, Magnet, MessageSquare, Minus, Pencil, Play, Plus, Redo2, Save, Square, TriangleAlert, Undo2, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { useWidth } from '../useWidth.js'
 import { instrumentFor, previewNote } from '../audio.js'
 import { typeLabel } from './Browser.jsx'
 import { isMine } from '../profile.js'
+import { SimilarPieces } from './SimilarPieces.jsx'
 
 const ROW = 14
 const KEYS = 64
@@ -67,7 +68,7 @@ function PieceName({ piece, onRename }) {
 }
 
 // onVisibility(publica): the author switches who may use the piece; onComments(): opens the piece's comments.
-export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, onChange, onBars, onFork, onSave, onRename, onVisibility, onComments, onToggleDiff, onPreview, previewing, playhead, handle }) {
+export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, onChange, onBars, onFork, onSave, onRename, onVisibility, onComments, onToggleDiff, onPreview, previewing, playhead, handle, onOpenPiece, onAddPiece, aviso, onDismissAviso }) {
   const [measure, width] = useWidth()
   const [zoom, setZoom] = useState(1)
   const scroller = useRef(null)
@@ -394,6 +395,7 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
             <Save size={13} /> {dirty ? 'Save' : 'Saved'}
           </button>
         )}
+        {onOpenPiece && <SimilarPieces piece={piece} onOpen={onOpenPiece} onAdd={onAddPiece} />}
         {piece.parent_id && (
           <button className={`tbtn ${diff ? 'on' : ''}`} onClick={onToggleDiff} aria-pressed={!!diff} title={`Compare with ${piece.parent_id} by ${parent?.autor ?? 'its author'}`}>
             <GitCompare size={13} /> {diff ? 'Exit diff' : 'What changed?'}
@@ -451,6 +453,22 @@ export function PianoRoll({ piece, parent, notes, bars, dirty, editable, diff, o
           </span>
         )}
       </div>
+
+      {aviso && (
+        <p className="roll-warn" role="status">
+          <TriangleAlert size={14} aria-hidden="true" />
+          <span>
+            This now sounds a lot like <b>{aviso.nombre}</b> by {aviso.autor} ({aviso.similitud}% alike, even across keys). If you built on it, fork theirs instead so
+            they are credited.
+          </span>
+          <button className="tbtn" onClick={() => onOpenPiece(aviso.id)}>
+            Open it
+          </button>
+          <button className="icon small" onClick={onDismissAviso} aria-label="Dismiss">
+            <X size={13} />
+          </button>
+        </p>
+      )}
 
       <div className="roll-scroll" ref={setScroller}>
         <div className="roll-canvas" style={{ width: KEYS + gridW }}>

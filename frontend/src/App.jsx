@@ -420,11 +420,15 @@ export default function App({ projectId = 'new' }) {
     }
   }
 
+  const [aviso, setAviso] = useState(null) // { pieceId, ...the public piece it nearly copies } after a save
   const save = async () => {
     if (!signedIn('Log in to save your changes to this piece.', save)) return false
     try {
       const saved = await api.saveNotes(selected.id, notes, bars)
       recordContribution()
+      // Too close to someone else's public piece? A note, never a block (forking would credit them).
+      const piece = selected
+      api.checkSimilar({ id: piece.id, parent_id: piece.parent_id, tipo: piece.tipo, notas: notes }).then((r) => setAviso(r?.aviso ? { pieceId: piece.id, ...r.aviso } : null))
       remember([{ ...selected, ...saved, notas: saved.notas ?? notes, compases: saved.compases ?? bars }])
       if (bars !== selected.compases) ripple(selected.id, bars)
       setDraft(null)
@@ -788,6 +792,10 @@ export default function App({ projectId = 'new' }) {
           onVisibility={setPieceVisibility}
           onComments={() => setCommentsFor({ objetivo: 'pieza', id: selected.id, title: selected.nombre, owner: selected.autor })}
           onToggleDiff={toggleDiff}
+          onOpenPiece={select}
+          onAddPiece={(id) => loadPiece(id).then(addToSong, fail)}
+          aviso={aviso?.pieceId === selected?.id ? aviso : null}
+          onDismissAviso={() => setAviso(null)}
           onPreview={() => previewPiece(selected, notes, bars)}
           previewing={playing === selected?.id}
           playhead={playing === selected?.id ? beat : null}

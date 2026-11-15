@@ -155,6 +155,10 @@ export const api = {
   // the piece is saved in a public project, cambios.md §10).
   createPiece: (pieza) => call('/piezas', { method: 'POST', body: pieza }, () => mock.create(pieza)),
   // Cached for the visit: the landing, profile and project pages ask for the same pieces again and again.
+  // Musical fingerprints (backend lib/fingerprint.js). Offline (mock) there is nothing to compare with.
+  similar: (id) => call(`/piezas/${id}/parecidas?n=6`, undefined, () => []),
+  /** { parecidas, aviso }: aviso = a public piece by someone else that these notes nearly copy, or null. */
+  checkSimilar: (pieza) => call('/piezas/parecidas', { method: 'POST', body: pieza }, () => null).catch(() => null),
   getPiece: (id) => {
     if (!pieceCache.has(id)) pieceCache.set(id, call(`/piezas/${id}`, undefined, () => mock.get(id)).catch((e) => (pieceCache.delete(id), Promise.reject(e))))
     return pieceCache.get(id).then((p) => structuredClone(p)) // callers may change their copy

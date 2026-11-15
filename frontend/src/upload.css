@@ -45,3 +45,5 @@
   .drop.compact { grid-auto-flow: row; justify-items: center; }
   .drop.compact .fine { margin-left: 0; }
 }
+.up-warn { grid-column: 1 / -1; display: flex; align-items: flex-start; gap: 6px; margin: 0; padding: 6px 8px; background: rgb(255 210 63 / 0.08); border: 1px solid rgb(255 210 63 / 0.35); border-radius: 2px; color: var(--text); font-size: 12px; line-height: 1.45; }
+.up-warn svg { flex: none; margin-top: 1px; color: var(--mov); }

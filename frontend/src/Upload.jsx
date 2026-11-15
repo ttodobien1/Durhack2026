@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowRight, Check, FileMusic, Play, RotateCcw, Square } from 'lucide-react'
+import { ArrowRight, Check, FileMusic, Play, RotateCcw, Square, TriangleAlert } from 'lucide-react'
 import { api } from './api.js'
 import * as audio from './audio.js'
 import { AuthDialog, SiteBar } from './Site.jsx'
@@ -47,6 +47,11 @@ export function Upload() {
         return { ...c, key: i, on: true, nombre: `${base} · ${c.part} ${String.fromCharCode(64 + seen[c.part])}`, tonalidad: c.tipo === 'ritmo' ? '' : (out.tonalidad ?? '') }
       })
       setSong({ file: file.name, tempo: out.tempo, tonalidad: out.tonalidad, parts: new Set(rows.map((r) => r.part)).size, rows })
+      // Compare each loop with the public library (any key or start beat): flag near-copies of someone else's piece.
+      const autor = loadUser()?.name ?? null
+      Promise.all(rows.map((r) => api.checkSimilar({ tipo: r.tipo, notas: r.notas, autor }))).then((checks) =>
+        setSong((s) => (s?.file === file.name ? { ...s, rows: s.rows.map((r, i) => ({ ...r, aviso: checks[i]?.aviso ?? null })) } : s)),
+      )
     } catch (e) {
       setError(e.message)
     }
@@ -229,6 +234,15 @@ export function Upload() {
                     {r.compases} bars · bar {r.desde + 1}
                     {r.repeats > 1 && <b> · ×{r.repeats}</b>}
                   </span>
+                  {r.aviso && (
+                    <p className="up-warn">
+                      <TriangleAlert size={13} aria-hidden="true" />
+                      <span>
+                        {r.aviso.similitud}% like <b>{r.aviso.nombre}</b> by {r.aviso.autor}, even across keys. If it is theirs, fork their piece instead so they are
+                        credited.
+                      </span>
+                    </p>
+                  )}
                 </li>
               ))}
             </ul>
