@@ -15,13 +15,11 @@
 .tbtn.big { height: 36px; padding: 0 16px; font-size: 14px; }
 .fine { margin: 0; color: var(--dim); font-size: 12px; line-height: 1.5; }
 
-.demo { margin: 0; }
-.demo-body { display: grid; gap: 0; padding: 16px; background: var(--well); }
-.demo .clip { position: relative; inset: auto; height: 64px; cursor: default; }
-.demo .clip-head { line-height: 18px; }
-.demo .clip-head .code { background: rgb(0 0 0 / 0.18); color: inherit; }
-.demo-link { display: block; margin-left: 18px; padding: 6px 0 6px 12px; border-left: 2px dashed #6c777d; color: var(--dim); font-size: 11.5px; }
-.demo-legend { margin: 12px 0 0; flex-wrap: wrap; }
+.hero-net { position: relative; margin: 0; aspect-ratio: 16 / 10; min-height: 300px; overflow: hidden; background: var(--well); }
+.hero-net canvas { display: block; width: 100%; height: 100%; }
+.hero-net-cap { position: absolute; left: 14px; right: 14px; bottom: 12px; color: var(--text); font-size: 13px; font-weight: 600; text-shadow: 0 1px 6px rgb(0 0 0 / 0.8); pointer-events: none; animation: hero-cap 0.6s ease-out; }
+@keyframes hero-cap { from { opacity: 0; transform: translateY(4px); } }
+@media (prefers-reduced-motion: reduce) { .hero-net-cap { animation: none; } }
 
 .flow { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 3px; counter-reset: step; }
 .flow > li { position: relative; display: grid; background: var(--panel); border: 1px solid var(--line); box-shadow: inset 0 1px 0 var(--bevel); counter-increment: step; }

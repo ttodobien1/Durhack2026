@@ -2,11 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ArrowRight, Disc3, Library, Lock, Play, Plus, Search, Square, X } from 'lucide-react'
 import { api } from './api.js'
 import * as audio from './audio.js'
-import { diffNotes } from './diff.js'
 import { SiteBar } from './Site.jsx'
 import { Arrangement, withMeta } from './projectMeta.jsx'
 import { useUser } from './profile.js'
-import { MiniNotes } from './components/Playlist.jsx'
+import { HeroNetwork } from './components/HeroNetwork.jsx'
 import { FlowDemo } from './components/FlowDemos.jsx'
 import { PieceLibrary } from './components/PieceLibrary.jsx'
 import { exampleEdit } from './exampleEdit.js'
@@ -35,7 +34,7 @@ export function Landing() {
   const [user, setUser] = useUser()
   const [playing, setPlaying] = useState(null)
 
-  const [chain, setChain] = useState(null) // [parent, fork] from the library, for the hero
+  const [chain, setChain] = useState(null) // [parent, fork] from the library, for the "How it works" popups
   const [mine, setMine] = useState(null) // your projects (private ones included), only while logged in
   const [demo, setDemo] = useState(null) // the "How it works" step whose popup is open
   const closeDemo = useCallback(() => setDemo(null), [])
@@ -70,7 +69,7 @@ export function Landing() {
         const f = found.find((x) => x.parent_id && found.some((y) => y.id === x.parent_id))
         if (f) return live && setChain([found.find((y) => y.id === f.parent_id), f])
       }
-      // No forks in the library yet: the "How it works" popups still show a real piece (the hero stays empty).
+      // No forks in the library yet: the "How it works" popups still show a real piece.
       const any = (await api.search({ tipo: 'acordes' }).catch(() => [])).find((p) => p.notas?.length)
       if (any && live) setChain([null, any])
     }
@@ -130,7 +129,7 @@ export function Landing() {
             </div>
             <p className="fine">MIDI only. Every piece carries its author and license, and the copilot suggests pieces but never writes your song.</p>
           </div>
-          <LineageDemo chain={chain} />
+          <HeroNetwork />
         </section>
 
         {user && <YourProjects name={user.name} projects={mine} />}
@@ -200,49 +199,6 @@ function YourProjects({ name, projects }) {
 }
 
 
-/** A real lineage from the library ending in an example fork by you, with its actual diff counts. */
-function LineageDemo({ chain }) {
-  const [base, child] = chain ?? []
-  const yours = useMemo(() => child && exampleEdit(child).yours, [child])
-  if (!base || !child) return <div className="demo panel" aria-hidden="true" />
-  const d = diffNotes(child.notas, yours.notas)
-  const rows = [
-    [base, null],
-    [child, `forked by ${child.autor}`],
-    [yours, 'forked by you'],
-  ]
-  return (
-    <figure className="demo panel">
-      <figcaption className="title">
-        Origin of a fork <span className="dim">· example</span>
-      </figcaption>
-      <div className="demo-body">
-        {rows.map(([p, how]) => (
-          <div key={p.id} className="demo-step">
-            {how && <span className="demo-link">{how}</span>}
-            <div className={`clip t-${p.tipo} ${p.autor === 'you' ? 'mine' : ''}`}>
-              <span className="clip-head">
-                <span className="clip-name">
-                  <span className="code">{p.id}</span> {p.nombre}
-                </span>
-                <span className="clip-by">
-                  {p.autor} · {p.licencia}
-                </span>
-              </span>
-              <MiniNotes notas={p.notas} beats={p.compases * 4} />
-            </div>
-          </div>
-        ))}
-        <p className="legend demo-legend">
-          <i className="k-new" /> {d.nuevas.length} new <i className="k-mov" /> {d.movidas.length} moved <i className="k-del" /> {d.borradas.length} deleted{' '}
-          <i className="k-same" /> {d.iguales.length} same
-        </p>
-      </div>
-    </figure>
-  )
-}
-
-// Two tabs: Public projects (the project list) and Library (every piece, PieceLibrary.jsx).
 function Explore({ projects, pieces, playing, onPreview, onPreviewPiece, onUser }) {
   const [view, setView] = useState('projects') // 'projects' | 'library'
   const [q, setQ] = useState('')

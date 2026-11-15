@@ -1,5 +1,5 @@
 /**
- * The example edit used on the landing page (hero and the Edit / Diff animations): in your fork of a real
+ * The example edit used on the landing page (the "How it works" Edit / Diff animations): in your fork of a real
  * library piece, one note moves half a beat later and the first note is added again at beat 6.
  */
 export function exampleEdit(child) {
