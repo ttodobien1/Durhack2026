@@ -1,7 +1,8 @@
 // Project helpers shared by the landing and profile pages.
-import { GitFork, MessageSquare } from 'lucide-react'
+import { MessageSquare } from 'lucide-react'
+import { Reuse } from './components/Reuse.jsx'
 
-/** Comments and forks of a project, when it has any (cambios.md §14). */
+/** Comments and copies of a project, when it has any (cambios.md §14). The copies count opens where it was reused. */
 export function Counts({ p }) {
   return (
     <>
@@ -10,11 +11,7 @@ export function Counts({ p }) {
           <MessageSquare size={12} aria-hidden="true" /> {p.comentarios}
         </span>
       )}
-      {p.forks > 0 && (
-        <span className="count-inline" title={`${p.forks} ${p.forks === 1 ? 'fork' : 'forks'}`}>
-          <GitFork size={12} aria-hidden="true" /> {p.forks}
-        </span>
-      )}
+      <Reuse kind="cancion" id={p.id} count={p.forks} />
     </>
   )
 }

@@ -10,6 +10,7 @@ import copiloto from './routes/copiloto.js';
 import invitaciones from './routes/invitaciones.js';
 import mensajes from './routes/mensajes.js';
 import piezas from './routes/piezas.js';
+import usos from './routes/usos.js';
 import usuarios from './routes/usuarios.js';
 
 const app = express();
@@ -46,6 +47,7 @@ app.get('/health', async (req, res) => {
   });
 });
 
+app.use(usos); // GET /usos and GET /piezas/:id/usos (before the /piezas router, which has /:id)
 app.use('/auth', auth);
 app.use('/usuarios', usuarios);
 app.use('/piezas', piezas);

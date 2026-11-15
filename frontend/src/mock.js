@@ -214,7 +214,37 @@ export const mock = {
   diff(id, otherId) {
     return diffNotes(get(otherId).notas, get(id).notas)
   },
-  copilot({ mensaje }) {
+  // Reuse counters offline: the demo projects that use each piece, and the forks made in this visit.
+  usage({ piezas = [], canciones = [] }) {
+    const live = PROJECTS.filter((p) => !p.borrada)
+    const count = (id) => {
+      const used = live.filter((p) => p.pistas.some((t) => t.bloques.some((b) => b.pieza_id === id))).length
+      const forks = [...db.values()].filter((p) => p.parent_id === id).length
+      return { canciones: used, forks, total: used + forks }
+    }
+    return {
+      piezas: Object.fromEntries(piezas.map((id) => [id, count(id)])),
+      canciones: Object.fromEntries(canciones.map((id) => [id, { forks: 0, total: 0 }])),
+    }
+  },
+  pieceUsage(id) {
+    get(id)
+    const lista = PROJECTS.filter((p) => !p.borrada && p.pistas.some((t) => t.bloques.some((b) => b.pieza_id === id))).map(({ id: cid, nombre, autor }) => ({
+      id: cid,
+      nombre,
+      autor,
+      publica: true,
+    }))
+    const forks = [...db.values()].filter((p) => p.parent_id === id).map(({ id: pid, nombre, autor }) => ({ id: pid, nombre, autor, publica: true }))
+    return { id, total: lista.length + forks.length, canciones: { total: lista.length, lista }, forks: { total: forks.length, lista: forks } }
+  },
+  copilot({ mensaje, tarareo }) {
+    if (tarareo) {
+      return {
+        texto: 'I heard you! Matching a humming against the library needs the Stemma server, and the app is on local demo data right now.',
+        piezas_sugeridas: [],
+      }
+    }
     const wantsMelody = /melod|chorus|coro|vocal|lead/i.test(mensaje)
     const ids = ['p-021', 'p-024', 'p-017', 'p-022', ...(wantsMelody ? ['p-030'] : [])]
     return {

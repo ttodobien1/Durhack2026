@@ -794,7 +794,18 @@ export default function App({ projectId = 'new' }) {
         />
       </main>
 
-      <Copilot song={song} pieces={pieces} onAddMany={addMany} onSelect={select} onTree={() => setHistoryTab('tree')} remember={remember} fail={fail} ask={ask} />
+      <Copilot
+        song={song}
+        pieces={pieces}
+        onAddMany={addMany}
+        onSelect={select}
+        onTree={() => setHistoryTab('tree')}
+        remember={remember}
+        fail={fail}
+        ask={ask}
+        onPreview={previewPiece}
+        playing={playing}
+      />
 
       {newPiece && (
         <NewPieceDialog

@@ -75,7 +75,9 @@ Errors always come back as `{ "error": "message" }` with the matching HTTP statu
 | GET | `/canciones/compartidas` | Projects the logged-in account collaborates on. *Extra* |
 | PATCH | `/canciones/:id/ajustes` | Author only: `{ permite_fork?, permite_propuestas?, pide_ayuda? }` (`pide_ayuda: null` removes the help request). Returns the song. *Extra* |
 | GET | `/canciones/:id/arbol` | `{ nodos, aristas }` plus `cancion` and `resumen` (see below) |
-| POST | `/copiloto` | `{ "mensaje", "cancion": Cancion \| null }` → `{ "texto", "piezas_sugeridas" }` |
+| POST | `/copiloto` | `{ "mensaje", "cancion": Cancion \| null }` → `{ "texto", "piezas_sugeridas" }`. Optional `historial` (earlier chat messages) and `tarareo` (a humming as notes), see [Hum to DJ Stemy](#hum-to-dj-stemy) |
+| GET | `/usos?piezas=&canciones=` | Reuse counters (popularity) for up to 200 ids each: `{ piezas: { id: { canciones, forks, total } }, canciones: { id: { forks, total } } }`. *Extra* |
+| GET | `/piezas/:id/usos` | Where a piece is reused: `{ id, total, canciones: { total, lista }, forks: { total, lista } }`. Totals count everything; the lists name only what the viewer may open. *Extra* |
 
 Routes marked *Extra* are not in the contract table; they are needed so songs can be saved and the tree can be built.
 
@@ -241,6 +243,35 @@ The lineage tree is a recursive query that walks `parent_id` up from every piece
 5. With Vercel's Git integration, every push to the production branch (`main` by default) redeploys both projects;
    other branches get preview URLs. Schema changes are applied by the server itself on the first request after the
    deploy; seed data still needs `npm run db:seed`.
+
+## Hum to DJ Stemy
+
+The user hums a melody into the microphone; the browser turns it into notes (`frontend/src/hum.js`: YIN pitch
+detection, note splitting, the singer's own tuning, a 16th-note grid at the project tempo). Audio never reaches the
+server, only the notes:
+
+```json
+POST /copiloto
+{
+  "mensaje": "Here's the melody I have in mind. Find pieces like it.",
+  "cancion": null,
+  "historial": [{ "de": "usuario", "texto": "a lo-fi beat with piano" }, { "de": "stemy", "texto": "..." }],
+  "tarareo": { "notas": [{ "tono": 64, "inicio": 0, "duracion": 0.25, "velocidad": 0.8 }, ...] }
+}
+```
+
+- `src/lib/melody.js` compares the humming with every public `melodia` piece: intervals between notes (any key) and
+  note lengths relative to each other (any tempo), with local alignment (a fragment, a missing or extra note, repeated
+  notes merged into one). It returns a similarity from 0 to 1 and the transposition.
+- The copilot gets the closest melodies (`src/copilot/hum.js`) and is told to say what the humming sounds like when
+  the best match is 70% or more, and to search for chords, bass and drums in the humming's key. The strong match is
+  always the first suggestion. Without an API key, or if the model fails, the server answers by itself with the same
+  matches plus pieces in that key, so the demo never stops.
+- Extra response field: `tarareo: { tonalidad, notas, coincidencias: [{ id, nombre, autor, licencia, similitud, transponer }] }`.
+- `historial` (up to 10 messages, oldest first) works on every request: DJ Stemy remembers what was said before.
+- `data/piezas/famous-melodies.json` (`p-501` to `p-514`): public-domain melodies everyone can hum (Für Elise, Ode to
+  Joy, Twinkle Twinkle, Happy Birthday, Jingle Bells, Beethoven's 5th, Eine kleine Nachtmusik, Canon in D, Frère
+  Jacques, Mary Had a Little Lamb, Bridal Chorus, In the Hall of the Mountain King, Greensleeves, Toccata and Fugue).
 
 ## Copilot
 

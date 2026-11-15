@@ -1336,6 +1336,62 @@
               }
             }
           }
+        },
+        {
+          "name": "Hum a melody (Für Elise, transposed and slower)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/copiloto",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Here is the melody I have in mind (hummed). Find pieces like it, or pieces that fit it.\",\n  \"cancion\": null,\n  \"historial\": [\n    {\n      \"de\": \"usuario\",\n      \"texto\": \"I want a lo-fi beat with piano\"\n    }\n  ],\n  \"tarareo\": {\n    \"notas\": [\n      {\n        \"tono\": 59,\n        \"inicio\": 0.0,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 58,\n        \"inicio\": 0.25,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 59,\n        \"inicio\": 0.5,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 58,\n        \"inicio\": 1.0,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 59,\n        \"inicio\": 1.25,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 54,\n        \"inicio\": 1.5,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 57,\n        \"inicio\": 2.0,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 55,\n        \"inicio\": 2.25,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 52,\n        \"inicio\": 2.5,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 43,\n        \"inicio\": 3.5,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 47,\n        \"inicio\": 3.75,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 52,\n        \"inicio\": 4.0,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 54,\n        \"inicio\": 4.5,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 47,\n        \"inicio\": 5.25,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 51,\n        \"inicio\": 5.5,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 54,\n        \"inicio\": 6.0,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 55,\n        \"inicio\": 6.25,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 47,\n        \"inicio\": 7.25,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 59,\n        \"inicio\": 7.5,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      },\n      {\n        \"tono\": 58,\n        \"inicio\": 7.75,\n        \"duracion\": 0.25,\n        \"velocidad\": 0.8\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "The first 20 notes of Für Elise, 5 semitones lower and 25% slower, like a real humming. Expect p-501 first and a \"tarareo\" field with the matches. Works without an API key too (the server answers with its own matches)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Popularidad (re-usos)",
+      "item": [
+        {
+          "name": "Reuse counters (batch)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/usos?piezas=p-501,p-001,p-1262&canciones={{cancionId}}",
+            "description": "Times each piece was used in projects or forked, and each project copied."
+          }
+        },
+        {
+          "name": "Where a piece is reused",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/piezas/p-501/usos",
+            "description": "Projects that use the piece and pieces forked from it. Lists only show what you may open; totals count everything."
+          }
         }
       ]
     }

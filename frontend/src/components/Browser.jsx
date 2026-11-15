@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Play, Plus, Search, Square, Star } from 'lucide-react'
 import { api } from '../api.js'
 import { setFavorite, useFavorites } from '../favorites.js'
+import { usePieceReuse } from '../reuse.js'
 
 export const TYPES = [
   ['', 'All'],
@@ -69,6 +70,7 @@ export function Browser({ pieces = {}, onResults, onSelect, onAdd, onPreview, on
   const starred = favorites.ids.map((id) => favPieces[id]).filter(Boolean)
   const loadingFavs = favorites.ids.some((id) => !(id in favPieces))
   const list = onFavorites ? starred.filter((p) => matches(p, text)) : results
+  const reuse = usePieceReuse((list ?? []).slice(0, 200).map((row) => row.id))
   const isFav = new Set(favorites.ids)
 
   const star = (p) => {
@@ -111,6 +113,12 @@ export function Browser({ pieces = {}, onResults, onSelect, onAdd, onPreview, on
                 <span className="piece-name">{p.nombre}</span>
                 <span className="piece-meta">
                   {p.autor} · {p.licencia} · {typeLabel(p.tipo)} · {p.tonalidad}
+                  {reuse[p.id]?.total > 0 && (
+                    <span className="piece-reuse" title={`Reused ${reuse[p.id].total} ${reuse[p.id].total === 1 ? 'time' : 'times'} (projects and forks)`}>
+                      {' '}
+                      · ↻ {reuse[p.id].total}
+                    </span>
+                  )}
                 </span>
               </button>
               <button className="icon" onClick={() => onPreview(p)} aria-label={playing === p.id ? `Stop ${p.nombre}` : `Preview ${p.nombre}`}>

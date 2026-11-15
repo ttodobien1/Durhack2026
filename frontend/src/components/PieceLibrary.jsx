@@ -8,6 +8,8 @@ import { setFavorite, useFavorites } from '../favorites.js'
 import { AuthDialog } from '../Site.jsx'
 import { FAVORITES, TABS, typeLabel } from './Browser.jsx'
 import { MiniNotes } from './Playlist.jsx'
+import { Reuse } from './Reuse.jsx'
+import { usePieceReuse } from '../reuse.js'
 import './library.css'
 
 const PER_PAGE = 24
@@ -99,6 +101,7 @@ export function PieceLibrary({ playing, onPreview, onUser }) {
   const first = (current - 1) * PER_PAGE
   const slice = shown.slice(first, first + PER_PAGE)
   const isFav = new Set(favorites.ids)
+  const reuse = usePieceReuse(slice.map((p) => p.id))
 
   const goTo = (n) => {
     setPage(n)
@@ -207,6 +210,7 @@ export function PieceLibrary({ playing, onPreview, onUser }) {
                 <span className="dim">
                   {p.compases} {p.compases === 1 ? 'bar' : 'bars'} · {p.tempo} BPM
                 </span>
+                <Reuse kind="pieza" id={p.id} count={reuse[p.id]?.total} />
               </div>
             </li>
           )

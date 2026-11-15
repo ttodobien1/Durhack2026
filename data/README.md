@@ -19,6 +19,9 @@ Seed data loaded into the database with `npm run db:seed` (or `npm run db:reset`
 - `estilo` tags are stored lowercase, without accents or hyphens (`"romántica"` → `"romantica"`, `"lo-fi"` → `"lofi"`, `"boom bap"` → `"boombap"`).
 - `tonalidad` is stored in short notation (`"La menor"` or `"A minor"` becomes `"Am"`). Use `null` for drums.
 - Every imported piece needs `autor`, `licencia` and `fuente` (CC BY requires attribution). No melodies or lyrics from known songs.
+  The one exception is `piezas/famous-melodies.json`: compositions in the **public domain** (Beethoven, Mozart, Bach,
+  traditional songs...), transcribed by the team, so the "hum to DJ Stemy" demo has tunes everyone knows. Never add
+  songs still under copyright (anything by a living or recently deceased composer, e.g. Queen).
 
 ## From MIDI to pieces
 

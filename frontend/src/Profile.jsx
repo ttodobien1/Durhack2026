@@ -8,6 +8,8 @@ import { ACCENTS, authorsFor, contributions, fetchProfile, isMine, loadProfile, 
 import { renderMarkdown } from './markdown.js'
 import { typeLabel } from './components/Browser.jsx'
 import { ProjectMenu } from './components/ProjectMenu.jsx'
+import { Reuse } from './components/Reuse.jsx'
+import { usePieceReuse } from './reuse.js'
 import './profile.css'
 import './social.css'
 
@@ -564,6 +566,7 @@ function Trash({ items, onRestore, onPurge }) {
 
 // own: your profile, where each piece of yours has its Public / Private switch (onVisibility(piece, publica)).
 function PieceList({ pieces, playing, onPreview, name, own, onVisibility, error }) {
+  const reuse = usePieceReuse(pieces.map((p) => p.id))
   const upload = own && (
     <>
       <a className="tbtn p-upload" href="#/upload">
@@ -605,6 +608,7 @@ function PieceList({ pieces, playing, onPreview, name, own, onVisibility, error 
                   · <GitFork size={12} aria-hidden="true" /> forked from <span className="code">{p.parent_id}</span>
                 </>
               )}
+              <Reuse kind="pieza" id={p.id} count={reuse[p.id]?.total} label />
             </div>
           </div>
           {own && isMine(p.autor) && (

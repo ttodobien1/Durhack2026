@@ -1,0 +1,14 @@
+/* Reuse counter + "where" popover (Reuse.jsx) */
+.reuse { position: relative; display: inline-flex; margin-left: 8px; vertical-align: middle; }
+.reuse-btn { display: inline-flex; align-items: center; gap: 3px; height: 18px; padding: 0 5px; color: var(--orange); background: none; border: 1px solid transparent; border-radius: 9px; font: inherit; font-size: 11px; cursor: pointer; }
+.reuse-btn:hover, .reuse-btn[aria-expanded='true'] { border-color: var(--orange); background: rgb(255 154 31 / 0.1); }
+.reuse-pop { position: absolute; z-index: 40; top: calc(100% + 4px); left: 0; width: 250px; max-height: 260px; overflow-y: auto; padding: 8px 10px; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 6px 18px rgb(0 0 0 / 0.45); text-align: left; white-space: normal; font-size: 12px; line-height: 1.4; }
+.reuse-pop h4 { display: flex; align-items: center; gap: 4px; margin: 0 0 4px; font-size: 11px; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: 0.03em; }
+.reuse-pop h4 + ul { margin-bottom: 8px; }
+.reuse-pop ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.reuse-pop ul:last-child { margin-bottom: 0; }
+.reuse-pop li { overflow: hidden; text-overflow: ellipsis; }
+.reuse-pop li svg { margin-left: 4px; vertical-align: -1px; color: var(--dim); }
+.reuse-pop a { color: var(--orange); }
+.reuse-more, .reuse-empty { margin: 0; color: var(--dim); font-style: italic; }
+@media (max-width: 480px) { .reuse-pop { width: min(250px, calc(100vw - 32px)); } }

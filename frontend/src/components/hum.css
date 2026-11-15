@@ -1,0 +1,27 @@
+/* "Hum to DJ Stemy" (HumRecorder.jsx) and hummed melodies in the chat (Copilot.jsx) */
+.hum-card { display: grid; gap: 6px; margin: 0 6px 6px; padding: 8px; background: var(--well-2); border: 1px solid var(--line); border-left: 3px solid var(--orange); border-radius: 3px; }
+.hum-head { display: flex; align-items: center; gap: 6px; color: var(--text); }
+.hum-head .icon { margin-left: auto; }
+.hum-note { margin: 0; color: var(--dim); font-size: 11px; }
+.hum-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.hum-live { display: flex; align-items: center; gap: 8px; }
+.hum-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--del); animation: hum-pulse 1s ease-in-out infinite; flex: none; }
+.hum-level { flex: 1; height: 8px; background: var(--well); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.hum-level i { display: block; height: 100%; background: linear-gradient(90deg, var(--note), var(--orange)); transition: width 60ms linear; }
+.hum-pitch { min-width: 34px; font: 600 13px var(--mono); color: var(--orange); text-align: center; }
+.hum-card .mini-roll, .hum-msg .mini-roll { width: 100%; background: var(--well); border: 1px solid var(--line); border-radius: 2px; }
+.hum-card .mini-roll rect, .hum-msg .mini-roll rect { fill: var(--orange); }
+.hum-card .mini-roll line, .hum-msg .mini-roll line { stroke: var(--line); }
+.ask .mic.on { color: var(--on-orange); background: var(--orange); }
+
+/* A hummed melody sent in the chat */
+.hum-msg { display: grid; gap: 5px; margin-top: 6px; min-width: 190px; }
+.hum-msg-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.hum-msg .tbtn { height: 22px; font-size: 11px; }
+
+/* "92% match" next to a suggestion that sounds like the humming */
+.sugg .match { flex: none; margin: 0 4px; padding: 1px 5px; color: var(--on-note); background: var(--note); border-radius: 8px; font-size: 10px; font-weight: 600; }
+.sugg .match.weak { color: var(--text); background: var(--well); border: 1px solid var(--bevel); }
+
+@keyframes hum-pulse { 50% { opacity: 0.35; transform: scale(0.8); } }
+@media (prefers-reduced-motion: reduce) { .hum-dot { animation: none; } }

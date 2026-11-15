@@ -5,6 +5,7 @@ import { existingPiezaIds, getPiezasByIds } from '../repo/piezas.js';
 import { SYSTEM_PROMPT } from './systemPrompt.js';
 import { TOOL_DEFINITIONS, runTool } from './tools.js';
 import { askGemini } from './gemini.js';
+import { analyzeHum, describeHum, humFallbackAnswer, humSummary, strongMatch } from './hum.js';
 
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-opus-5-5';
 const MAX_ROUNDS = 6; // model calls per request (each tool round is one call)
@@ -106,18 +107,50 @@ async function createMessage(anthropic, messages) {
   }
 }
 
-// mensaje: user text; cancion: Cancion (contract 4.2) or null.
-// Returns { texto, piezas_sugeridas } (contract 4.3).
-export async function runCopilot(mensaje, cancion) {
+// Earlier turns of the chat, so "a lo-fi piano melody" said before a humming still counts.
+function describeHistory(historial) {
+  if (!historial?.length) return null;
+  const lines = historial.map(({ de, texto }) => `${de === 'stemy' ? 'DJ Stemy' : 'User'}: ${texto}`);
+  return `Earlier in this chat (oldest first):\n${lines.join('\n')}`;
+}
+
+const hasModel = () => Boolean(process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY);
+
+// mensaje: user text; cancion: Cancion (contract 4.2) or null; tarareo: { notas } transcribed from the user's humming,
+// or null; historial: earlier chat messages [{ de, texto }].
+// Returns { texto, piezas_sugeridas } (contract 4.3), plus `tarareo` (key and closest melodies) when one was sent.
+export async function runCopilot(mensaje, cancion, { tarareo = null, historial = [] } = {}) {
+  const hum = tarareo ? await analyzeHum(tarareo.notas) : null;
+  const userText = [describeHistory(historial), await describeSong(cancion), hum && describeHum(hum), `User message: ${mensaje}`]
+    .filter(Boolean)
+    .join('\n\n');
+  if (!hum) return askModel(userText);
+
+  let answer;
+  if (!hasModel()) answer = await humFallbackAnswer(hum);
+  else {
+    try {
+      answer = await askModel(userText);
+    } catch (err) {
+      // A humming demo must not die with the model: answer with the matches Stemma computed itself.
+      console.error(`Copilot failed on a humming, using the fallback answer: ${err.message}`);
+      answer = await humFallbackAnswer(hum);
+    }
+  }
+  // The melody the humming sounds like always comes first, whatever the model wrote.
+  const best = strongMatch(hum);
+  const ids = best ? [best.pieza.id, ...answer.piezas_sugeridas.filter((id) => id !== best.pieza.id)] : answer.piezas_sugeridas;
+  return { texto: answer.texto, piezas_sugeridas: await onlyExistingIds(ids), tarareo: humSummary(hum) };
+}
+
+async function askModel(userText) {
   // Claude is the agreed copilot; Gemini is used only when no Anthropic key is configured.
   if (!process.env.ANTHROPIC_API_KEY && process.env.GEMINI_API_KEY) {
-    const answer = parseFinalAnswer(await askGemini(`${await describeSong(cancion)}\n\nUser message: ${mensaje}`));
+    const answer = parseFinalAnswer(await askGemini(userText));
     return { texto: answer.texto, piezas_sugeridas: await onlyExistingIds(answer.piezas_sugeridas) };
   }
   const anthropic = getClient();
-  const messages = [
-    { role: 'user', content: `${await describeSong(cancion)}\n\nUser message: ${mensaje}` },
-  ];
+  const messages = [{ role: 'user', content: userText }];
 
   for (let round = 0; round < MAX_ROUNDS; round++) {
     const response = await createMessage(anthropic, messages);

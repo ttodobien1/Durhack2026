@@ -346,3 +346,43 @@ Stemma deja de ser solo un editor: los artistas comparten, comentan, piden ideas
 - Tablas nuevas: `comentarios`, `colaboradores`, `invitaciones`, `propuestas`, `mensajes`, `bloqueos`; columnas nuevas
   `canciones.permite_fork / permite_propuestas / pide_ayuda / pide_ayuda_at` y `usuarios.mensajes_de`. `migrate.js`
   las crea solo al primer request después del deploy.
+
+## 15. Popularidad (re-usos) y "tararéale a DJ Stemy"
+
+### Popularidad: cuántas veces se re-usó algo
+- **Piezas:** contador ↻ (proyectos que la usan + forks) en las tarjetas de la librería (Explore → Library), en las
+  piezas del perfil y en el Browser del proyecto. Al hacer clic se abre una lista con los proyectos públicos que la
+  usan (enlazados) y los forks con su autor; lo privado solo suma al contador ("+N private").
+- **Proyectos:** el contador de forks de las tarjetas (Explore, Popular projects, perfil) ahora se abre y lista las
+  copias públicas, enlazadas.
+- Backend: `GET /usos?piezas=&canciones=` (contadores en lote) y `GET /piezas/:id/usos` (dónde se re-usa).
+
+### Tararéale a DJ Stemy
+- En el chat de DJ Stemy hay un botón de micrófono. Le dices un género y un instrumento, aprietas el micrófono y
+  tarareas (una "da" por nota, hasta 15 s). Ves el nivel y la nota en vivo.
+- Al parar, el navegador transforma el tarareo en notas MIDI (`frontend/src/hum.js`; el audio nunca sale de la
+  página), lo muestra en un mini piano roll y lo puedes **escuchar antes de mandarlo** (Play), repetir o enviar.
+- El servidor compara esas notas con todas las melodías públicas (intervalos y ritmo: da igual la tonalidad y la
+  velocidad a la que se tararee) y DJ Stemy responde a qué melodía se parece (con % de coincidencia en cada
+  sugerencia) y qué acordes, bajo y batería le van, en la tonalidad del tarareo.
+- "Use in my song" guarda el tarareo como **pieza propia** (melodía del usuario, CC BY 4.0) y la agrega a la canción:
+  aparece en los créditos y en el árbol como lo que aportó el usuario. El copiloto sigue sin componer: solo compara y
+  recomienda piezas existentes.
+- DJ Stemy ahora recibe los mensajes anteriores del chat (`historial`), así recuerda el género y el instrumento.
+- Catálogo nuevo: `data/piezas/famous-melodies.json` (`p-501` a `p-514`), 14 melodías famosas de **dominio público**
+  (Für Elise, Himno de la alegría, Estrellita, Cumpleaños feliz, Jingle Bells, la 5ª de Beethoven, Pequeña serenata
+  nocturna, Canon de Pachelbel, Frère Jacques, Mary Had a Little Lamb, Marcha nupcial, En la gruta del rey de la
+  montaña, Greensleeves, Tocata y fuga). Bohemian Rhapsody no se puede: tiene copyright. Para cargarlas en una base
+  existente: `npm run db:seed` en `backend/`.
+- Para la demo: "un beat lo-fi con piano" → micrófono → tararear Für Elise ("mi re# mi re# mi si re do la") →
+  escuchar → enviar → DJ Stemy dice que suena a Für Elise de Beethoven (dominio público) y sugiere acordes y bajo en
+  esa tonalidad y una batería.
+
+### Rutas y contrato
+| Método | Ruta | Qué hace |
+| --- | --- | --- |
+| GET | `/usos?piezas=p-1,p-2&canciones=c-1` | `{ piezas: { id: { canciones, forks, total } }, canciones: { id: { forks, total } } }` |
+| GET | `/piezas/:id/usos` | `{ id, total, canciones: { total, lista }, forks: { total, lista } }` |
+| POST | `/copiloto` | Acepta además `historial: [{ de: "usuario" \| "stemy", texto }]` y `tarareo: { notas }`; con tarareo responde además `tarareo: { tonalidad, notas, coincidencias }` |
+
+Los campos nuevos son opcionales: el contrato 4.3 de `/copiloto` sigue igual para quien no los mande.

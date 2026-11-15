@@ -213,6 +213,14 @@ export const api = {
 
   // Changed piece first, original second: `nuevas` are notes only in `id`.
   diff: (id, original) => call(`/piezas/${id}/diff/${original}`, undefined, () => mock.diff(id, original)),
-  copilot: (mensaje, cancion) =>
-    call('/copiloto', { method: 'POST', body: { mensaje, cancion } }, () => mock.copilot({ mensaje, cancion })),
+  // extra (optional): { historial: [{ de: 'usuario' | 'stemy', texto }], tarareo: { notas } } (a humming transcribed in
+  // hum.js). With a humming the answer also has `tarareo`: { tonalidad, notas, coincidencias: [{ id, similitud... }] }.
+  copilot: (mensaje, cancion, extra = {}) =>
+    call('/copiloto', { method: 'POST', body: { mensaje, cancion, ...extra } }, () => mock.copilot({ mensaje, cancion, ...extra })),
+
+  // Reuse counters (popularity): { piezas: { id: { canciones, forks, total } }, canciones: { id: { forks, total } } }
+  usage: ({ piezas = [], canciones = [] }) =>
+    call(`/usos?piezas=${piezas.map(enc).join(',')}&canciones=${canciones.map(enc).join(',')}`, undefined, () => mock.usage({ piezas, canciones })),
+  // Where a piece is reused: { total, canciones: { total, lista }, forks: { total, lista } }
+  pieceUsage: (id) => call(`/piezas/${enc(id)}/usos`, undefined, () => mock.pieceUsage(id)),
 }
